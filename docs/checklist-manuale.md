@@ -51,3 +51,13 @@ Anche questo passo è solo logica: si verifica dalla pagina dei test. L'apertura
 - [ ] `tests.html` mostra **"Tutti i test superati"** (182 test).
 - [ ] Con il filtro `round-trip` si vedono i test di QA-05: il campione dell'Appendice A riesportato identico (salvo `saved`), anche con a capo CRLF e BOM.
 - [ ] Con il filtro `lettura` si vedono le regole FMT-R (file non validi, elementi sconosciuti, avvisi).
+
+---
+
+## Passo 5 — Interprete e scheduler
+
+Ancora solo logica: l'esecuzione con i pulsanti arriva al passo 6.
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (267 test), in pochi secondi.
+- [ ] Con il filtro `QA-04` si vede il caso di riferimento: l'Appendice A con gli input `5, s, 3, n, 4, 9` produce le tre righe finali attese.
+- [ ] Con il filtro `Scheduler` passa anche l'ultimo test, quello con i timer veri: un ciclo infinito non blocca la pagina e Ferma risponde subito.

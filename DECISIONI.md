@@ -219,3 +219,70 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 
 - **Passo:** 4 · **Decisa da:** sviluppo · **Tocca:** NFR-CODE-01
 - **Decisione:** nel codice, caratteri invisibili o facili da confondere (BOM, spazi speciali, virgolette tipografiche) si scrivono come sequenze `\uXXXX`, mai letterali. Le virgolette « » nei testi del catalogo sono invece testo dell'interfaccia e restano letterali. Corretto al passo 4 anche il codice dei passi precedenti.
+
+## DEC-038 — Controlli statici della fase 1
+
+- **Passo:** 5 · **Decisa da:** sviluppo · **Tocca:** §8.1, FR-RUN-02, DEC-026
+- **Decisione:** `OnoFlow.StaticCheck.check(program)` restituisce tutti gli errori che impediscono l'esecuzione, per funzione: prima quelli della funzione (nome non valido, `ERR_FUNCTION_NAME_RESERVED`, `ERR_DUPLICATE_FUNCTION`, `ERR_MAIN_SIGNATURE`, nomi di parametri e variabile di ritorno), poi quelli dei blocchi nell'ordine di DEC-027 (sintassi, `ERR_DUPLICATE_DECLARATION` anche per un nome ripetuto nello stesso blocco o per un parametro ridichiarato, `ERR_CALL_BLOCK_NOT_CALL`). `Main` non si può chiamare (`ERR_UNKNOWN_FUNCTION`).
+
+## DEC-039 — Valori ed errori durante l'esecuzione
+
+- **Passo:** 5 · **Decisa da:** sviluppo · **Tocca:** §6.1, §8.2, FR-ERR-03
+- **Decisione:** un valore è `{ type, value }`; un array `{ type, array: true, elements }` con `undefined` per gli elementi non inizializzati. Un errore di runtime è `{ code, params, nodeId, functionName, variables }`, dove `variables` è la fotografia delle variabili della funzione in esecuzione, nell'ordine in cui sono state dichiarate. Gli errori sugli argomenti sono del blocco chiamante; quelli sul valore di ritorno (`ERR_RETURN_*`) della funzione chiamata, con le sue variabili.
+
+## DEC-040 — Valore non valido nella console: si richiede
+
+- **Passo:** 5 · **Decisa da:** sviluppo, **da confermare dall'autore** · **Tocca:** §6.11, §8.1, FR-CON-02
+- **Problema:** la §8.1 elenca "input non convertibile" tra gli errori di runtime, ma non dice se l'esecuzione si ferma.
+- **Decisione provvisoria:** la console mostra l'errore e chiede di nuovo il valore (l'evento `input` porta l'errore del tentativo precedente). L'interprete ha anche la modalità `invalidInput: 'error'`, che ferma l'esecuzione con `ERR_INPUT_NOT_CONVERTIBLE`.
+- **Motivazione:** uno studente che scrive `2,5` per un `Integer` dovrebbe poter correggere senza rifare tutti gli input precedenti.
+
+## DEC-041 — Interprete a trampolino
+
+- **Passo:** 5 · **Decisa da:** sviluppo · **Tocca:** §10.3, §6.8
+- **Problema:** con `yield*` ogni chiamata annida circa dieci generatori e ogni ripresa attraversa tutta la catena: lo stack del motore si esauriva verso i 470 livelli di ricorsione, sotto i 1000 richiesti.
+- **Decisione:** i generatori dell'interprete cedono il sotto-generatore (`yield this.evaluate(...)`) invece di delegarlo; un motore (`trampoline`) tiene la pila in un array e passa valori ed eccezioni. Il codice dell'interprete resta uguale, lo stack nativo costante, il costo di un passo non dipende dalla profondità.
+- **Misura:** circa un milione di passi al secondo su un computer da laboratorio.
+
+## DEC-042 — Tempo massimo per turno e Ferma
+
+- **Passo:** 5 · **Decisa da:** sviluppo · **Tocca:** §10.3, FR-RUN-01, NFR-PERF-01, NFR-PERF-04
+- **Decisione:** oltre al budget di 10.000 passi, un turno finisce dopo circa 25 ms (l'orologio si legge ogni 256 passi): su un telefono lento 10.000 passi possono durare 50–100 ms. Ferma fa entrare `ERR_STOPPED` nel generatore nel punto in cui era fermo, quindi l'errore ha blocco e variabili. Pausa non ha effetto mentre si attende un input.
+
+## DEC-043 — Passi e commenti
+
+- **Passo:** 5 · **Decisa da:** sviluppo · **Tocca:** §10.3, FR-RUN-05
+- **Decisione:** un passo prima di ogni blocco eseguibile. `while` e `for`: la prima verifica della condizione usa il passo del blocco, le successive ne cedono uno nuovo; `do`: un passo prima di ogni verifica, dopo il corpo. I commenti non si eseguono e non consumano passi (il passo-passo della fase 2 non si fermerà sui commenti).
+
+## DEC-044 — Cortocircuito e tipi
+
+- **Passo:** 5 · **Decisa da:** sviluppo · **Tocca:** §6.4
+- **Decisione:** con `and`/`or` cortocircuitati, il secondo operando non valutato non si controlla: `true or 1` vale `true`. Lo troverà l'analisi statica dei tipi (FR-ERR-06, fase 2).
+
+## DEC-045 — Dettagli delle funzioni predefinite
+
+- **Passo:** 5 · **Decisa da:** sviluppo, **da verificare con Flowgorithm (Q-09)** · **Tocca:** §6.9
+- **Decisione:**
+  - `Len`, `Char` contano le unità di testo di JavaScript (un'emoji può valere 2);
+  - `ToChar` accetta codici da 0 a 1.114.111 tranne 55.296–57.343 (surrogati); `ToCode` restituisce il codice del primo carattere;
+  - `Random(n)` = `floor(random() * n)`;
+  - `Int` di un valore fuori dagli `Integer` è `ERR_INTEGER_OVERFLOW`;
+  - argomenti numerici di tipo sbagliato: `ERR_ARGUMENT_TYPE` con motivo `number`; `Size` vuole il nome di un array (`ERR_ARRAY_ARGUMENT`);
+  - `ToInteger`/`ToReal` usano le regole dell'input; un errore è `ERR_CONVERSION_FAILED` con lo stesso motivo (`empty`, `format`, `decimal`, `range`);
+  - `ERR_BUILTIN_ARGUMENT` ha i motivi `position`, `random`, `charCode`, `empty`, `digits`.
+
+## DEC-046 — Motivi specifici degli errori sugli operatori
+
+- **Passo:** 5 · **Decisa da:** sviluppo · **Tocca:** §8.4
+- **Decisione:** `ERR_BINARY_OPERATOR_TYPES` con motivo `stringPlus` (`"a" + "b"`: "per unire testi usa &") e `booleanOrder` (`true < false`); `ERR_UNARY_OPERATOR_TYPE` con motivo `not` (`not x > 5`: "usa le parentesi"); `ERR_ASSIGN_TYPE` con motivo `realToInteger` ("/ dà sempre un Real; usa Int(...)"); `ERR_UNINITIALIZED_VARIABLE` con motivo `element` per gli elementi di array; `ERR_FOR_VARIABLE_TYPE` con motivo `array`.
+
+## DEC-047 — Esecuzione sincrona per i test
+
+- **Passo:** 5 · **Decisa da:** sviluppo · **Tocca:** §10.3, QA-10
+- **Decisione:** `Interpreter.runSync(program, inputs, { maxSteps, maxMs, ... })` restituisce `{ status, output, error, errors, steps }`. `output` è il testo della console con gli input digitati seguiti da un a capo. Oltre a `done`, `error`, `invalid`: `limit` (troppi passi), `timeout` (troppo tempo, controllato ogni 1000 passi), `waitingInput` (input finiti).
+- **Limite noto:** un difetto dell'interprete che giri senza produrre passi non si può interrompere; la verifica automatica (`tools/run-tests.mjs`) lo segnala con il suo timeout di 60 secondi.
+
+## DEC-048 — Conteggio della ricorsione
+
+- **Passo:** 5 · **Decisa da:** sviluppo · **Tocca:** §6.8, NFR-PERF-02
+- **Decisione:** il limite di 1000 conta le chiamate di funzioni utente annidate, senza `Main`: `Giu(999)` (1000 chiamate) va bene, `Giu(1000)` no. Se il motore esaurisse comunque lo stack, l'errore è `ERR_RECURSION_LIMIT`; gli altri `RangeError` sono difetti interni (`ERR_INTERNAL`).
