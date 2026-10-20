@@ -21,3 +21,13 @@ Aprire `tests.html` con doppio clic dalla cartella del progetto (non da un serve
 - [ ] Rinominare temporaneamente `tests/framework/assert.js`: ricaricando, la pagina spiega che il framework non si è caricato e cita lo ZIP. Rimettere il nome giusto.
 - [ ] Con il tema scuro del sistema la pagina è scura e leggibile.
 - [ ] A larghezza da telefono (Strumenti di sviluppo → Visualizzazione flessibile, 360 px) non c'è scorrimento orizzontale.
+
+---
+
+## Passo 2 — Localizzazione e formato dei numeri
+
+Questo passo è solo logica: si verifica dalla pagina dei test.
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (95 test).
+- [ ] Con il filtro `NumberFormat` restano le suite del formato dei numeri; aprendo `NumberFormat › output Real (§6.10)` si vedono i casi della specifica (`1.005` → `1,01`, `-0.001` → `0`, ...).
+- [ ] Con il filtro `Localization` restano le suite della localizzazione, compreso il controllo dei cataloghi (NFR-I18N-06).

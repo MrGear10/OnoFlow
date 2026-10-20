@@ -79,3 +79,42 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 
 - **Passo:** 1 · **Decisa da:** sviluppo
 - **Decisione:** ogni passo si sviluppa su un branch `fase1/passo-NN`, con un commit a fine passo.
+
+## DEC-013 — Struttura dei cataloghi e del modulo dei numeri
+
+- **Passo:** 2 · **Decisa da:** sviluppo · **Tocca:** NFR-I18N-03, NFR-I18N-04, §10.2
+- **Decisione:** un catalogo è `{ name, number: { decimalSeparator, inputDecimalSeparators }, messages }`, in `js/i18n/catalog.<lingua>.js`, e si registra con `OnoFlow.Localization.registerCatalog`. Le chiavi sono piatte con i punti (`ERR_INPUT_NOT_CONVERTIBLE.decimal`). Il modulo dei numeri è `OnoFlow.NumberFormat` e riceve il formato numerico come argomento, così non dipende dalla localizzazione.
+- **Motivazione:** ogni modulo si prova da solo; aggiungere una lingua = aggiungere un file.
+
+## DEC-014 — Parametri dei messaggi
+
+- **Passo:** 2 · **Decisa da:** sviluppo · **Tocca:** NFR-I18N-02, QA-07
+- **Decisione:** i parametri si inseriscono con `String()`; chi chiama passa i numeri già formattati quando serve il separatore della lingua. Un parametro mancante lascia `{nome}` visibile nel testo.
+- **Motivazione:** un segnaposto rimasto si vede e i test (QA-07) lo trovano; un testo vuoto passerebbe inosservato.
+
+## DEC-015 — Chiave più specifica tra lingua attiva e italiano
+
+- **Passo:** 2 · **Decisa da:** sviluppo · **Tocca:** §8.2, NFR-I18N-05
+- **Decisione:** per un errore si prova ogni chiave, dalla più specifica, prima nella lingua attiva e poi in italiano; vince la prima trovata. Un messaggio specifico in italiano batte quindi uno generico nella lingua attiva. `type` senza `reason` non sceglie una chiave (la §8.2 elenca solo `CODICE.reason.type` → `CODICE.reason` → `CODICE`).
+- **Motivazione:** con NFR-I18N-06 i cataloghi hanno le stesse chiavi, quindi il caso si presenta solo con un catalogo incompleto; meglio il messaggio più preciso.
+
+## DEC-016 — Forma degli errori di input
+
+- **Passo:** 2 · **Decisa da:** sviluppo · **Tocca:** §6.11, §8.3
+- **Decisione:** `parseInput` restituisce `{ ok: true, value }` oppure `{ ok: false, error: { code: 'ERR_INPUT_NOT_CONVERTIBLE', params: { reason, type, text } } }`, con `text` esattamente come digitato. L'interprete aggiunge `nodeId`. Un `Boolean` non valido ha `reason` `format`.
+
+## DEC-017 — `"2,5"` per un `Integer` nelle lingue col punto
+
+- **Passo:** 2 · **Decisa da:** sviluppo · **Tocca:** §6.11
+- **Decisione:** nelle lingue con il solo punto come separatore, `"2,5"` per un `Integer` è errore `format` (la virgola lì non è un separatore decimale), non `decimal`.
+
+## DEC-018 — Arrotondamento di `ToFixed`
+
+- **Passo:** 2 · **Decisa da:** sviluppo · **Tocca:** §6.9
+- **Decisione:** `ToFixed` usa lo stesso arrotondamento dell'output (rappresentazione più corta, metà lontano dallo zero) e non scrive mai `-0` (`ToFixed(-0.001, 2)` → `"0,00"`). Un numero di cifre fuori da 0–15 è un errore che l'interprete trasformerà in `ERR_BUILTIN_ARGUMENT` (passo 5).
+- **Da verificare:** il comportamento di Flowgorithm (Q-09).
+
+## DEC-019 — Spazi ai bordi dell'input
+
+- **Passo:** 2 · **Decisa da:** sviluppo · **Tocca:** §6.11
+- **Decisione:** si tolgono con `String.prototype.trim`, quindi anche tabulazioni, a capo e spazio non separabile. Le stringhe (`String`) restano esattamente come digitate.

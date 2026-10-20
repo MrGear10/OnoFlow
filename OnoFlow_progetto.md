@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Prodotto** | OnoFlow — editor web di diagrammi di flusso, compatibile con i file `.fprg` |
-| **Versione del documento** | 1.5 — 20 ottobre 2026 |
+| **Versione del documento** | 1.6 — 20 ottobre 2026 |
 | **Stato** | Base per una nuova implementazione da zero |
 | **Origine** | Sintesi del documento di progetto (rev. 7) e di un prototipo che ha completato i passi 1–6 della fase 1 |
 | **Licenza prevista** | MIT |
@@ -400,7 +400,7 @@ Formato `.fprg` presunto e da verificare (§7.4).
 | `Random` | `Integer` n | `Integer` | da 0 a n − 1; n ≤ 0 è errore |
 | `ToChar` | codice | `String` | codice non valido è errore |
 | `ToCode` | `String` | `Integer` | codice del primo carattere; testo vuoto è errore |
-| `ToFixed` | `Real`, cifre (0–15) | `String` | zeri finali conservati, separatore della console: `ToFixed(2.5, 2)` → `"2,50"` |
+| `ToFixed` | `Real`, cifre (0–15) | `String` | zeri finali conservati, separatore della console: `ToFixed(2.5, 2)` → `"2,50"`; stesso arrotondamento dell'output (rappresentazione più corta, metà lontano dallo zero), mai `-0` (DEC-018) |
 | `ToInteger`, `ToReal` | `String` | `Integer`, `Real` | stesse regole dell'input da console (§6.11) |
 | `ToString` | valore semplice | `String` | stesse regole dell'output: `ToString(1/3)` → `"0,33"` |
 
@@ -443,7 +443,10 @@ Il separatore decimale dipende dalla **lingua dell'interfaccia** (§9.6). Le reg
 
 - **`String`:** conservata esattamente come digitata, spazi compresi.
 - **`Boolean`:** `true` o `false` senza distinzione di maiuscole, con spazi ai bordi ammessi.
-- **Separatori decimali in input:** virgola e punto **solo nelle lingue con separatore `,`**. Nelle lingue con separatore `.` si accetta solo il punto, perché `"1,500"` sarebbe ambiguo.
+- **Separatori decimali in input:** virgola e punto **solo nelle lingue con separatore `,`**. Nelle lingue con separatore `.` si accetta solo il punto, perché `"1,500"` sarebbe ambiguo; lì `"2,5"` per un `Integer` è errore `format`, non `decimal` (DEC-017).
+- **Spazi ai bordi:** si tolgono quelli che toglie `String.prototype.trim` (anche tabulazioni, a capo e spazio non separabile) (DEC-019).
+- **Boolean non valido:** errore `format`. Segno e separatore iniziale insieme (`"-,5"`) sono accettati per i `Real`, come `".5"`.
+- **Forma dell'errore:** `{ code: 'ERR_INPUT_NOT_CONVERTIBLE', params: { reason, type, text } }`, con `text` esattamente come digitato (DEC-016).
 
 ### 6.12 Conseguenze da documentare per gli studenti
 
@@ -552,7 +555,7 @@ Il significato del **numero finale** di `created` ed `edited` non è noto: forse
 ### 8.2 Rappresentazione
 
 - Gli errori DEVONO essere **oggetti con codice e parametri**, mai stringhe: `{ code: 'ERR_INDEX_OUT_OF_BOUNDS', params: { index: 5, size: 3, last: 2 }, nodeId }`. Il testo si genera dal catalogo della lingua solo al momento di mostrarlo.
-- Lo stesso codice può avere **messaggi diversi** in base ai parametri facoltativi `reason` e `type`: si cerca nel catalogo la chiave più specifica, `CODICE.reason.type` → `CODICE.reason` → `CODICE`.
+- Lo stesso codice può avere **messaggi diversi** in base ai parametri facoltativi `reason` e `type`: si cerca nel catalogo la chiave più specifica, `CODICE.reason.type` → `CODICE.reason` → `CODICE`. Vince la chiave più specifica presente nella lingua attiva **o** in italiano (DEC-015); `type` senza `reason` non sceglie una chiave.
 - Gli errori di sintassi DEVONO avere la **posizione** nel testo dell'espressione (colonna, inizio, fine). Basta il primo errore per espressione.
 - Gli errori di runtime DEVONO includere la **fotografia delle variabili** della funzione in esecuzione.
 - Gli avvisi hanno la stessa forma, con prefisso `WARN_`.
@@ -647,9 +650,9 @@ Negli errori gli operatori DEVONO essere mostrati in una forma canonica e coeren
 | ID | Requisito |
 |---|---|
 | NFR-I18N-01 | Oggi solo italiano, ma **nessun testo dell'interfaccia scritto nel codice**: tutto passa da un catalogo per lingua, con funzione `t(chiave, parametri)` |
-| NFR-I18N-02 | Messaggi con **segnaposto** (`{nome}`), mai concatenazioni di frammenti |
+| NFR-I18N-02 | Messaggi con **segnaposto** (`{nome}`), mai concatenazioni di frammenti. Un parametro mancante lascia il segnaposto visibile; i numeri si passano già formattati (DEC-014) |
 | NFR-I18N-03 | Un file per lingua; aggiungere una lingua = aggiungere un file |
-| NFR-I18N-04 | Il catalogo contiene anche il **formato numerico** della console (separatore decimale in output e separatori accettati in input) |
+| NFR-I18N-04 | Il catalogo contiene anche il **formato numerico** della console (separatore decimale in output e separatori accettati in input). Struttura: `{ name, number: { decimalSeparator, inputDecimalSeparators }, messages }` (DEC-013) |
 | NFR-I18N-05 | Lingua iniziale: `?lang=` nell'URL, poi lingua del browser, poi italiano. Chiave assente nella lingua attiva → italiano; assente anche lì → la chiave stessa |
 | NFR-I18N-06 | Un test verifica che ogni catalogo abbia esattamente le chiavi e gli stessi segnaposto dell'italiano |
 
