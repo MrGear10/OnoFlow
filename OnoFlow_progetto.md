@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Prodotto** | OnoFlow — editor web di diagrammi di flusso, compatibile con i file `.fprg` |
-| **Versione del documento** | 1.9 — 20 ottobre 2026 |
+| **Versione del documento** | 1.10 — 20 ottobre 2026 |
 | **Stato** | Base per una nuova implementazione da zero |
 | **Origine** | Sintesi del documento di progetto (rev. 7) e di un prototipo che ha completato i passi 1–6 della fase 1 |
 | **Licenza prevista** | MIT |
@@ -724,7 +724,8 @@ Questa architettura è stata **validata nel prototipo** dei passi 1–6. È racc
 - Durante l'esecuzione Nuovo, Apri, Esempi e la modifica del diagramma sono disabilitati; Pausa è disabilitato mentre si attende un input.
 - Un diagramma nuovo mostra un invito a inserire il primo blocco cliccando sulla freccia.
 - **Piè di pagina:** progetto indipendente e non affiliato a Flowgorithm; i file non lasciano il browser; **avviso sull'hosting** su GitHub Pages, fuori dall'UE, con il collegamento all'informativa di GitHub (FR-INFO-03), sostituito da "copia locale" quando l'app è aperta da `file://` (FR-INFO-04).
-- **Testi:** frasi semplici, verbi d'azione; lo stesso nome per la stessa azione ovunque (es. "Ferma" sia nel pulsante sia nell'avviso del ciclo infinito).
+- **Testi:** frasi semplici, verbi d'azione; lo stesso nome per la stessa azione ovunque (es. "Ferma" sia nel pulsante sia nell'avviso del ciclo infinito). Tono **impersonale**, senza "tu" (DEC-050).
+- **Priorità:** quando le esigenze sono in conflitto vince la leggibilità al proiettore (DEC-050).
 
 ### 11.2 Direzione visiva
 
@@ -737,6 +738,8 @@ Il prototipo ha validato una direzione basata sugli **oggetti della classe**:
 - blocco in esecuzione con l'**evidenziatore**.
 
 È una proposta che ha funzionato, non un vincolo: chi riparte PUÒ sceglierne un'altra, rispettando NFR-PRIV-02 e §9.5.
+
+**Scelta (DEC-051):** questa direzione, in versione sobria, con la grammatica degli stati della segnaletica stradale (ogni stato un segno con un solo significato), linee a un pixel, niente gradienti, ombre o rilievi, quadretti tenui e contenuto al massimo contrasto. Contesto di prodotto in `PRODUCT.md`; sistema visivo in `DESIGN.md`, scritto alla fine del passo 6.
 
 ---
 

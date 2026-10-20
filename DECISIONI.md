@@ -301,3 +301,17 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 - **D-11:** sul telefono due schede in basso, Diagramma e Console; all'avvio dell'esecuzione si passa da soli alla console.
 - **D-12:** tastiera normale per gli input della console (la tastiera numerica di iOS spesso non ha il meno né la virgola).
 - **D-13:** versioni minime iOS/iPadOS 15.4 e Chrome per Android delle ultime 3 versioni circa.
+
+## DEC-050 — Priorità d'uso e tono dei testi
+
+- **Passo:** 5b · **Decisa da:** autore · **Tocca:** §4, §9.5, §11.1, PRODUCT.md
+- **Priorità:** quando le esigenze sono in conflitto vince il **docente al proiettore**: leggibilità a distanza e contrasto prima di tutto.
+- **Tono:** i testi dell'interfaccia e i messaggi sono **impersonali**, senza "tu" (es. "Per unire testi si usa &", non "usa &").
+- **Conseguenza:** i messaggi già nel catalogo, scritti con il "tu" nei passi 2–5, vanno riscritti in forma impersonale (da fare all'inizio del passo 6).
+
+## DEC-051 — Direzione visiva
+
+- **Passo:** 5b · **Decisa da:** autore, sulla pagina di decisione della skill impeccable · **Tocca:** §11.2
+- **Decisione:** quaderno a quadretti e lavagna, sobri, con la grammatica degli stati della segnaletica stradale: ogni stato ha un segno con un solo significato. Penna rossa solo per gli errori, evidenziatore giallo solo per il blocco in esecuzione, inchiostro blu per i blocchi, console come ardesia con il gesso. Linee a un pixel, niente gradienti, ombre o rilievi; quadretti tenui e contenuto al massimo contrasto. Da evitare: aria da giocattolo e metafora spinta fino al costume.
+- **Dove:** `PRODUCT.md` (verità di prodotto) e `.impeccable/surfaces/index-html.md` (contratto della direzione per la superficie dell'app). `DESIGN.md` si scrive alla fine del passo 6, dal costruito, dopo la revisione finale.
+- **Vincolo di pubblicazione:** il contratto della direzione non deve essere servito con l'app. GitHub Pages, con Jekyll attivo come da impostazione predefinita, non pubblica le cartelle che iniziano con il punto: per questo **non si aggiunge un file `.nojekyll`** al repository. Da ricontrollare prima della pubblicazione.
