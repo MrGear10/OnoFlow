@@ -232,7 +232,7 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 
 ## DEC-040 — Valore non valido nella console: si richiede
 
-- **Passo:** 5 · **Decisa da:** sviluppo, **da confermare dall'autore** · **Tocca:** §6.11, §8.1, FR-CON-02
+- **Passo:** 5 · **Decisa da:** sviluppo, **confermata dall'autore (DEC-049)** · **Tocca:** §6.11, §8.1, FR-CON-02
 - **Problema:** la §8.1 elenca "input non convertibile" tra gli errori di runtime, ma non dice se l'esecuzione si ferma.
 - **Decisione provvisoria:** la console mostra l'errore e chiede di nuovo il valore (l'evento `input` porta l'errore del tentativo precedente). L'interprete ha anche la modalità `invalidInput: 'error'`, che ferma l'esecuzione con `ERR_INPUT_NOT_CONVERTIBLE`.
 - **Motivazione:** uno studente che scrive `2,5` per un `Integer` dovrebbe poter correggere senza rifare tutti gli input precedenti.
@@ -286,3 +286,18 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 
 - **Passo:** 5 · **Decisa da:** sviluppo · **Tocca:** §6.8, NFR-PERF-02
 - **Decisione:** il limite di 1000 conta le chiamate di funzioni utente annidate, senza `Main`: `Giu(999)` (1000 chiamate) va bene, `Giu(1000)` no. Se il motore esaurisse comunque lo stack, l'errore è `ERR_RECURSION_LIMIT`; gli altri `RangeError` sono difetti interni (`ERR_INTERNAL`).
+
+## DEC-049 — Decisioni dell'autore prima del passo 5b
+
+- **Passo:** prima del passo 5b · **Decisa da:** autore (proposte consigliate approvate in blocco) · **Tocca:** §5.9, §6.11, §11, FR-CON-03, FR-FILE-06
+- **DEC-040 confermata:** con un valore non valido nella console si mostra l'errore e si richiede il valore.
+- **B1:** il divieto di finestre modali vale per esecuzione e console. La modifica di un blocco avviene in un pannello (a tutto schermo sul telefono); le conferme, come "modifiche non salvate", sono barre in linea non bloccanti.
+- **B2:** il nome di un file nuovo si sceglie in un campo nella barra superiore, con valore iniziale `diagramma.fprg`.
+- **B3:** sul telefono un tocco seleziona il blocco e mostra "Modifica" e "Inserisci dopo"; un secondo tocco apre la modifica.
+- **B4a:** solo font di sistema (NFR-PRIV-02).
+- **B4b:** si parte dalla metafora della classe (quaderno a quadretti, lavagna, penna rossa, evidenziatore) in versione sobria, rifinita con le skill di design.
+- **B5:** la verifica di FR-MOB-03 (blocco dell'errore inquadrato) si sposta al passo 7.
+- **B6:** lo sviluppo scrive 5–6 esempi brevi (es. pari/dispari, tabellina, media, fattoriale) da sottoporre all'autore.
+- **D-11:** sul telefono due schede in basso, Diagramma e Console; all'avvio dell'esecuzione si passa da soli alla console.
+- **D-12:** tastiera normale per gli input della console (la tastiera numerica di iOS spesso non ha il meno né la virgola).
+- **D-13:** versioni minime iOS/iPadOS 15.4 e Chrome per Android delle ultime 3 versioni circa.

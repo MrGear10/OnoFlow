@@ -445,7 +445,7 @@ Il separatore decimale dipende dalla **lingua dell'interfaccia** (§9.6). Le reg
 
 - **`String`:** conservata esattamente come digitata, spazi compresi.
 - **`Boolean`:** `true` o `false` senza distinzione di maiuscole, con spazi ai bordi ammessi.
-- **Valore non valido:** la console mostra l'errore e chiede di nuovo il valore; l'esecuzione non si ferma (DEC-040, **da confermare dall'autore**).
+- **Valore non valido:** la console mostra l'errore e chiede di nuovo il valore; l'esecuzione non si ferma (DEC-040, confermata).
 - **Separatori decimali in input:** virgola e punto **solo nelle lingue con separatore `,`**. Nelle lingue con separatore `.` si accetta solo il punto, perché `"1,500"` sarebbe ambiguo; lì `"2,5"` per un `Integer` è errore `format`, non `decimal` (DEC-017).
 - **Spazi ai bordi:** si tolgono quelli che toglie `String.prototype.trim` (anche tabulazioni, a capo e spazio non separabile) (DEC-019).
 - **Boolean non valido:** errore `format`. Segno e separatore iniziale insieme (`"-,5"`) sono accettati per i `Real`, come `".5"`.
