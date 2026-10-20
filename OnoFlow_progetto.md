@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Prodotto** | OnoFlow — editor web di diagrammi di flusso, compatibile con i file `.fprg` |
-| **Versione del documento** | 1.8 — 20 ottobre 2026 |
+| **Versione del documento** | 1.9 — 20 ottobre 2026 |
 | **Stato** | Base per una nuova implementazione da zero |
 | **Origine** | Sintesi del documento di progetto (rev. 7) e di un prototipo che ha completato i passi 1–6 della fase 1 |
 | **Licenza prevista** | MIT |
@@ -331,7 +331,7 @@ Precedenza, dalla più alta alla più bassa:
 | `Real` non finito | Un risultato `Infinity` o `NaN` (es. `10.0 ^ 400`, `Sqrt(-1)`, `Log(0)`) è **errore di runtime** | P |
 | `&` | Concatenazione; numeri e `Boolean` convertiti in testo con le regole dell'output (§6.9) | V |
 | `+` tra stringhe | **Errore di tipo**, con il suggerimento di usare `&` | P |
-| `and` / `or` | **Cortocircuitati**; operandi solo `Boolean` | P |
+| `and` / `or` | **Cortocircuitati**; operandi solo `Boolean`. Il tipo di un operando non valutato non si controlla durante l'esecuzione (`true or 1` → `true`): lo troverà l'analisi statica della fase 2 (DEC-044) | P |
 | Uguaglianza tra `Real` | **Esatta**: `0.1 + 0.2 == 0.3` è falso | P |
 | Confronto tra stringhe | **Case-sensitive** (`"S" == "s"` è falso); `<` e `>` per codice dei caratteri (`"Z" < "a"` è vero) | V / P |
 | Confronto tra `Boolean` | Solo `==` e `!=` | P |
@@ -381,7 +381,8 @@ Formato `.fprg` presunto e da verificare (§7.4).
 | Valore di ritorno | Lo dà la variabile indicata nell'attributo `variable` della funzione, che va dichiarata nel corpo; se alla fine non è inizializzata è errore | P |
 | Blocco `call` | Deve contenere una chiamata; il valore di una funzione con ritorno viene scartato | P |
 | Funzione senza ritorno in un'espressione | Errore | P |
-| Ricorsione | Ammessa fino a 1000 livelli | P |
+| Ricorsione | Ammessa fino a 1000 chiamate di funzione annidate, oltre `Main` (DEC-048) | P |
+| Chiamare `Main` | Non si può: `ERR_UNKNOWN_FUNCTION` (DEC-038) | P |
 | Nomi | Funzioni con lo stesso nome o con il nome di una predefinita: errore statico | P |
 
 ### 6.9 Funzioni predefinite
@@ -444,6 +445,7 @@ Il separatore decimale dipende dalla **lingua dell'interfaccia** (§9.6). Le reg
 
 - **`String`:** conservata esattamente come digitata, spazi compresi.
 - **`Boolean`:** `true` o `false` senza distinzione di maiuscole, con spazi ai bordi ammessi.
+- **Valore non valido:** la console mostra l'errore e chiede di nuovo il valore; l'esecuzione non si ferma (DEC-040, **da confermare dall'autore**).
 - **Separatori decimali in input:** virgola e punto **solo nelle lingue con separatore `,`**. Nelle lingue con separatore `.` si accetta solo il punto, perché `"1,500"` sarebbe ambiguo; lì `"2,5"` per un `Integer` è errore `format`, non `decimal` (DEC-017).
 - **Spazi ai bordi:** si tolgono quelli che toglie `String.prototype.trim` (anche tabulazioni, a capo e spazio non separabile) (DEC-019).
 - **Boolean non valido:** errore `format`. Segno e separatore iniziale insieme (`"-,5"`) sono accettati per i `Real`, come `".5"`.
@@ -576,7 +578,7 @@ Elenco indicativo dei codici validati nel prototipo, utile come punto di partenz
 | Sintassi | `ERR_SYNTAX_TOO_COMPLEX` (DEC-023), `ERR_SYNTAX_EMPTY_EXPRESSION`, `ERR_SYNTAX_UNEXPECTED_CHARACTER`, `ERR_SYNTAX_UNTERMINATED_STRING`, `ERR_SYNTAX_INVALID_NUMBER`, `ERR_SYNTAX_UNEXPECTED_TOKEN`, `ERR_SYNTAX_UNEXPECTED_END`, `ERR_SYNTAX_UNCLOSED`, `ERR_SYNTAX_CHAINED_COMPARISON`, `ERR_SYNTAX_INVALID_INDEX`, `ERR_SYNTAX_INVALID_TARGET`, `ERR_INTEGER_LITERAL_OUT_OF_RANGE`, `ERR_REAL_LITERAL_OUT_OF_RANGE`, `ERR_NAME_LIST_INVALID`, `ERR_FOR_STEP_INVALID` |
 | Caricamento | `ERR_LOAD_INVALID_XML`, `ERR_LOAD_NOT_FLOWGORITHM`, `ERR_LOAD_UNKNOWN_ELEMENT`, `ERR_LOAD_MISSING_ELEMENT`, `ERR_LOAD_DUPLICATE_ELEMENT`, `ERR_LOAD_MISSING_ATTRIBUTE`, `ERR_LOAD_INVALID_VALUE`, `ERR_LOAD_NO_MAIN`; avvisi `WARN_LOAD_UNSUPPORTED_VERSION`, `WARN_LOAD_UNKNOWN_ATTRIBUTE`, `WARN_LOAD_IGNORED_SIZE`, `WARN_LOAD_UNVERIFIED_FORMAT`; `ERR_LOAD_FILE_TOO_LARGE` (DEC-032) |
 | Statici | `ERR_DUPLICATE_DECLARATION`, `ERR_DUPLICATE_FUNCTION`, `ERR_FUNCTION_NAME_RESERVED`, `ERR_INVALID_NAME` (usato anche per la variabile del `for`, DEC-021), `ERR_MAIN_SIGNATURE`, `ERR_CALL_BLOCK_NOT_CALL` |
-| Runtime | `ERR_UNDECLARED_VARIABLE`, `ERR_UNINITIALIZED_VARIABLE`, `ERR_ARRAY_WITHOUT_INDEX`, `ERR_NOT_AN_ARRAY`, `ERR_INDEX_TYPE`, `ERR_INDEX_OUT_OF_BOUNDS`, `ERR_ARRAY_SIZE_TYPE`, `ERR_ARRAY_SIZE_INVALID`, `ERR_ARRAY_TOO_LARGE`, `ERR_ASSIGN_TYPE`, `ERR_CONDITION_TYPE`, `ERR_LOGICAL_OPERAND`, `ERR_BINARY_OPERATOR_TYPES`, `ERR_UNARY_OPERATOR_TYPE`, `ERR_DIVISION_BY_ZERO`, `ERR_INTEGER_OVERFLOW`, `ERR_REAL_NOT_FINITE`, `ERR_UNKNOWN_FUNCTION`, `ERR_ARGUMENT_COUNT`, `ERR_ARGUMENT_TYPE`, `ERR_ARRAY_ARGUMENT`, `ERR_FUNCTION_NO_VALUE`, `ERR_RETURN_UNDECLARED`, `ERR_RETURN_NOT_SET`, `ERR_RETURN_TYPE`, `ERR_RECURSION_LIMIT`, `ERR_FOR_VARIABLE_TYPE`, `ERR_FOR_BOUND_TYPE`, `ERR_BUILTIN_ARGUMENT`, `ERR_CONVERSION_FAILED`, `ERR_STOPPED`, `ERR_INTERNAL` |
+| Runtime (parametri e motivi: DEC-039, DEC-045, DEC-046) | `ERR_UNDECLARED_VARIABLE`, `ERR_UNINITIALIZED_VARIABLE`, `ERR_ARRAY_WITHOUT_INDEX`, `ERR_NOT_AN_ARRAY`, `ERR_INDEX_TYPE`, `ERR_INDEX_OUT_OF_BOUNDS`, `ERR_ARRAY_SIZE_TYPE`, `ERR_ARRAY_SIZE_INVALID`, `ERR_ARRAY_TOO_LARGE`, `ERR_ASSIGN_TYPE`, `ERR_CONDITION_TYPE`, `ERR_LOGICAL_OPERAND`, `ERR_BINARY_OPERATOR_TYPES`, `ERR_UNARY_OPERATOR_TYPE`, `ERR_DIVISION_BY_ZERO`, `ERR_INTEGER_OVERFLOW`, `ERR_REAL_NOT_FINITE`, `ERR_UNKNOWN_FUNCTION`, `ERR_ARGUMENT_COUNT`, `ERR_ARGUMENT_TYPE`, `ERR_ARRAY_ARGUMENT`, `ERR_FUNCTION_NO_VALUE`, `ERR_RETURN_UNDECLARED`, `ERR_RETURN_NOT_SET`, `ERR_RETURN_TYPE`, `ERR_RECURSION_LIMIT`, `ERR_FOR_VARIABLE_TYPE`, `ERR_FOR_BOUND_TYPE`, `ERR_BUILTIN_ARGUMENT`, `ERR_CONVERSION_FAILED`, `ERR_STOPPED`, `ERR_INTERNAL` |
 
 ### 8.4 Messaggi con suggerimento
 
@@ -701,8 +703,9 @@ Questa architettura è stata **validata nel prototipo** dei passi 1–6. È racc
 ### 10.3 Scelte chiave e motivazioni
 
 - **Interprete a generatori (`function*`).** Ogni blocco cede il controllo (`yield`): passo-passo, pausa e attesa dell'input si ottengono senza bloccare la pagina. **Anche il valutatore delle espressioni è un generatore**, perché una funzione utente chiamata in un'espressione può contenere un input; le chiamate si valutano con `yield*`. Il parser resta una funzione normale.
-- **Eventi dell'interprete:** `step` (con l'ID del blocco), `output` (testo e a capo), `input` (tipo atteso; il testo digitato torna con `next(testo)`). Un `step` prima di ogni blocco **e a ogni verifica della condizione di un ciclo**, così anche un `while true` vuoto consuma passi.
-- **Scheduler a budget.** Non un `while (!gen.next().done)`: un numero massimo di passi per turno (ordine di grandezza 10.000), poi `setTimeout(0)`. La misura dei 5 secondi (FR-RUN-04) DEVE usare il **tempo reale**, pause tra i turni comprese, non solo il tempo di calcolo.
+- **Eventi dell'interprete:** `step` (con l'ID del blocco), `output` (testo e a capo), `input` (tipo atteso; il testo digitato torna con `next(testo)`). Un `step` prima di ogni blocco **e a ogni verifica della condizione di un ciclo**, così anche un `while true` vuoto consuma passi. I commenti non si eseguono e non consumano passi (DEC-043).
+- **Trampolino:** i generatori non delegano con `yield*` ma cedono il sotto-generatore a un motore con una pila esplicita; lo stack nativo resta costante e 1000 livelli di ricorsione sono possibili (DEC-041).
+- **Scheduler a budget.** Non un `while (!gen.next().done)`: un numero massimo di passi per turno (ordine di grandezza 10.000), poi `setTimeout(0)`. La misura dei 5 secondi (FR-RUN-04) DEVE usare il **tempo reale**, pause tra i turni comprese, non solo il tempo di calcolo. Oltre al budget di passi, un turno dura al massimo circa 25 ms (DEC-042). **Ferma** fa entrare `ERR_STOPPED` nel generatore, così l'errore ha il blocco e le variabili del momento.
 - **ID stabili sui nodi fin dall'inizio.** Collegano modello e disegno: servono all'evidenziazione degli errori, al passo-passo e al clic sulle frecce dell'editor. Non si scrivono nel file.
 - **Testo sorgente conservato.** Il modello conserva, per ogni campo, il risultato dell'analisi `{ testo, ast, errore }` anche quando contiene un errore. Così un file con errori si apre, e l'export riscrive le espressioni come le ha scritte lo studente.
 - **Modello separato dal disegno.** L'editor modifica solo il modello e il renderer ridisegna; la generazione di codice diventa un *visitor* sull'albero.
