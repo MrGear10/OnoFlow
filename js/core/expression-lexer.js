@@ -30,8 +30,8 @@
     var TWO_CHAR_OPERATORS = ['==', '!=', '<>', '<=', '>=', '&&', '||'];
     var ONE_CHAR_OPERATORS = '+-*/^&%()[],=<>!';
     var WHITESPACE = ' \t\r\n';
-    var TYPOGRAPHIC_QUOTES = '“”„‟‘’‚‛«»';
-    var INVISIBLE_SPACES = '   ​‌‍⁠﻿';
+    var TYPOGRAPHIC_QUOTES = '\u201C\u201D\u201E\u201F\u2018\u2019\u201A\u201B\u00AB\u00BB';
+    var INVISIBLE_SPACES = '\u00A0\u2007\u202F\u200B\u200C\u200D\u2060\uFEFF';
     var INTEGER_MAX = 2147483647n;
     var NON_ASCII_LETTER = /^\p{L}$/u;
 

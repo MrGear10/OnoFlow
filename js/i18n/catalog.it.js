@@ -63,7 +63,25 @@
             'ERR_INVALID_NAME': '«{text}» non è un nome valido: usa lettere senza accenti, cifre e _, senza cifra iniziale.',
             'ERR_INVALID_NAME.keyword': '«{text}» è una parola riservata e non si può usare come nome.',
             'ERR_INVALID_NAME.indexed': 'Qui serve solo il nome della variabile, senza indice: «{text}» non va bene.',
-            'ERR_FOR_STEP_INVALID': 'Il passo deve essere un numero intero maggiore di zero, senza segno: «{text}» non va bene.'
+            'ERR_FOR_STEP_INVALID': 'Il passo deve essere un numero intero maggiore di zero, senza segno: «{text}» non va bene.',
+
+            // Caricamento dei file .fprg (§7.5).
+            'ERR_LOAD_INVALID_XML': 'Il file non si può aprire: non è un diagramma .fprg, oppure è rovinato.',
+            'ERR_LOAD_NOT_FLOWGORITHM': 'Il file non si può aprire: contiene dati XML, ma non è un diagramma .fprg (inizia con <{element}>).',
+            'ERR_LOAD_FILE_TOO_LARGE': 'Il file è troppo grande per essere un diagramma: il massimo è {max} MB.',
+            'ERR_LOAD_UNKNOWN_ELEMENT': 'Il file non si può aprire: contiene l\'elemento sconosciuto <{element}> dentro <{parent}>.',
+            'ERR_LOAD_MISSING_ELEMENT': 'Il file non si può aprire: manca l\'elemento <{element}> dentro <{parent}>.',
+            'ERR_LOAD_DUPLICATE_ELEMENT': 'Il file non si può aprire: l\'elemento <{element}> compare più volte dentro <{parent}>.',
+            'ERR_LOAD_MISSING_ATTRIBUTE': 'Il file non si può aprire: all\'elemento <{element}> manca l\'attributo {attribute}.',
+            'ERR_LOAD_INVALID_VALUE': 'Il file non si può aprire: l\'attributo {attribute} di <{element}> ha un valore non valido, «{value}».',
+            'ERR_LOAD_NO_MAIN': 'Il file non si può aprire: manca la funzione Main, da cui parte il programma.',
+            'WARN_LOAD_UNSUPPORTED_VERSION': 'Il file è della versione «{version}» del formato, diversa da quella prevista (4.x): controlla che il diagramma sia giusto.',
+            'WARN_LOAD_UNKNOWN_ATTRIBUTE': 'L\'attributo {attribute} di <{element}> non è riconosciuto: andrà perso al salvataggio.',
+            'WARN_LOAD_IGNORED_SIZE': 'La dichiarazione di «{names}» non è un array ma ha una dimensione («{size}»): la dimensione è stata ignorata.',
+            'WARN_LOAD_UNVERIFIED_FORMAT': 'Il file contiene elementi <{element}>, il cui formato non è ancora stato verificato: controlla il diagramma dopo averlo salvato.',
+
+            // Esempi (FR-FILE-06).
+            'examples.sumMaxMin.title': 'Somma, massimo e minimo'
         }
     });
 })(window.OnoFlow.Localization);

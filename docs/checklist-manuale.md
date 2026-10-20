@@ -41,3 +41,13 @@ Anche questo passo è solo logica: si verifica dalla pagina dei test.
 - [ ] `tests.html` mostra **"Tutti i test superati"** (151 test).
 - [ ] Con il filtro `precedenze` si vedono i casi della §6.3 (`-2 ^ 2` → `(-(2 ^ 2))`, `not x > 5` → `((not x) > 5)`).
 - [ ] Con il filtro `tipici` si vedono gli errori della §8.4 (`x = 2,5`, `a AND b`, `'ciao'`, `età`, `.5`, `2x`, ...) con la loro posizione.
+
+---
+
+## Passo 4 — Formato `.fprg`
+
+Anche questo passo è solo logica: si verifica dalla pagina dei test. L'apertura e il salvataggio veri, con i pulsanti, arrivano al passo 6.
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (182 test).
+- [ ] Con il filtro `round-trip` si vedono i test di QA-05: il campione dell'Appendice A riesportato identico (salvo `saved`), anche con a capo CRLF e BOM.
+- [ ] Con il filtro `lettura` si vedono le regole FMT-R (file non validi, elementi sconosciuti, avvisi).

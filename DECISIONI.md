@@ -168,3 +168,54 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 
 - **Passo:** 3 · **Decisa da:** sviluppo · **Tocca:** FR-RUN-02, L-12
 - **Decisione:** "ordine dei blocchi" = funzioni nell'ordine del file, e in ciascuna i blocchi in ordine di lettura: prima il blocco, poi i suoi figli, `then` prima di `else`. Gli errori si raccolgono in quest'ordine, campo per campo nell'ordine della definizione del blocco.
+
+## DEC-028 — Interfaccia del modulo del formato
+
+- **Passo:** 4 · **Decisa da:** sviluppo · **Tocca:** §10.2, FR-FILE-04
+- **Decisione:** `OnoFlow.Format.importFprg(testo)` restituisce `{ ok: true, program, format, warnings }` oppure `{ ok: false, error, warnings }`; `exportFprg(program, { format, now })` restituisce il testo. `format` = `{ newline, bom, finalNewline }` descrive come era scritto il file e resta fuori dal modello: l'applicazione lo conserva accanto al programma aperto. L'import non ha effetti collaterali, quindi un file che non si apre lascia intatto quello aperto (FR-FILE-04). Lo schema degli attributi dei blocchi (`BLOCK_SCHEMA`) è unico per lettura e scrittura.
+
+## DEC-029 — Avviso per gli elementi da verificare: uno per tipo
+
+- **Passo:** 4 · **Decisa da:** sviluppo · **Tocca:** DEC-004, §7.4
+- **Decisione:** affina DEC-004 ("una volta per file"): `WARN_LOAD_UNVERIFIED_FORMAT` compare una volta per tipo di elemento presunto (`comment`, `call`, `function`, `parameter`), con il nome dell'elemento nel messaggio. Una `function` conta come presunta se non è `Main` senza tipo e senza variabile di ritorno. I tipi `Real` e `Boolean`, pur elencati nella §7.4, non danno avviso: sono i nomi dei tipi in Flowgorithm ed è molto probabile che siano scritti così; un avviso su quasi ogni file sarebbe rumore.
+- **Motivazione:** dire allo studente quale elemento controllare.
+
+## DEC-030 — `fileversion` mancante
+
+- **Passo:** 4 · **Decisa da:** sviluppo · **Tocca:** FMT-R-06
+- **Decisione:** un file senza `fileversion` si carica con `WARN_LOAD_UNSUPPORTED_VERSION` e versione vuota. L'export scrive sempre `fileversion="4.2"` (FMT-W-01).
+
+## DEC-031 — Elementi e attributi obbligatori
+
+- **Passo:** 4 · **Decisa da:** sviluppo · **Tocca:** §7.3, §7.5
+- **Decisione:** `<attributes>` può mancare (nessun attributo). Tutto il resto della §7.3 è obbligatorio: in `<function>` `name`, `type`, `variable`, `<parameters>` e `<body>`; in ogni blocco tutti i suoi attributi; in `<if>` `<then>` ed `<else>`. Un elemento dentro un blocco che non ne prevede (es. `<input>`) è un elemento sconosciuto.
+
+## DEC-032 — File troppo grande: `ERR_LOAD_FILE_TOO_LARGE`
+
+- **Passo:** 4 · **Decisa da:** sviluppo · **Tocca:** NFR-PERF-02, §8.3
+- **Decisione:** nuovo codice `ERR_LOAD_FILE_TOO_LARGE` (`params.max` = 5). L'import controlla la lunghezza del testo in caratteri; l'interfaccia (passo 6) controllerà anche la dimensione in byte prima di leggere il file.
+
+## DEC-033 — Attributo `saved`
+
+- **Passo:** 4 · **Decisa da:** sviluppo · **Tocca:** FMT-W-06, §7.2
+- **Decisione:** `saved` si scrive nell'ora locale del dispositivo, formato `AAAA-MM-GG hh:mm:ss ` con lo spazio finale, e solo se il file lo aveva già. Per i file nuovi decide D-01 (prima del passo 8). `created` ed `edited` non si generano mai (FMT-W-07).
+
+## DEC-034 — Dimensione delle variabili semplici
+
+- **Passo:** 4 · **Decisa da:** sviluppo · **Tocca:** FMT-R-07
+- **Decisione:** per una dichiarazione con `array="False"` l'export scrive sempre `size=""`, anche se nel modello è rimasto un testo (per esempio dopo aver tolto la spunta "array" nell'editor). All'import, una dimensione su una variabile semplice dà `WARN_LOAD_IGNORED_SIZE` e si azzera.
+
+## DEC-035 — Casi di round-trip non identico accettati
+
+- **Passo:** 4 · **Decisa da:** sviluppo · **Tocca:** FR-FILE-03, Q-05, Q-06
+- **Decisione:** il round-trip è identico per i file scritti come il campione. Non lo è, ed è accettato, quando il file ha: una dichiarazione XML diversa da `<?xml version="1.0"?>` (es. con `encoding`); `fileversion` diverso da `4.2`; a capo o tabulazioni letterali dentro un attributo (il parser XML li trasforma in spazi; Flowgorithm presumibilmente scrive `&#10;`); attributi sconosciuti; `size` su una variabile semplice. Se un file reale di Flowgorithm rientra in uno di questi casi, si rivede la §7.6.
+
+## DEC-036 — Esempi incorporati
+
+- **Passo:** 4 · **Decisa da:** sviluppo · **Tocca:** FR-FILE-06, NFR-DIST-04, L-10
+- **Decisione:** gli esempi stanno in `js/examples/examples.js` (`OnoFlow.Examples`), ciascuno con `id`, chiave del titolo nel catalogo, nome del file e testo. Per ora c'è solo l'Appendice A ("Somma, massimo e minimo"); gli altri dipendono da B6. I test usano questi testi, senza copie.
+
+## DEC-037 — Caratteri speciali nel codice sorgente
+
+- **Passo:** 4 · **Decisa da:** sviluppo · **Tocca:** NFR-CODE-01
+- **Decisione:** nel codice, caratteri invisibili o facili da confondere (BOM, spazi speciali, virgolette tipografiche) si scrivono come sequenze `\uXXXX`, mai letterali. Le virgolette « » nei testi del catalogo sono invece testo dell'interfaccia e restano letterali. Corretto al passo 4 anche il codice dei passi precedenti.

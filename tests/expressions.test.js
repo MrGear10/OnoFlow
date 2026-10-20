@@ -239,7 +239,7 @@
                 ['NOT a', 'ERRORE:ERR_SYNTAX_UNEXPECTED_TOKEN.keywordCase@0-3'],
                 ['a Mod 2', 'ERRORE:ERR_SYNTAX_UNEXPECTED_TOKEN.keywordCase@2-5'],
                 ['\'ciao\'', 'ERRORE:ERR_SYNTAX_UNEXPECTED_CHARACTER.singleQuote@0-1'],
-                ['“ciao”', 'ERRORE:ERR_SYNTAX_UNEXPECTED_CHARACTER.typographicQuote@0-1'],
+                ['\u201Cciao\u201D', 'ERRORE:ERR_SYNTAX_UNEXPECTED_CHARACTER.typographicQuote@0-1'],
                 ['età + 1', 'ERRORE:ERR_SYNTAX_UNEXPECTED_CHARACTER.accentedLetter@2-3'],
                 ['àb', 'ERRORE:ERR_SYNTAX_UNEXPECTED_CHARACTER.accentedLetter@0-1'],
                 ['.5', 'ERRORE:ERR_SYNTAX_INVALID_NUMBER.leadingPoint@0-2'],
@@ -305,7 +305,7 @@
             table(assert, [
                 ['"abc', 'ERRORE:ERR_SYNTAX_UNTERMINATED_STRING@0-4'],
                 ['a | b', 'ERRORE:ERR_SYNTAX_UNEXPECTED_CHARACTER@2-3'],
-                ['a + b', 'ERRORE:ERR_SYNTAX_UNEXPECTED_CHARACTER.invisible@1-2'],
+                ['a\u00A0+ b', 'ERRORE:ERR_SYNTAX_UNEXPECTED_CHARACTER.invisible@1-2'],
                 ['a . b', 'ERRORE:ERR_SYNTAX_UNEXPECTED_CHARACTER@2-3'],
                 ['1.2.3', 'ERRORE:ERR_SYNTAX_INVALID_NUMBER@0-5'],
                 ['a # b', 'ERRORE:ERR_SYNTAX_UNEXPECTED_CHARACTER@2-3']
@@ -425,8 +425,8 @@
         // Un esempio per ogni codice e motivo: il controllo vale anche quando un filtro
         // esclude gli altri test, che aggiungono i loro casi a ERROR_SAMPLES.
         var BASELINE = [
-            ['expression', ''], ['expression', '\'a\''], ['expression', '“a'], ['expression', 'è'],
-            ['expression', ' '], ['expression', '#'], ['expression', '"a'], ['expression', '1.2.3'],
+            ['expression', ''], ['expression', '\'a\''], ['expression', '\u201Ca'], ['expression', 'è'],
+            ['expression', '\u00A0'], ['expression', '#'], ['expression', '"a'], ['expression', '1.2.3'],
             ['expression', '.5'], ['expression', '5.'], ['expression', '1e3'], ['expression', '2x'],
             ['expression', 'a b'], ['expression', '2,5'], ['expression', 'a AND b'], ['expression', 'a +'],
             ['expression', '(a'], ['expression', 'a < b < c'], ['expression', 'a[i][j]'], ['expression', 'a[]'],

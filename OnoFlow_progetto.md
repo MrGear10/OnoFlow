@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Prodotto** | OnoFlow — editor web di diagrammi di flusso, compatibile con i file `.fprg` |
-| **Versione del documento** | 1.7 — 20 ottobre 2026 |
+| **Versione del documento** | 1.8 — 20 ottobre 2026 |
 | **Stato** | Base per una nuova implementazione da zero |
 | **Origine** | Sintesi del documento di progetto (rev. 7) e di un prototipo che ha completato i passi 1–6 della fase 1 |
 | **Licenza prevista** | MIT |
@@ -527,6 +527,9 @@ Il significato del **numero finale** di `created` ed `edited` non è noto: forse
 | FMT-R-08 | Testo e commenti XML tra gli elementi ignorati |
 | FMT-R-09 | Funzione `Main` assente → errore di caricamento |
 | FMT-R-10 | Il caricamento si ferma al primo errore strutturale; gli errori dentro le espressioni non lo bloccano |
+| FMT-R-11 | `fileversion` assente → avviso `WARN_LOAD_UNSUPPORTED_VERSION` con versione vuota; `<attributes>` assente → nessun attributo; tutti gli altri elementi e attributi della §7.3 (compreso `variable` di `<function>`) sono obbligatori (DEC-030, DEC-031) |
+| FMT-R-12 | File oltre 5 MB (misurati in caratteri dopo la lettura) → `ERR_LOAD_FILE_TOO_LARGE` (DEC-032) |
+| FMT-R-13 | `WARN_LOAD_UNVERIFIED_FORMAT` una volta per tipo di elemento presunto: `comment`, `call`, `function` (diversa da `Main` senza tipo né ritorno), `parameter`. I tipi `Real` e `Boolean` non danno avviso (DEC-029) |
 
 ### 7.6 Regole di scrittura
 
@@ -542,6 +545,8 @@ Il significato del **numero finale** di `created` ed `edited` non è noto: forse
 | FMT-W-08 | Attributi sconosciuti non riscritti |
 | FMT-W-09 | Un'espressione modificata nell'editor si scrive con il testo digitato dall'utente; un blocco nuovo si scrive nella forma della §7.3 |
 | FMT-W-10 | Un file creato da zero ha almeno l'attributo `name` (dal nome scelto al salvataggio) e nessun dato dell'utente; l'insieme completo degli attributi è la decisione D-01 |
+| FMT-W-11 | `saved` usa l'ora locale e si aggiorna solo se il file lo aveva; senza attributi si scrive `<attributes/>`; la dimensione di una dichiarazione non array si scrive vuota (DEC-033, DEC-034) |
+| FMT-W-12 | Casi in cui il round-trip **non** è identico, accettati: dichiarazione XML diversa da `<?xml version="1.0"?>`, `fileversion` diverso da `4.2`, a capo o tabulazioni scritti letterali (non come `&#10;`) dentro un attributo, attributi sconosciuti, `size` su una variabile semplice (DEC-035) |
 
 ---
 
@@ -569,7 +574,7 @@ Elenco indicativo dei codici validati nel prototipo, utile come punto di partenz
 |---|---|
 | Input | `ERR_INPUT_NOT_CONVERTIBLE` con `reason` `empty`, `format`, `decimal`, `range` |
 | Sintassi | `ERR_SYNTAX_TOO_COMPLEX` (DEC-023), `ERR_SYNTAX_EMPTY_EXPRESSION`, `ERR_SYNTAX_UNEXPECTED_CHARACTER`, `ERR_SYNTAX_UNTERMINATED_STRING`, `ERR_SYNTAX_INVALID_NUMBER`, `ERR_SYNTAX_UNEXPECTED_TOKEN`, `ERR_SYNTAX_UNEXPECTED_END`, `ERR_SYNTAX_UNCLOSED`, `ERR_SYNTAX_CHAINED_COMPARISON`, `ERR_SYNTAX_INVALID_INDEX`, `ERR_SYNTAX_INVALID_TARGET`, `ERR_INTEGER_LITERAL_OUT_OF_RANGE`, `ERR_REAL_LITERAL_OUT_OF_RANGE`, `ERR_NAME_LIST_INVALID`, `ERR_FOR_STEP_INVALID` |
-| Caricamento | `ERR_LOAD_INVALID_XML`, `ERR_LOAD_NOT_FLOWGORITHM`, `ERR_LOAD_UNKNOWN_ELEMENT`, `ERR_LOAD_MISSING_ELEMENT`, `ERR_LOAD_DUPLICATE_ELEMENT`, `ERR_LOAD_MISSING_ATTRIBUTE`, `ERR_LOAD_INVALID_VALUE`, `ERR_LOAD_NO_MAIN`; avvisi `WARN_LOAD_UNSUPPORTED_VERSION`, `WARN_LOAD_UNKNOWN_ATTRIBUTE`, `WARN_LOAD_IGNORED_SIZE`, `WARN_LOAD_UNVERIFIED_FORMAT` |
+| Caricamento | `ERR_LOAD_INVALID_XML`, `ERR_LOAD_NOT_FLOWGORITHM`, `ERR_LOAD_UNKNOWN_ELEMENT`, `ERR_LOAD_MISSING_ELEMENT`, `ERR_LOAD_DUPLICATE_ELEMENT`, `ERR_LOAD_MISSING_ATTRIBUTE`, `ERR_LOAD_INVALID_VALUE`, `ERR_LOAD_NO_MAIN`; avvisi `WARN_LOAD_UNSUPPORTED_VERSION`, `WARN_LOAD_UNKNOWN_ATTRIBUTE`, `WARN_LOAD_IGNORED_SIZE`, `WARN_LOAD_UNVERIFIED_FORMAT`; `ERR_LOAD_FILE_TOO_LARGE` (DEC-032) |
 | Statici | `ERR_DUPLICATE_DECLARATION`, `ERR_DUPLICATE_FUNCTION`, `ERR_FUNCTION_NAME_RESERVED`, `ERR_INVALID_NAME` (usato anche per la variabile del `for`, DEC-021), `ERR_MAIN_SIGNATURE`, `ERR_CALL_BLOCK_NOT_CALL` |
 | Runtime | `ERR_UNDECLARED_VARIABLE`, `ERR_UNINITIALIZED_VARIABLE`, `ERR_ARRAY_WITHOUT_INDEX`, `ERR_NOT_AN_ARRAY`, `ERR_INDEX_TYPE`, `ERR_INDEX_OUT_OF_BOUNDS`, `ERR_ARRAY_SIZE_TYPE`, `ERR_ARRAY_SIZE_INVALID`, `ERR_ARRAY_TOO_LARGE`, `ERR_ASSIGN_TYPE`, `ERR_CONDITION_TYPE`, `ERR_LOGICAL_OPERAND`, `ERR_BINARY_OPERATOR_TYPES`, `ERR_UNARY_OPERATOR_TYPE`, `ERR_DIVISION_BY_ZERO`, `ERR_INTEGER_OVERFLOW`, `ERR_REAL_NOT_FINITE`, `ERR_UNKNOWN_FUNCTION`, `ERR_ARGUMENT_COUNT`, `ERR_ARGUMENT_TYPE`, `ERR_ARRAY_ARGUMENT`, `ERR_FUNCTION_NO_VALUE`, `ERR_RETURN_UNDECLARED`, `ERR_RETURN_NOT_SET`, `ERR_RETURN_TYPE`, `ERR_RECURSION_LIMIT`, `ERR_FOR_VARIABLE_TYPE`, `ERR_FOR_BOUND_TYPE`, `ERR_BUILTIN_ARGUMENT`, `ERR_CONVERSION_FAILED`, `ERR_STOPPED`, `ERR_INTERNAL` |
 
@@ -684,7 +689,7 @@ Questa architettura è stata **validata nel prototipo** dei passi 1–6. È racc
 | Formattazione | Stampa e parsing dei numeri della console (§6.10, §6.11) |
 | Modello | Albero di programma, funzioni e blocchi; **unica fonte di verità**, senza dettagli grafici. ID stabili su ogni nodo |
 | Espressioni | Lexer e parser (Pratt) di espressioni, bersagli, elenchi di nomi, nomi singoli e passo del `for`; conserva il **testo sorgente** accanto all'AST. Forma dell'AST e operatori canonici: DEC-020 |
-| Formato | Import con `DOMParser`; export scritto a mano (§7.6) |
+| Formato | Import con `DOMParser`; export scritto a mano (§7.6). `importFprg` restituisce anche il formato del file (a capo, BOM, a capo finale), tenuto fuori dal modello (DEC-028) |
 | Interprete | Esecuzione basata su **funzioni generatore** |
 | Scheduler | Esecuzione continua a budget di passi, pausa, passo-passo, stop |
 | Renderer | Layout e disegno SVG, collegato al modello tramite ID |
