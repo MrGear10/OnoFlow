@@ -152,6 +152,29 @@
             });
         });
 
+        T.test('i messaggi italiani sono impersonali, senza "tu" (DEC-050)', function (assert) {
+            // Solo forme che non possono essere una terza persona: "controlla" o "indica"
+            // potrebbero esserlo, ma non con il pronome attaccato
+            // ("assegnale"); "usa" va bene solo dopo "si".
+            var secondPerson = /\b(tu|ti|tuo|tua|tuoi|tue|hai|puoi|devi|vuoi|(?:scrivi|riscrivi|aggiungi|togli|correggi|inserisci|scegli|premi|apri|metti|dividi)(?:lo|la|li|le|ne|gli)?|(?:usa|assegna|segnala|cancella|controlla|indica)(?:lo|la|li|le|ne|gli))\b/i;
+            function hasSecondPerson(text) {
+                var usa = /\busa\b/gi;
+                var match;
+                while ((match = usa.exec(text)) !== null) {
+                    if (!/\bsi $/i.test(text.slice(0, match.index))) return true;
+                }
+                return secondPerson.test(text);
+            }
+            assert.isTrue(hasSecondPerson('Per unire testi usa &.'), 'il controllo riconosce il "tu"');
+            assert.isTrue(hasSecondPerson('Usa le parentesi.'), 'anche a inizio frase');
+            assert.isFalse(hasSecondPerson('Si usa un solo indice.'), '"si usa" è impersonale');
+
+            var messages = Localization.catalogOf('it').messages;
+            assert.deepEqual(Object.keys(messages).filter(function (key) {
+                return hasSecondPerson(messages[key]);
+            }), []);
+        });
+
         T.test('un catalogo uguale al riferimento non ha problemi', function (assert) {
             assert.deepEqual(Localization.checkCatalog(reference, fakeCatalogs().it), []);
         });

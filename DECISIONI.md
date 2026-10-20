@@ -307,7 +307,7 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 - **Passo:** 5b · **Decisa da:** autore · **Tocca:** §4, §9.5, §11.1, PRODUCT.md
 - **Priorità:** quando le esigenze sono in conflitto vince il **docente al proiettore**: leggibilità a distanza e contrasto prima di tutto.
 - **Tono:** i testi dell'interfaccia e i messaggi sono **impersonali**, senza "tu" (es. "Per unire testi si usa &", non "usa &").
-- **Conseguenza:** i messaggi già nel catalogo, scritti con il "tu" nei passi 2–5, vanno riscritti in forma impersonale (da fare all'inizio del passo 6).
+- **Conseguenza:** i messaggi già nel catalogo, scritti con il "tu" nei passi 2–5, vanno riscritti in forma impersonale. Fatto all'inizio del passo 6: 26 messaggi riscritti, §8.4 del documento di progetto allineata (v1.11), e un test in `tests/localization.test.js` che segnala le forme con il "tu" non ambigue (pronomi, "hai", "puoi", imperativi in -ere/-ire, "usa" non preceduto da "si", imperativi con il pronome attaccato). "controlla" e "indica" restano fuori dal controllo perché possono essere una terza persona.
 
 ## DEC-051 — Direzione visiva
 

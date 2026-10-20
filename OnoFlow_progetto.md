@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Prodotto** | OnoFlow — editor web di diagrammi di flusso, compatibile con i file `.fprg` |
-| **Versione del documento** | 1.10 — 20 ottobre 2026 |
+| **Versione del documento** | 1.11 — 20 ottobre 2026 |
 | **Stato** | Base per una nuova implementazione da zero |
 | **Origine** | Sintesi del documento di progetto (rev. 7) e di un prototipo che ha completato i passi 1–6 della fase 1 |
 | **Licenza prevista** | MIT |
@@ -582,7 +582,7 @@ Elenco indicativo dei codici validati nel prototipo, utile come punto di partenz
 
 ### 8.4 Messaggi con suggerimento
 
-Questi casi DEVONO avere un messaggio dedicato, perché sono gli errori tipici degli studenti:
+Questi casi DEVONO avere un messaggio dedicato, perché sono gli errori tipici degli studenti. I messaggi sono impersonali, senza "tu" (DEC-050):
 
 | Caso | Suggerimento |
 |---|---|
@@ -591,13 +591,13 @@ Questi casi DEVONO avere un messaggio dedicato, perché sono gli errori tipici d
 | `'ciao'` | "le stringhe si scrivono tra virgolette doppie" |
 | `età` | "nei nomi niente lettere accentate" |
 | `.5`, `5.`, `1e3`, `2x` | rispettivamente: zero davanti, cifre dopo il punto, niente notazione scientifica, serve `*` |
-| `a < b < c` | "usa `and`" |
-| `c = a / b` con `c` `Integer` | "`/` dà sempre un `Real`; usa `Int(...)`" |
-| `"a" + "b"` | "per unire testi usa `&`" |
-| `not x > 5` | "per negare un confronto usa le parentesi" |
+| `a < b < c` | "si usa `and`" |
+| `c = a / b` con `c` `Integer` | "`/` dà sempre un `Real`; per un intero si usa `Int(...)`" |
+| `"a" + "b"` | "per unire testi si usa `&`" |
+| `not x > 5` | "per negare un confronto servono le parentesi" |
 | Input `2,5` per un `Integer` | "la variabile accetta solo numeri interi" |
 | Ricorsione troppo profonda | "probabilmente una funzione ricorsiva non si ferma" |
-| Difetto interno | "non è un errore del diagramma: segnalalo" |
+| Difetto interno | "non è un errore del diagramma e va segnalato" |
 
 Negli errori gli operatori DEVONO essere mostrati in una forma canonica e coerente.
 
