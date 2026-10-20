@@ -31,3 +31,13 @@ Questo passo è solo logica: si verifica dalla pagina dei test.
 - [ ] `tests.html` mostra **"Tutti i test superati"** (95 test).
 - [ ] Con il filtro `NumberFormat` restano le suite del formato dei numeri; aprendo `NumberFormat › output Real (§6.10)` si vedono i casi della specifica (`1.005` → `1,01`, `-0.001` → `0`, ...).
 - [ ] Con il filtro `Localization` restano le suite della localizzazione, compreso il controllo dei cataloghi (NFR-I18N-06).
+
+---
+
+## Passo 3 — Modello ed espressioni
+
+Anche questo passo è solo logica: si verifica dalla pagina dei test.
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (151 test).
+- [ ] Con il filtro `precedenze` si vedono i casi della §6.3 (`-2 ^ 2` → `(-(2 ^ 2))`, `not x > 5` → `((not x) > 5)`).
+- [ ] Con il filtro `tipici` si vedono gli errori della §8.4 (`x = 2,5`, `a AND b`, `'ciao'`, `età`, `.5`, `2x`, ...) con la loro posizione.
