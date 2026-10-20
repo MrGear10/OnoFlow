@@ -1,0 +1,12 @@
+{
+  "name": "onoflow-tools",
+  "private": true,
+  "description": "Strumenti di verifica per lo sviluppo di OnoFlow. L'applicazione e tests.html non ne dipendono.",
+  "type": "module",
+  "scripts": {
+    "test:browsers": "node run-tests.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
+  }
+}

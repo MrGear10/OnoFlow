@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Prodotto** | OnoFlow — editor web di diagrammi di flusso, compatibile con i file `.fprg` |
-| **Versione del documento** | 1.4 — 20 ottobre 2026 |
+| **Versione del documento** | 1.5 — 20 ottobre 2026 |
 | **Stato** | Base per una nuova implementazione da zero |
 | **Origine** | Sintesi del documento di progetto (rev. 7) e di un prototipo che ha completato i passi 1–6 della fase 1 |
 | **Licenza prevista** | MIT |
@@ -19,7 +19,7 @@ Questo PRD è la **fonte di verità** del prodotto. È scritto per essere conseg
 | Termine | Significato |
 |---|---|
 | **DEVE** | Requisito obbligatorio |
-| **DOVREBBE** | Raccomandato; si può derogare con una motivazione scritta nel registro delle decisioni |
+| **DOVREBBE** | Raccomandato; si può derogare con una motivazione scritta nel registro delle decisioni ([`DECISIONI.md`](DECISIONI.md)) |
 | **PUÒ** | Facoltativo |
 
 **Origine delle regole del linguaggio** (§6): **V** = verificato in Flowgorithm · **P** = scelta di progetto · **?** = da verificare in Flowgorithm.
@@ -30,7 +30,7 @@ Questo PRD è la **fonte di verità** del prodotto. È scritto per essere conseg
 2. Lavorare per passi piccoli e verificabili (§13). Ogni passo termina con codice che l'autore può provare.
 3. Consegnare file completi, mai frammenti da incollare.
 4. Ogni modulo ha i suoi test nella batteria comune (§12). Va verificato anche che i test **sappiano fallire**, introducendo difetti di proposito.
-5. Alla fine di ogni passo, elencare le decisioni prese che non erano in questo documento e aggiornarlo.
+5. Alla fine di ogni passo, elencare le decisioni prese che non erano in questo documento, registrarle in [`DECISIONI.md`](DECISIONI.md) e aggiornare questo documento.
 6. Distinguere sempre tra "non so", "non sono sicuro" e "dipende da contesto mancante".
 
 ---
@@ -171,7 +171,7 @@ L'editor fa parte della **prima versione**: senza, lo studente può eseguire dia
 | FR-EDIT-08 | Modifica dei campi non testuali: tipo e "array" nelle dichiarazioni, "a capo" nell'output, verso e passo del `for` | 1 |
 | FR-EDIT-09 | L'editor DEVE essere pienamente usabile al tocco: vedi §5.9 | 1 |
 | FR-EDIT-10 | Blocchi `call` e `comment` (formato da verificare, §7.4) | 2 |
-| FR-EDIT-11 | Gestione delle funzioni: aggiunta, rinomina, parametri, valore di ritorno, cancellazione (formato da verificare, §7.4) | 2 |
+| FR-EDIT-11 | Gestione delle funzioni: aggiunta, rinomina, parametri, valore di ritorno, cancellazione (formato da verificare, §7.4). Nella fase 1 le funzioni di un file importato si caricano, si disegnano e si eseguono, ma l'editor modifica solo `Main` (DEC-004) | 2 |
 | FR-EDIT-12 | Spostamento di blocchi (trascinamento o taglia/incolla) | 2 |
 
 ### 5.4 Esecuzione
@@ -287,7 +287,7 @@ Questa sezione è **normativa**: definisce come vengono analizzate ed eseguite l
 | Zeri iniziali | `007` accettato e letto in base dieci | P |
 | Letterali stringa | Solo `"…"`, senza sequenze di escape: una stringa non può contenere `"` | P |
 | Letterali booleani | `true`, `false` | P |
-| `-2147483648` | Accettato: il meno davanti a un letterale fa parte del letterale | P |
+| `-2147483648` | Accettato. Il `-` è **sempre** un operatore unario (quindi `-2 ^ 2` vale `-4`); solo il letterale `2147483648`, quando è operando diretto di un meno unario, supera il controllo di intervallo (DEC-001) | P |
 | Letterale `Integer` fuori intervallo | Errore statico | P |
 
 ### 6.3 Operatori e precedenza
@@ -516,7 +516,7 @@ Il significato del **numero finale** di `created` ed `edited` non è noto: forse
 | FMT-R-01 | BOM iniziale rimosso; file letti come UTF-8 (la codifica di Flowgorithm non è nota) |
 | FMT-R-02 | Booleani accettati solo come `True` / `False` |
 | FMT-R-03 | Nell'`if`, `then` ed `else` obbligatori e non ripetuti |
-| FMT-R-04 | Elemento sconosciuto → **errore di caricamento** con il nome dell'elemento |
+| FMT-R-04 | Elemento sconosciuto → **errore di caricamento** con il nome dell'elemento. Gli elementi presunti della §7.4 (funzioni con parametri, `call`, `comment`) **non** sono sconosciuti: dalla fase 1 si caricano, si disegnano e si eseguono, con l'avviso `WARN_LOAD_UNVERIFIED_FORMAT` una volta per file (DEC-004) |
 | FMT-R-05 | Attributo sconosciuto → **avviso** ("andrà perso al salvataggio"), una volta per coppia elemento/attributo |
 | FMT-R-06 | Versione diversa da `4.x` (anche `4` è valida) → si prova a caricare, con un **avviso** |
 | FMT-R-07 | `size` non vuoto con `array="False"` → ignorato, con avviso |
@@ -528,11 +528,11 @@ Il significato del **numero finale** di `created` ed `edited` non è noto: forse
 
 | ID | Regola |
 |---|---|
-| FMT-W-01 | `fileversion="4.2"`, dichiarazione `<?xml version="1.0"?>`, indentazione di 4 spazi, a capo LF con a capo finale |
+| FMT-W-01 | `fileversion="4.2"`, dichiarazione `<?xml version="1.0"?>`, indentazione di 4 spazi, a capo LF con a capo finale. Per un file **importato** si riproducono invece il tipo di a capo (LF o CRLF), il BOM e la presenza dell'a capo finale rilevati all'apertura (DEC-002) |
 | FMT-W-02 | Attributi nell'ordine di Flowgorithm (es. `declare`: `name`, `type`, `array`, `size`) |
 | FMT-W-03 | Elementi senza contenuto autochiusi (`<else/>`, `<parameters/>`, e per ipotesi anche `<then/>`, `<body/>` e cicli vuoti) |
 | FMT-W-04 | Escape scritti dall'app, non dal serializzatore: `&amp;`, `&lt;`, `&gt;`, `&quot;`; a capo e tabulazioni come `&#10;`, `&#13;`, `&#9;` (ipotesi) |
-| FMT-W-05 | **Espressioni, elenchi di nomi e passo del `for` riscritti con il testo originale**, non rigenerati dall'AST: lo stile dello studente (`<>` o `!=`, spazi) si conserva |
+| FMT-W-05 | **Espressioni, elenchi di nomi e passo del `for` riscritti con il testo originale**, non rigenerati dall'AST: lo stile dello studente (`<>` o `!=`, spazi) si conserva. Gli elementi XML, anche quelli non modificati, si rigenerano dal modello secondo questa sezione; eventuali differenze dal file originale emergono da QA-05 (DEC-003) |
 | FMT-W-06 | Gli attributi di un file importato si conservano tutti, nello stesso ordine (anche `authors`, `created`, `edited`); solo `saved` si aggiorna all'ora dell'export, nel formato `AAAA-MM-GG hh:mm:ss ` |
 | FMT-W-07 | L'app **non genera mai** `created` ed `edited`. Quali attributi abbia un file nuovo è la decisione D-01 (prima del passo 8); se Flowgorithm li richiedesse, si usano valori neutri privi di dati dell'utente |
 | FMT-W-08 | Attributi sconosciuti non riscritti |
@@ -565,7 +565,7 @@ Elenco indicativo dei codici validati nel prototipo, utile come punto di partenz
 |---|---|
 | Input | `ERR_INPUT_NOT_CONVERTIBLE` con `reason` `empty`, `format`, `decimal`, `range` |
 | Sintassi | `ERR_SYNTAX_EMPTY_EXPRESSION`, `ERR_SYNTAX_UNEXPECTED_CHARACTER`, `ERR_SYNTAX_UNTERMINATED_STRING`, `ERR_SYNTAX_INVALID_NUMBER`, `ERR_SYNTAX_UNEXPECTED_TOKEN`, `ERR_SYNTAX_UNEXPECTED_END`, `ERR_SYNTAX_UNCLOSED`, `ERR_SYNTAX_CHAINED_COMPARISON`, `ERR_SYNTAX_INVALID_INDEX`, `ERR_SYNTAX_INVALID_TARGET`, `ERR_INTEGER_LITERAL_OUT_OF_RANGE`, `ERR_REAL_LITERAL_OUT_OF_RANGE`, `ERR_NAME_LIST_INVALID`, `ERR_FOR_STEP_INVALID` |
-| Caricamento | `ERR_LOAD_INVALID_XML`, `ERR_LOAD_NOT_FLOWGORITHM`, `ERR_LOAD_UNKNOWN_ELEMENT`, `ERR_LOAD_MISSING_ELEMENT`, `ERR_LOAD_DUPLICATE_ELEMENT`, `ERR_LOAD_MISSING_ATTRIBUTE`, `ERR_LOAD_INVALID_VALUE`, `ERR_LOAD_NO_MAIN`; avvisi `WARN_LOAD_UNSUPPORTED_VERSION`, `WARN_LOAD_UNKNOWN_ATTRIBUTE`, `WARN_LOAD_IGNORED_SIZE` |
+| Caricamento | `ERR_LOAD_INVALID_XML`, `ERR_LOAD_NOT_FLOWGORITHM`, `ERR_LOAD_UNKNOWN_ELEMENT`, `ERR_LOAD_MISSING_ELEMENT`, `ERR_LOAD_DUPLICATE_ELEMENT`, `ERR_LOAD_MISSING_ATTRIBUTE`, `ERR_LOAD_INVALID_VALUE`, `ERR_LOAD_NO_MAIN`; avvisi `WARN_LOAD_UNSUPPORTED_VERSION`, `WARN_LOAD_UNKNOWN_ATTRIBUTE`, `WARN_LOAD_IGNORED_SIZE`, `WARN_LOAD_UNVERIFIED_FORMAT` |
 | Statici | `ERR_DUPLICATE_DECLARATION`, `ERR_DUPLICATE_FUNCTION`, `ERR_FUNCTION_NAME_RESERVED`, `ERR_INVALID_NAME`, `ERR_MAIN_SIGNATURE`, `ERR_CALL_BLOCK_NOT_CALL` |
 | Runtime | `ERR_UNDECLARED_VARIABLE`, `ERR_UNINITIALIZED_VARIABLE`, `ERR_ARRAY_WITHOUT_INDEX`, `ERR_NOT_AN_ARRAY`, `ERR_INDEX_TYPE`, `ERR_INDEX_OUT_OF_BOUNDS`, `ERR_ARRAY_SIZE_TYPE`, `ERR_ARRAY_SIZE_INVALID`, `ERR_ARRAY_TOO_LARGE`, `ERR_ASSIGN_TYPE`, `ERR_CONDITION_TYPE`, `ERR_LOGICAL_OPERAND`, `ERR_BINARY_OPERATOR_TYPES`, `ERR_UNARY_OPERATOR_TYPE`, `ERR_DIVISION_BY_ZERO`, `ERR_INTEGER_OVERFLOW`, `ERR_REAL_NOT_FINITE`, `ERR_UNKNOWN_FUNCTION`, `ERR_ARGUMENT_COUNT`, `ERR_ARGUMENT_TYPE`, `ERR_ARRAY_ARGUMENT`, `ERR_FUNCTION_NO_VALUE`, `ERR_RETURN_UNDECLARED`, `ERR_RETURN_NOT_SET`, `ERR_RETURN_TYPE`, `ERR_RECURSION_LIMIT`, `ERR_FOR_VARIABLE_TYPE`, `ERR_FOR_BOUND_TYPE`, `ERR_BUILTIN_ARGUMENT`, `ERR_CONVERSION_FAILED`, `ERR_STOPPED`, `ERR_INTERNAL` |
 
@@ -614,7 +614,7 @@ Negli errori gli operatori DEVONO essere mostrati in una forma canonica e coeren
 | ID | Requisito |
 |---|---|
 | NFR-DIST-01 | Pubblicata con **GitHub Pages**. Sui **computer** è utilizzabile anche **offline**, scaricando lo ZIP del repository e aprendo `index.html` da `file://`; sui **telefoni** si usa online (§5.9). Nessuna app installabile (PWA) per ora |
-| NFR-DIST-02 | **Nessuna dipendenza esterna e nessun passaggio di build**: il repository è già l'applicazione |
+| NFR-DIST-02 | **Nessuna dipendenza esterna e nessun passaggio di build**: il repository è già l'applicazione. Unica eccezione la cartella `tools/`, con un proprio `package.json` (Playwright) usato solo per le verifiche automatiche: né l'app né `tests.html` ne dipendono (DEC-005) |
 | NFR-DIST-03 | Browser di riferimento: **Firefox** su Linux Mint (laboratorio), **Chrome** su Android e **Safari** su iOS/iPadOS, con lo stesso peso. DEVE funzionare anche su Chromium/Chrome per computer e su Firefox per Android |
 | NFR-DIST-04 | Da `file://` il browser non permette di leggere altri file locali con `fetch` o `XMLHttpRequest`: esempi e casi di test `.fprg` DEVONO essere incorporati come stringhe in file JavaScript |
 
@@ -732,7 +732,7 @@ Il prototipo ha validato una direzione basata sugli **oggetti della classe**:
 
 | ID | Requisito |
 |---|---|
-| QA-01 | Una pagina `tests.html` con un **mini-framework di asserzioni scritto da zero**, senza dipendenze, eseguibile da `file://` in Firefox: suite, test sincroni e asincroni con timeout, asserzioni di uguaglianza (con `Object.is`, per distinguere `0` da `-0`), uguaglianza strutturale, eccezioni attese, filtro dall'URL, segnalazione degli script non caricati |
+| QA-01 | Una pagina `tests.html` con un **mini-framework di asserzioni scritto da zero**, senza dipendenze, eseguibile da `file://` in Firefox: suite, test sincroni e asincroni con timeout, asserzioni di uguaglianza (con `Object.is`, per distinguere `0` da `-0`), uguaglianza strutturale, eccezioni attese, filtro dall'URL (`?filtro=`), segnalazione degli script non caricati. Un test che non esegue asserzioni risulta fallito; `?dimostrazione` mostra fallimenti voluti (DEC-007, DEC-008) |
 | QA-02 | Il framework ha i propri test, che verificano che le asserzioni falliscano quando devono |
 | QA-03 | Ogni modulo di logica ha i suoi test. Ogni consegna verifica anche che i test sappiano fallire (difetti introdotti di proposito) |
 | QA-04 | **Caso di riferimento:** il programma dell'Appendice A, con input `5, s, 3, n, 4, 9`, DEVE produrre come ultime righe:<br>`Somma del primo set di numeri: 8`<br>`Numero massimo trovato nel secondo set di numeri: 9`<br>`Numero minimo trovato nel secondo set di numeri: 4` |
@@ -745,7 +745,7 @@ Il prototipo ha validato una direzione basata sugli **oggetti della classe**:
 | QA-15 | Prima della pubblicazione della prima versione: prova dell'autore su un **telefono Android reale e un iPhone reale** (creazione da zero, modifica di un file, esecuzione con input, salvataggio, ripristino dopo aver chiuso e riaperto la scheda o dopo essere passati a un'altra app). Le verifiche automatiche DOVREBBERO usare anche WebKit (es. Playwright con il motore WebKit) oltre a Chromium, ma non sostituiscono l'iPhone reale |
 | QA-07 | Ogni codice d'errore prodotto nei test ha un messaggio nel catalogo, senza segnaposto rimasti |
 | QA-08 | I componenti dell'interfaccia (console, diagramma) sono testati su elementi creati in memoria; l'applicazione completa si verifica con una **lista di controlli manuali** consegnata con il codice |
-| QA-09 | La verifica che conta è quella in **Firefox** da `file://`, fatta dall'autore. Prima della consegna DOVREBBE essere fatta una verifica automatica in un browser vero (es. Chromium con Playwright), comprese schermate in tema chiaro, scuro e a larghezza da telefono |
+| QA-09 | La verifica che conta è quella in **Firefox** da `file://`, fatta dall'autore. Prima della consegna DOVREBBE essere fatta una verifica automatica in un browser vero (es. Chromium con Playwright), comprese schermate in tema chiaro, scuro e a larghezza da telefono. Lo strumento è `tools/run-tests.mjs` (Chromium, Firefox, WebKit) |
 | QA-10 | Un ciclo infinito causato da un difetto dell'interprete DOVREBBE far fallire il test invece di bloccare `tests.html` (limite di tempo oltre al limite di passi) |
 
 ---
