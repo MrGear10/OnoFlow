@@ -315,3 +315,35 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 - **Decisione:** quaderno a quadretti e lavagna, sobri, con la grammatica degli stati della segnaletica stradale: ogni stato ha un segno con un solo significato. Penna rossa solo per gli errori, evidenziatore giallo solo per il blocco in esecuzione, inchiostro blu per i blocchi, console come ardesia con il gesso. Linee a un pixel, niente gradienti, ombre o rilievi; quadretti tenui e contenuto al massimo contrasto. Da evitare: aria da giocattolo e metafora spinta fino al costume.
 - **Dove:** `PRODUCT.md` (verità di prodotto) e `.impeccable/surfaces/index-html.md` (contratto della direzione per la superficie dell'app). `DESIGN.md` si scrive alla fine del passo 6, dal costruito, dopo la revisione finale.
 - **Vincolo di pubblicazione:** il contratto della direzione non deve essere servito con l'app. GitHub Pages, con Jekyll attivo come da impostazione predefinita, non pubblica le cartelle che iniziano con il punto: per questo **non si aggiunge un file `.nojekyll`** al repository. Da ricontrollare prima della pubblicazione.
+
+## DEC-052 — Schema testuale del diagramma fino al renderer
+
+- **Passo:** 6 · **Decisa da:** autore (proposta consigliata) · **Tocca:** §5.2, FR-VIEW-02, FR-VIEW-03
+- **Decisione:** fino al renderer SVG (passo 7) la zona del diagramma mostra un elenco rientrato sul foglio a quadretti: una riga per blocco, con la forma del suo tipo, il testo come è scritto e l'ID in `data-id`. Evidenziatore e penna rossa funzionano già, con la sottolineatura nel punto esatto dei campi (`js/ui/diagram-outline.js`). Il do si mostra su due righe (`do` in alto, `while …` in fondo).
+- **Perché:** esecuzione ed errori si verificano già al passo 6; al passo 7 si sostituisce solo il disegno, collegato agli stessi ID.
+- **Conseguenza:** l'invito "Toccare la freccia per inserire il primo blocco" (contratto della direzione) arriva con l'editor (passo 9). Per ora il diagramma vuoto rimanda al menu, perché la freccia non è ancora attiva.
+
+## DEC-053 — Testi dei blocchi e dei comandi nel catalogo
+
+- **Passo:** 6 · **Decisa da:** sviluppo · **Tocca:** NFR-I18N-01, NFR-I18N-02, DEC-050
+- **Decisione:** il testo di ogni tipo di blocco viene da un modello del catalogo (`'block.input': 'Input {variable}'`); i segnaposto con il nome di un campo diventano parti che portano il testo e l'errore del campo (`js/ui/block-text.js`). L'HTML non contiene testi: gli elementi hanno `data-i18n` e `data-i18n-label`.
+- **Comandi:** i nomi dei comandi (Nuovo, Apri, Salva, Esegui, Pausa, Riprendi, Ferma, Annulla, Ripeti, Continua, Chiudi) restano all'imperativo, come nella §11.1: sono etichette di azioni, non frasi rivolte allo studente. Il test sul "tu" (DEC-050) li esclude per nome.
+
+## DEC-054 — Comandi del passo 6
+
+- **Passo:** 6 · **Decisa da:** sviluppo · **Tocca:** §11.1, FR-FILE-02, FR-FILE-07, FR-MOB-10
+- **Barra:** OnoFlow, nome del file (B2) con "Non salvato", stato dell'esecuzione, Esegui, Pausa/Riprendi, Ferma, Menu. Nel menu: Nuovo, Apri…, Salva; Esempi; Annulla e Ripeti, disabilitati fino al passo 12. Sotto i 27,5rem Pausa e Ferma mostrano solo l'icona, con il nome per i lettori di schermo.
+- **Nuovo:** disponibile già ora (`Main` vuota). Senza editor non ci sono modifiche, quindi non serve ancora l'avviso di FR-FILE-08 (passo 8). Un diagramma nuovo salvato ha `<attributes/>` (FMT-W-11): gli attributi di un file nuovo restano D-01, da decidere prima del passo 8.
+- **Salvataggio:** download con tipo `application/octet-stream`, perché su iOS il file arrivi con il nome e l'estensione `.fprg` (FR-MOB-20). Va verificato su un iPhone.
+- **Durante l'esecuzione** Nuovo, Apri ed Esempi sono disabilitati; Salva e il nome del file restano attivi.
+
+## DEC-055 — Stati dell'esecuzione come segni
+
+- **Passo:** 6 · **Decisa da:** sviluppo · **Tocca:** FR-RUN-01, DEC-051
+- **Decisione:** lo stato accanto al nome del file ha un segno per significato: quadrato giallo per "In esecuzione", quadrato vuoto per "In pausa", lavagna con il gesso per "In attesa di un valore", cerchio rosso solo per gli errori ("Terminato con un errore", "Non eseguito"), quadrato pieno d'inchiostro per "Terminato". "Fermato" non è un errore: niente penna rossa.
+- **Pulsanti:** premuto pieno, focus come due parentesi quadre, disabilitato barrato (contratto della direzione).
+
+## DEC-056 — Verifica automatica della pagina
+
+- **Passo:** 6 · **Decisa da:** sviluppo · **Tocca:** QA-09, QA-14, DEC-005
+- **Decisione:** `tools/check-ui.mjs` apre `index.html` da `file://` in Chromium e Firefox, a 1440 × 900, 360 × 640 e 375 × 667. Verifica che non ci sia scorrimento orizzontale e prova questi percorsi: esempio, esecuzione con gli input di QA-04, console in primo piano sul telefono, salvataggio, file non valido, ripristino dopo il ricaricamento, menu da tastiera, ciclo infinito con la pausa dopo 5 secondi. Non sostituisce la prova su telefoni veri: tastiera, aree sicure e download su iOS si verificano solo lì.

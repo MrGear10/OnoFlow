@@ -1,0 +1,1091 @@
+/*
+ * OnoFlow — disposizione e componenti (§11.1, §5.9). Valori in css/tokens.css.
+ *
+ * Computer e tablet in orizzontale: foglio e lavagna affiancati (FR-MOB-14).
+ * Sotto i 56rem: una zona alla volta a tutto schermo, schede in basso (FR-MOB-01, D-11).
+ * Livello telefono (skill mobile-native): altezza da visualViewport/dvh, aree sicure,
+ * input da 16 px (FR-MOB-17), niente evidenziazione al tocco, hover solo con il mouse
+ * (FR-MOB-11), nessun blocco dello zoom della pagina.
+ */
+
+/* --- Fondamenta ------------------------------------------------------------------ */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overscroll-behavior: none;
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: var(--chrome);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--text-body);
+    line-height: var(--leading);
+}
+
+p {
+    margin: 0;
+}
+
+button,
+input {
+    font: inherit;
+    color: inherit;
+}
+
+input {
+    font-size: max(16px, 1em); /* sotto i 16 px Safari su iOS ingrandisce la pagina */
+}
+
+button,
+[role="tab"],
+[role="menuitem"] {
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+a {
+    color: var(--ink);
+    text-underline-offset: 0.2em;
+}
+
+::selection {
+    background: var(--info-soft);
+    color: var(--text);
+}
+
+:focus {
+    outline: none;
+}
+
+:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* --- Guscio dell'applicazione ---------------------------------------------------- */
+
+.app {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    height: 100vh;
+    height: var(--viewport-height, 100dvh);
+    overflow: hidden;
+}
+
+.work {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(20rem, 2fr);
+    min-height: 0;
+}
+
+.pane {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Barra superiore ------------------------------------------------------------- */
+
+.bar {
+    position: relative;
+    z-index: 10;
+    background: var(--chrome);
+    border-bottom: 1px solid var(--chrome-line);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: max(var(--gutter), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--gutter), env(safe-area-inset-right, 0px));
+}
+
+.bar-row--main {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--bar-height);
+    padding-block: var(--space-1);
+}
+
+.brand {
+    flex: none;
+    font-size: var(--text-title);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+}
+
+.file-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex: 0 1 34rem;
+    min-width: 0;
+}
+
+.file {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex: 0 1 20rem;
+    min-width: 0;
+}
+
+.file-name {
+    width: 100%;
+    min-width: 0;
+    min-height: var(--touch);
+    padding: 0 var(--space-2);
+    background: var(--paper);
+    border: 1px solid var(--chrome-line);
+    border-radius: var(--radius);
+    font-family: var(--font-code);
+    font-size: 16px;
+    color: var(--text);
+    caret-color: var(--ink);
+    text-overflow: ellipsis;
+}
+
+.file-field {
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.file-name:focus-visible {
+    outline: none;
+    border-color: var(--ink);
+}
+
+/* "Non salvato": un segno pieno d'inchiostro, ben visibile anche sul telefono (§11.1). */
+.modified {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-small);
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+}
+
+.modified::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Stato dell'esecuzione: ogni stato un segno, come un cartello (FR-RUN-01). */
+.status {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-small);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status::before {
+    content: "";
+    flex: none;
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 1px solid var(--text);
+}
+
+[data-run-state="running"] .status::before {
+    background: var(--highlighter);
+    border-color: var(--on-highlighter);
+}
+
+[data-run-state="paused"] .status::before {
+    border: 2px solid var(--text);
+    background: var(--paper);
+}
+
+[data-run-state="waitingInput"] .status::before {
+    background: var(--slate);
+    border-color: var(--text);
+    border-bottom: 3px solid var(--chalk-yellow);
+}
+
+[data-run-state="finished-error"] .status,
+[data-run-state="finished-invalid"] .status {
+    color: var(--pen);
+}
+
+[data-run-state="finished-error"] .status::before,
+[data-run-state="finished-invalid"] .status::before {
+    border: 2px solid var(--pen);
+    border-radius: 50%;
+}
+
+[data-run-state="finished-stopped"] .status::before {
+    border: 2px solid var(--text);
+}
+
+[data-run-state="finished-done"] .status::before {
+    background: var(--ink);
+    border-color: var(--ink);
+}
+
+.run-controls {
+    display: flex;
+    gap: var(--space-2);
+    margin-left: auto;
+}
+
+.menu-anchor {
+    position: relative;
+    flex: none;
+}
+
+/* --- Pulsanti: premuto pieno, focus tra parentesi, disabilitato barrato ------------- */
+
+.button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-width: var(--touch);
+    min-height: var(--touch);
+    padding: 0 var(--space-3);
+    background: transparent;
+    border: 1px solid var(--ink);
+    border-radius: var(--radius);
+    color: var(--ink);
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color var(--duration-press) var(--ease-out),
+        color var(--duration-press) var(--ease-out),
+        transform var(--duration-press) var(--ease-out);
+}
+
+.button--primary {
+    background: var(--ink);
+    color: var(--on-ink);
+}
+
+.button--primary .icon path {
+    fill: currentColor;
+}
+
+#stop .icon rect {
+    fill: currentColor;
+}
+
+.button--quiet {
+    border-color: transparent;
+}
+
+.button--small {
+    min-height: var(--touch); /* il testo è più piccolo, l'area di tocco no (FR-MOB-04) */
+    padding: 0 var(--space-2);
+    font-size: var(--text-small);
+}
+
+.button:active:not(:disabled),
+.button[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--on-ink);
+}
+
+.button:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.button:focus-visible {
+    outline: none;
+}
+
+.file-field:focus-within::before,
+.console-input:focus-within::before {
+    inset: -4px;
+}
+
+.slate .console-input:focus-within::before {
+    border-color: var(--chalk-yellow);
+}
+
+/* Focus: due parentesi quadre tracciate attorno al comando o al campo. I campi di testo non
+   hanno ::before: le parentesi vanno sul contenitore. */
+.button:focus-visible::before,
+.file-field:focus-within::before,
+.console-input:focus-within::before {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    -webkit-mask-image: linear-gradient(90deg, #000 0.5rem, transparent 0.5rem, transparent calc(100% - 0.5rem), #000 calc(100% - 0.5rem));
+    mask-image: linear-gradient(90deg, #000 0.5rem, transparent 0.5rem, transparent calc(100% - 0.5rem), #000 calc(100% - 0.5rem));
+    pointer-events: none;
+}
+
+/* Disabilitato: il comando è barrato, come un'indicazione che non vale. */
+.button:disabled {
+    cursor: not-allowed;
+    color: var(--text-muted);
+    border-color: var(--line);
+    background: transparent;
+}
+
+.button:disabled::after {
+    content: "";
+    position: absolute;
+    left: var(--space-2);
+    right: var(--space-2);
+    top: 50%;
+    height: 1px;
+    background: currentColor;
+    pointer-events: none;
+}
+
+.button--quiet:disabled {
+    border-color: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .button:hover:not(:disabled):not(.button--primary):not(.button--chalk):not([aria-pressed="true"]) {
+        background: var(--info-soft);
+    }
+
+    .button--primary:hover:not(:disabled) {
+        background: var(--ink-soft);
+    }
+}
+
+/* --- Menu ------------------------------------------------------------------------ */
+
+.menu {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    z-index: 30;
+    width: max-content;
+    min-width: 15rem;
+    max-width: calc(100vw - 2 * var(--gutter));
+    max-height: calc(var(--viewport-height, 100dvh) - var(--bar-height) - var(--space-6));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-2) 0;
+    background: var(--paper);
+    border: 1px solid var(--text);
+    border-radius: var(--radius);
+}
+
+.menu-heading {
+    padding: var(--space-2) var(--space-4) var(--space-1);
+    font-size: var(--text-small);
+    color: var(--text-muted);
+}
+
+.menu-heading:not(:first-child) {
+    margin-top: var(--space-2);
+    border-top: 1px solid var(--line);
+    padding-top: var(--space-3);
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: var(--touch);
+    padding: 0 var(--space-4);
+    background: none;
+    border: 0;
+    text-align: left;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.menu-item:focus-visible {
+    outline: none;
+    background: var(--info-soft);
+    box-shadow: inset 2px 0 0 var(--ink), inset -2px 0 0 var(--ink);
+}
+
+.menu-item:active:not(:disabled) {
+    background: var(--ink);
+    color: var(--on-ink);
+}
+
+.menu-item:disabled {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    cursor: not-allowed;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .menu-item:hover:not(:disabled) {
+        background: var(--info-soft);
+    }
+}
+
+/* --- Avvisi in linea ------------------------------------------------------------- */
+
+.notice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-2) max(var(--gutter), env(safe-area-inset-right, 0px)) var(--space-2) max(var(--gutter), env(safe-area-inset-left, 0px));
+    border-bottom: 1px solid var(--chrome-line);
+    background: var(--info-soft);
+}
+
+.notice-body {
+    flex: 1;
+    min-width: 0;
+    padding-block: var(--space-2);
+    overflow-wrap: anywhere;
+}
+
+.notice-body ul {
+    margin: var(--space-1) 0 0;
+    padding-left: 1.25rem;
+}
+
+.notice--error {
+    background: var(--pen-soft);
+    border-bottom-color: var(--pen);
+}
+
+.notice--error .notice-body > p:first-child {
+    color: var(--pen);
+    font-weight: 600;
+}
+
+.notice--warning {
+    background: var(--warning-soft);
+    border-bottom-color: var(--warning);
+}
+
+.notice-close {
+    flex: none;
+}
+
+/* --- Foglio a quadretti (diagramma) ------------------------------------------------ */
+
+.sheet {
+    --margin-line: calc(2 * var(--square));
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    overscroll-behavior: contain;
+    background-color: var(--paper);
+    /* Quadretti e margine rosso del quaderno: il foglio è la superficie del diagramma. */
+    background-image:
+        linear-gradient(90deg, transparent var(--margin-line), var(--paper-margin) var(--margin-line), var(--paper-margin) calc(var(--margin-line) + 1px), transparent calc(var(--margin-line) + 1px)),
+        linear-gradient(var(--paper-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--paper-grid) 1px, transparent 1px);
+    background-size: 100% 100%, var(--square) var(--square), var(--square) var(--square);
+    background-repeat: no-repeat, repeat, repeat;
+    background-attachment: local;
+    scrollbar-color: var(--ink-soft) transparent;
+}
+
+.sheet:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: -2px;
+}
+
+.sheet-content {
+    flex: 1 0 auto;
+    padding: var(--square) var(--square) calc(2 * var(--square)) calc(var(--margin-line) + var(--square));
+}
+
+.diagram-summary {
+    max-width: 60ch;
+    margin-bottom: var(--square);
+    color: var(--pen);
+    font-weight: 600;
+}
+
+.outline {
+    font-size: var(--text-content);
+}
+
+.outline-function + .outline-function {
+    margin-top: calc(2 * var(--square));
+}
+
+.outline-function-name {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-title);
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.outline-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Rientro dei blocchi annidati: la linea a un pixel è il filo del flusso. */
+.row .outline-list {
+    margin-left: calc(0.875em + var(--space-2));
+    padding-left: var(--space-3);
+    border-left: 1px solid var(--ink-soft);
+}
+
+.row-line {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    width: fit-content;
+    max-width: 100%;
+    min-height: calc(2 * var(--square));
+    padding: 0.35em 0.6em;
+    border: 2px solid transparent;
+    border-radius: 1.25em;
+    transition: background-color var(--duration-state) var(--ease-out);
+}
+
+.row-shape {
+    flex: none;
+    width: 1.75em;
+    height: 1.125em;
+    margin-top: 0.15em;
+    color: var(--ink);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+}
+
+.row-shape * {
+    vector-effect: non-scaling-stroke;
+}
+
+.row-text {
+    min-width: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.seg--keyword {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.seg--field,
+.seg--property {
+    font-family: var(--font-code);
+    font-size: 0.95em;
+    color: var(--text);
+}
+
+.row--terminal .row-line {
+    color: var(--ink);
+}
+
+/* Blocco in esecuzione: l'evidenziatore, e nient'altro è giallo sul foglio. */
+.row-line.is-running {
+    background: var(--highlighter);
+}
+
+.row-line.is-running .seg,
+.row-line.is-running .row-shape {
+    color: var(--on-highlighter);
+}
+
+/* Errore: cerchio di penna rossa attorno al blocco, onda sotto il punto esatto. */
+.row-line.is-error {
+    border-color: var(--pen);
+}
+
+.pen-wave {
+    text-decoration: underline wavy var(--pen);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.25em;
+    text-decoration-skip-ink: none;
+}
+
+/* Errore in un punto senza testo (es. "manca qualcosa alla fine"): un segno di penna lì. */
+.pen-wave--point {
+    display: inline-block;
+    width: 1.5ch;
+    height: 1em;
+    vertical-align: -0.15em;
+    border-bottom: 3px solid var(--pen);
+    text-decoration: none;
+}
+
+.row-error {
+    max-width: 60ch;
+    margin: 0 0 var(--space-2) calc(1.75em + 1.2em);
+    color: var(--pen);
+    font-weight: 600;
+    font-size: var(--text-body);
+}
+
+.branch {
+    margin-top: var(--space-1);
+}
+
+.branch-label {
+    display: block;
+    margin: 0 0 0 calc(0.875em + var(--space-2));
+    padding-left: var(--space-3);
+    border-left: 1px solid var(--ink-soft);
+    font-size: var(--text-small);
+    font-weight: 600;
+    color: var(--ink-soft);
+}
+
+.outline-empty {
+    max-width: 44ch;
+    margin-top: var(--square);
+    color: var(--text-muted);
+}
+
+.footer {
+    flex: none;
+    padding: var(--space-3) var(--square) calc(var(--space-3) + env(safe-area-inset-bottom, 0px)) calc(var(--margin-line) + var(--square));
+    border-top: 1px solid var(--line);
+    background: var(--paper);
+    font-size: var(--text-small);
+    color: var(--text-muted);
+}
+
+.footer p {
+    max-width: 75ch;
+}
+
+.footer p + p {
+    margin-top: var(--space-1);
+}
+
+/* --- Lavagna (console) ------------------------------------------------------------- */
+
+.pane--console {
+    border-left: 1px solid var(--slate-line);
+}
+
+.slate {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: var(--square);
+    background: var(--slate);
+    color: var(--chalk);
+    font-family: var(--font-code);
+    font-size: var(--text-content);
+    line-height: var(--leading);
+    scrollbar-color: var(--chalk-muted) transparent;
+}
+
+.slate ::selection {
+    background: var(--chalk);
+    color: var(--slate);
+}
+
+.slate :focus-visible {
+    outline-color: var(--chalk);
+}
+
+.console-empty,
+.console-trimmed {
+    font-family: var(--font-ui);
+    font-size: var(--text-body);
+    color: var(--chalk-muted);
+}
+
+.console-trimmed {
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-2);
+    border-bottom: 1px solid var(--slate-line);
+}
+
+.console-log {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.console-typed {
+    color: var(--chalk-yellow);
+}
+
+.console-input {
+    position: relative;
+    display: inline-flex;
+    max-width: 100%;
+    vertical-align: baseline;
+}
+
+.console-field {
+    width: 14ch;
+    max-width: 100%;
+    min-height: var(--touch);
+    padding: 0 var(--space-2);
+    background: var(--chalk-field);
+    border: 0;
+    border-bottom: 1px solid var(--chalk-yellow);
+    border-radius: 0;
+    font-family: var(--font-code);
+    font-size: max(16px, 1em);
+    color: var(--chalk-yellow);
+    caret-color: var(--chalk-yellow);
+}
+
+.console-field::placeholder {
+    color: var(--chalk-muted);
+    opacity: 1;
+}
+
+.console-field:focus-visible {
+    outline: none;
+}
+
+.console-note {
+    margin: var(--space-3) 0;
+    white-space: normal;
+    font-family: var(--font-ui);
+}
+
+.console-note--done .console-message {
+    color: var(--chalk-muted);
+}
+
+.console-note--error .console-message,
+.console-note--input-error .console-message {
+    color: var(--chalk-pen);
+    font-weight: 600;
+}
+
+.console-note--stopped > .console-message {
+    font-weight: 600;
+}
+
+.console-block {
+    margin-top: var(--space-1);
+    font-family: var(--font-code);
+    overflow-wrap: anywhere;
+}
+
+.console-block + .button {
+    margin-top: var(--space-2);
+}
+
+.console-caption {
+    margin-top: var(--space-3);
+    color: var(--chalk-muted);
+    font-size: var(--text-body);
+}
+
+.console-muted {
+    color: var(--chalk-muted);
+}
+
+.console-variables {
+    margin-top: var(--space-1);
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+.console-variables th,
+.console-variables td {
+    padding: var(--space-1) var(--space-4) var(--space-1) 0;
+    border-bottom: 1px solid var(--slate-line);
+    text-align: left;
+    vertical-align: top;
+}
+
+.console-variables thead th {
+    white-space: nowrap;
+    font-size: var(--text-small);
+    font-weight: 600;
+    color: var(--chalk-muted);
+}
+
+.console-variable-name,
+.console-variable-value {
+    font-family: var(--font-code);
+    font-weight: 400;
+    overflow-wrap: anywhere;
+}
+
+.console-error-list {
+    margin: var(--space-2) 0 0;
+    padding-left: 1.5rem;
+}
+
+.console-note--error > .console-message {
+    font-weight: 700;
+}
+
+.console-error-list .console-message {
+    font-weight: 500;
+}
+
+.console-error-list li + li {
+    margin-top: var(--space-3);
+}
+
+.console-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+.button--chalk {
+    border-color: var(--chalk-muted);
+    color: var(--chalk);
+    font-family: var(--font-ui);
+}
+
+.button--chalk:active:not(:disabled) {
+    background: var(--chalk);
+    color: var(--slate);
+}
+
+.button--chalk:focus-visible::before {
+    border-color: var(--chalk);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .button--chalk:hover:not(:disabled) {
+        background: var(--chalk-field);
+    }
+}
+
+/* --- Schede (solo telefono) ---------------------------------------------------------- */
+
+.tabs {
+    display: none;
+}
+
+.tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: var(--tabs-height);
+    padding: 0 var(--space-3);
+    background: none;
+    border: 0;
+    border-top: 2px solid transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tab[aria-selected="true"] {
+    color: var(--ink);
+    border-top-color: var(--ink);
+}
+
+.tab:active {
+    background: var(--info-soft);
+}
+
+.tab:focus-visible {
+    outline-offset: -4px;
+}
+
+/* Segno sulla scheda Console: qualcosa di nuovo (inchiostro) o un errore (penna). */
+.tab[data-badge]::after {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--ink);
+}
+
+.tab[data-badge="error"]::after {
+    background: var(--pen);
+}
+
+/* --- Telefono e tablet in verticale ---------------------------------------------------- */
+
+@media (max-width: 55.99rem) {
+    :root {
+        --gutter: 0.75rem;
+    }
+
+    .work {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .app[data-tab="diagram"] .pane--console,
+    .app[data-tab="console"] .pane--diagram {
+        display: none;
+    }
+
+    .pane--console {
+        border-left: 0;
+    }
+
+    .tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        background: var(--chrome);
+        border-top: 1px solid var(--chrome-line);
+        padding-left: env(safe-area-inset-left, 0px);
+        padding-right: env(safe-area-inset-right, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* Con la tastiera aperta le schede lasciano spazio al campo della console. */
+    .app.keyboard-open .tabs {
+        display: none;
+    }
+
+    /* Due righe: marchio, Esegui, Pausa, Ferma e menu; sotto, il nome del file e lo stato. */
+    .bar-row--main {
+        flex-wrap: wrap;
+        column-gap: var(--space-1);
+        row-gap: var(--space-1);
+        padding-bottom: var(--space-2);
+    }
+
+    .brand {
+        font-size: 1.125rem;
+    }
+
+    .run-controls {
+        gap: var(--space-1);
+    }
+
+    .run-controls .button--primary {
+        padding: 0 var(--space-3) 0 var(--space-2);
+    }
+
+    .file-group {
+        order: 1;
+        flex: 1 1 100%;
+        gap: var(--space-3);
+    }
+
+    .file {
+        flex: 1 1 auto;
+    }
+
+    .menu-button {
+        padding: 0;
+    }
+
+    .menu-button-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    .sheet {
+        --margin-line: var(--square);
+    }
+
+    .sheet-content {
+        padding-right: var(--space-3);
+        padding-left: calc(var(--margin-line) + var(--space-3));
+    }
+
+    .footer {
+        padding-left: calc(var(--margin-line) + var(--space-3));
+        padding-right: var(--space-3);
+    }
+
+    .slate {
+        padding: var(--space-4) var(--gutter);
+    }
+
+    .row .outline-list {
+        margin-left: calc(0.875em + var(--space-1));
+        padding-left: var(--space-2);
+    }
+
+    .row-error {
+        margin-left: var(--space-3);
+    }
+}
+
+/* Telefoni stretti: Pausa e Ferma restano visibili, con la sola icona. */
+@media (max-width: 27.5rem) {
+    #pause .button-label,
+    #stop .button-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    #pause,
+    #stop {
+        padding: 0;
+    }
+
+    /* Con la sola icona il barrato orizzontale si confonde con il disegno: qui è in diagonale. */
+    #pause:disabled::after,
+    #stop:disabled::after {
+        left: 22%;
+        right: 22%;
+        transform: rotate(-40deg);
+        height: 1.5px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+    }
+}

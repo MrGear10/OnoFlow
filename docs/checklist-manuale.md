@@ -61,3 +61,26 @@ Ancora solo logica: l'esecuzione con i pulsanti arriva al passo 6.
 - [ ] `tests.html` mostra **"Tutti i test superati"** (267 test), in pochi secondi.
 - [ ] Con il filtro `QA-04` si vede il caso di riferimento: l'Appendice A con gli input `5, s, 3, n, 4, 9` produce le tre righe finali attese.
 - [ ] Con il filtro `Scheduler` passa anche l'ultimo test, quello con i timer veri: un ciclo infinito non blocca la pagina e Ferma risponde subito.
+
+---
+
+## Passo 6 — Interfaccia minima
+
+Aprire `index.html` con doppio clic, in Firefox. Poi le stesse prove da telefono (Android e iPhone), dalla copia pubblicata.
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (292 test).
+- [ ] All'apertura: foglio a quadretti con Inizio e Fine, lavagna vuota a destra con il suo messaggio; nel piè di pagina "Copia locale".
+- [ ] **Menu → Esempi → Somma, massimo e minimo**: compare lo schema del diagramma; nel campo in alto `somma-massimo-minimo.fprg`.
+- [ ] **Esegui**, poi nella console `5`, `s`, `3`, `n`, `4`, `9`, ognuno con Invio: i valori restano in giallo, il blocco in attesa è evidenziato in giallo sul foglio, alla fine le tre righe di QA-04 e "Esecuzione terminata.".
+- [ ] Durante l'attesa di un valore, Pausa è barrato; Nuovo, Apri ed Esempi nel menu sono barrati.
+- [ ] Scrivere `2,5` quando il programma chiede un numero: compare il messaggio "accetta solo numeri interi" e il valore viene richiesto di nuovo.
+- [ ] Cambiare il nome nel campo in alto e scegliere **Menu → Salva**: si scarica un file con quel nome e `.fprg`; riaprendolo con **Menu → Apri…** il diagramma è lo stesso.
+- [ ] **Apri…** su un file che non è un diagramma (per esempio un `.txt`): barra rossa con il motivo, il diagramma di prima resta.
+- [ ] Ricaricare la pagina (F5): il diagramma torna, con la barra "Il diagramma è stato ripristinato".
+- [ ] Un file con un errore di sintassi (per esempio `x = 2,5` in un'assegnazione) si apre con il blocco cerchiato in rosso, l'onda sotto `2,5` e il messaggio sotto il blocco; Esegui elenca gli errori nella console.
+- [ ] Un ciclo infinito (`while true`): dopo circa 5 secondi la console chiede se continuare; **Continua** riprende, **Ferma** ferma e mostra il blocco e le variabili.
+- [ ] Tutto da tastiera: Tab arriva ai comandi con le parentesi del focus; nel menu le frecce scorrono le voci, Esc lo chiude.
+- [ ] Tema scuro del sistema: foglio blu notte, lavagna più scura, tutto leggibile.
+- [ ] Al proiettore, dal fondo dell'aula: testo del diagramma e della console leggibile.
+- [ ] **Telefono:** schede Diagramma e Console in basso; Esegui porta da solo alla console; il campo della console resta sopra la tastiera (Android e iPhone); toccando un campo la pagina non si ingrandisce; nessuno scorrimento orizzontale; dopo un errore **Mostra nel diagramma** porta al blocco.
+- [ ] **iPhone:** Salva mette il file in File → Download con il nome e l'estensione `.fprg` (FR-MOB-20).

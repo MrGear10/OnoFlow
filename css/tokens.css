@@ -1,0 +1,117 @@
+/*
+ * OnoFlow — valori del sistema visivo (§11.2, DEC-051).
+ *
+ * Quaderno a quadretti e lavagna, sobri; ogni stato ha un segno con un solo significato:
+ *   inchiostro blu   i blocchi e i comandi;
+ *   penna rossa      solo gli errori;
+ *   evidenziatore    solo il blocco in esecuzione;
+ *   gesso giallo     solo i valori digitati nella console.
+ * Linee a un pixel, niente gradienti, ombre o rilievi. Solo font di sistema (NFR-PRIV-02).
+ * Tema chiaro e scuro secondo il sistema (NFR-ACC-02).
+ */
+:root {
+    color-scheme: light dark;
+
+    /* Foglio (zona del diagramma) */
+    --paper: #ffffff;
+    --paper-grid: #e3e9f1;
+    --paper-margin: #e7a9a9;
+    --ink: #1c3594;
+    --ink-soft: #4d5f9c;
+    --text: #15171c;
+    --text-muted: #555a66;
+
+    /* Barra e pannelli */
+    --chrome: #f4f5f7;
+    --chrome-line: #c9ced8;
+    --line: #d5dae3;
+    --on-ink: #ffffff;
+
+    /* Stati */
+    --pen: #c0141c;
+    --pen-soft: #fbe9e9;
+    --highlighter: #fff06b;
+    --on-highlighter: #15171c;
+    --warning: #8a5a00;
+    --warning-soft: #fdf3dc;
+    --info-soft: #e8edf9;
+
+    /* Lavagna (console) */
+    --slate: #213a33;
+    --slate-line: #3c5a50;
+    --chalk: #eef0e8;
+    --chalk-muted: #b4c3b9;
+    --chalk-yellow: #f3d75f;
+    --chalk-pen: #ff9d93;
+    --chalk-field: #2b4840;
+
+    /* Tipografia */
+    --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, sans-serif;
+    --font-code: ui-monospace, "SFMono-Regular", "Cascadia Mono", "DejaVu Sans Mono", "Liberation Mono", Menlo, Consolas, monospace;
+    --text-small: 0.875rem;
+    --text-body: 1rem;
+    --text-content: 1.125rem;   /* diagramma e console: si leggono da lontano (DEC-050) */
+    --text-title: 1.25rem;
+    --leading: 1.45;
+
+    /* Spazi: il quadretto è l'unità */
+    --square: 1.25rem;
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --gutter: 1rem;
+    --touch: 2.75rem;           /* 44 px: area di tocco minima (FR-MOB-04) */
+    --radius: 4px;
+    --bar-height: 3.5rem;
+    --tabs-height: 3.5rem;
+
+    /* Movimento */
+    --duration-press: 100ms;
+    --duration-state: 160ms;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Foglio scuro: carta blu notte, inchiostro chiaro; i segni restano gli stessi. */
+        --paper: #12161e;
+        --paper-grid: #1f2633;
+        --paper-margin: #6a2f35;
+        --ink: #a8bfff;
+        --ink-soft: #8394c4;
+        --text: #eef1f6;
+        --text-muted: #a3abb9;
+
+        --chrome: #1a1f29;
+        --chrome-line: #353d4c;
+        --line: #2c3442;
+        --on-ink: #10131a;
+
+        --pen: #ff7b73;
+        --pen-soft: #3a1b1d;
+        --highlighter: #f5e15a;
+        --on-highlighter: #12161e;
+        --warning: #f1c46b;
+        --warning-soft: #33290f;
+        --info-soft: #1d2638;
+
+        /* Lavagna più scura del foglio, separata da una linea */
+        --slate: #172a24;
+        --slate-line: #335046;
+        --chalk: #e9ece4;
+        --chalk-muted: #a9b9ae;
+        --chalk-yellow: #f3d75f;
+        --chalk-pen: #ff9d93;
+        --chalk-field: #213a33;
+    }
+}
+
+/* Schermi grandi, come il proiettore: diagramma e console più grandi. */
+@media (min-width: 80rem) {
+    :root {
+        --text-content: 1.25rem;
+        --square: 1.375rem;
+    }
+}

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f5f7">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1f29">
+    <title>OnoFlow</title>
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/base.css">
+</head>
+<body>
+<div class="app" id="app" data-tab="diagram" data-run-state="idle" data-loading>
+    <header class="bar">
+        <div class="bar-row bar-row--main">
+            <span class="brand">OnoFlow</span>
+            <div class="file-group">
+                <div class="file">
+                    <label class="visually-hidden" for="file-name" data-i18n="ui.fileName.label"></label>
+                    <span class="file-field"><input class="file-name" id="file-name" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done"></span>
+                    <span class="modified" id="modified" data-i18n="ui.modified" hidden></span>
+                </div>
+                <p class="status" id="status" role="status" hidden></p>
+            </div>
+            <div class="run-controls">
+                <button class="button button--primary" id="run" type="button">
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5v11l9-5.5z"/></svg>
+                    <span class="button-label" data-i18n="ui.run"></span>
+                </button>
+                <button class="button" id="pause" type="button" aria-pressed="false" disabled>
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4.5v11M13 4.5v11"/></svg>
+                    <span class="button-label" id="pause-label" data-i18n="ui.pause"></span>
+                </button>
+                <button class="button" id="stop" type="button" disabled>
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="5" y="5" width="10" height="10"/></svg>
+                    <span class="button-label" data-i18n="ui.stop"></span>
+                </button>
+            </div>
+            <div class="menu-anchor">
+                <button class="button button--quiet menu-button" id="menu-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="menu">
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 6h13M3.5 10h13M3.5 14h13"/></svg>
+                    <span class="menu-button-label" data-i18n="ui.menu"></span>
+                </button>
+                <div class="menu" id="menu" role="menu" data-i18n-label="ui.menu" hidden>
+                    <p class="menu-heading" data-i18n="ui.menu.file"></p>
+                    <button class="menu-item" id="cmd-new" type="button" role="menuitem" data-i18n="ui.new"></button>
+                    <button class="menu-item" id="cmd-open" type="button" role="menuitem" data-i18n="ui.open"></button>
+                    <button class="menu-item" id="cmd-save" type="button" role="menuitem" data-i18n="ui.save"></button>
+                    <p class="menu-heading" data-i18n="ui.menu.examples"></p>
+                    <div id="examples-list" role="group"></div>
+                    <p class="menu-heading" data-i18n="ui.menu.edit"></p>
+                    <button class="menu-item" id="cmd-undo" type="button" role="menuitem" data-i18n="ui.undo" disabled></button>
+                    <button class="menu-item" id="cmd-redo" type="button" role="menuitem" data-i18n="ui.redo" disabled></button>
+                </div>
+            </div>
+        </div>
+        <input class="visually-hidden" id="file-input" type="file" tabindex="-1" aria-hidden="true">
+    </header>
+
+    <div class="notices" id="notices"></div>
+
+    <main class="work">
+        <section class="pane pane--diagram" id="panel-diagram" role="tabpanel" aria-labelledby="tab-diagram">
+            <div class="sheet" id="sheet" role="region" tabindex="0" data-i18n-label="ui.tab.diagram">
+                <div class="sheet-content">
+                    <p class="diagram-summary" id="diagram-summary" role="status" hidden></p>
+                    <div class="outline" id="diagram"></div>
+                </div>
+                <footer class="footer">
+                    <p data-i18n="ui.footer.independent"></p>
+                    <p id="footer-hosting"></p>
+                    <p data-i18n="ui.footer.ai"></p>
+                </footer>
+            </div>
+        </section>
+
+        <section class="pane pane--console" id="panel-console" role="tabpanel" aria-labelledby="tab-console">
+            <div class="slate" id="console-scroll">
+                <p class="console-trimmed" id="console-trimmed" data-i18n="ui.console.trimmed" hidden></p>
+                <p class="console-empty" id="console-empty" data-i18n="ui.console.empty"></p>
+                <div class="console-log" id="console-log" role="log" aria-live="polite" data-i18n-label="ui.tab.console"></div>
+            </div>
+        </section>
+    </main>
+
+    <nav class="tabs" role="tablist" data-i18n-label="ui.tabs">
+        <button class="tab" id="tab-diagram" type="button" role="tab" aria-controls="panel-diagram" aria-selected="true">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="6" y="2.5" width="8" height="4" rx="2"/><path d="M10 6.5v3M5 9.5h10l-1.5 3h-7zM10 12.5v2"/><rect x="6" y="14.5" width="8" height="3" rx="1.5"/></svg>
+            <span data-i18n="ui.tab.diagram"></span>
+        </button>
+        <button class="tab" id="tab-console" type="button" role="tab" aria-controls="panel-console" aria-selected="false" tabindex="-1">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13"/><path d="M5.5 8l2.5 2-2.5 2M10 12.5h4"/></svg>
+            <span data-i18n="ui.tab.console"></span>
+        </button>
+    </nav>
+</div>
+
+<script src="js/namespace.js"></script>
+<script src="js/i18n/localization.js"></script>
+<script src="js/i18n/catalog.it.js"></script>
+<script src="js/core/number-format.js"></script>
+<script src="js/core/expression-lexer.js"></script>
+<script src="js/core/expression-parser.js"></script>
+<script src="js/core/model.js"></script>
+<script src="js/core/fprg-import.js"></script>
+<script src="js/core/fprg-export.js"></script>
+<script src="js/core/values.js"></script>
+<script src="js/core/builtins.js"></script>
+<script src="js/core/static-check.js"></script>
+<script src="js/core/interpreter.js"></script>
+<script src="js/core/scheduler.js"></script>
+<script src="js/examples/examples.js"></script>
+<script src="js/ui/block-text.js"></script>
+<script src="js/ui/diagram-outline.js"></script>
+<script src="js/ui/console-view.js"></script>
+<script src="js/ui/session-copy.js"></script>
+<script src="js/app.js"></script>
+<script>
+    window.OnoFlow.App.start();
+</script>
+</body>
+</html>

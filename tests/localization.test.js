@@ -169,9 +169,13 @@
             assert.isTrue(hasSecondPerson('Usa le parentesi.'), 'anche a inizio frase');
             assert.isFalse(hasSecondPerson('Si usa un solo indice.'), '"si usa" è impersonale');
 
+            // I nomi dei comandi (§11.1: Nuovo, Apri, Salva, Esegui, Ferma...) sono etichette
+            // di azioni, non frasi rivolte allo studente: restano all'imperativo.
+            var commandNames = ['ui.new', 'ui.open', 'ui.save', 'ui.run', 'ui.pause', 'ui.resume', 'ui.stop',
+                'ui.undo', 'ui.redo', 'ui.console.continue', 'ui.notice.close'];
             var messages = Localization.catalogOf('it').messages;
             assert.deepEqual(Object.keys(messages).filter(function (key) {
-                return hasSecondPerson(messages[key]);
+                return commandNames.indexOf(key) === -1 && hasSecondPerson(messages[key]);
             }), []);
         });
 
