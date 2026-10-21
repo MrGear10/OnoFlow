@@ -347,6 +347,9 @@ Comandi a contorno, in inchiostro, con il nome all'imperativo (Esegui, Pausa, Ri
 - **Menu:** si apre sotto il pulsante Menu, allineato a destra, su carta con bordo pieno del colore del testo; sezioni File, Esempi, Modifica separate da una riga, con intestazioni tenui in piccolo. Voci alte 44px; hover e focus col velo d'inchiostro, il focus anche con due tratti d'inchiostro ai lati; premuta piena d'inchiostro; disabilitata barrata.
 - **Schede (solo sotto i 56rem):** Diagramma e Console in basso, a metà larghezza ciascuna, icona più nome, alte 3.5rem. Attiva in inchiostro con una riga di 2px in alto; inattiva in testo tenue. Sulla scheda Console un pallino d'inchiostro segnala output nuovo, un pallino rosso un errore.
 
+### Piè di pagina e Informazioni (DEC-065)
+In fondo al foglio una sola riga in 0.75rem, testo tenue su carta, senza bordo: indipendenza, hosting in breve, "Privacy di GitHub" e "Informazioni" sottolineati, separati da puntini. I collegamenti hanno l'area di tocco di 44px senza alzare la riga. Il pannello **Informazioni** si apre sopra il foglio (massimo 38rem, con il suo scorrimento), su carta con bordo pieno del colore del testo, titolo in inchiostro 700 e Chiudi a destra; testi entro 65ch. Non è modale: Chiudi o Esc.
+
 ### Notices (avvisi in linea)
 Barra non bloccante sotto la barra superiore, a tutta larghezza, con il pulsante Chiudi a destra. Quando chiede una scelta (modifiche non salvate, DEC-062) ha prima di Chiudi i pulsanti a contorno Salva e Non salvare, con il focus su Salva; sul telefono i pulsanti vanno sotto il testo. Informativo con il velo d'inchiostro; errore con il velo di penna, bordo inferiore rosso e prima frase in penna rossa 600; avviso con velo e bordo ocra. Gli elenchi di dettagli vanno a capo dentro la barra.
 
@@ -355,6 +358,15 @@ Testo in Label accanto al nome del file, preceduto dal suo segno (vedi Shapes); 
 
 ### Blocco del diagramma (signature)
 Forma e tinta del tipo, testo come è scritto, parole chiave in inchiostro 600 e campi in monospazio. **In esecuzione:** il riempimento diventa evidenziatore, contorno e testo in testo sotto evidenziatore, con una transizione di 160ms. **Errore:** cerchio di penna rossa (2px) attorno al blocco, numero in un tondo rosso sull'angolo in alto a destra (più errori sullo stesso blocco: i numeri in fila), onda rossa (2px) sotto il pezzo sbagliato del campo, o un trattino rosso di 3px dove manca qualcosa.
+
+### Punto di inserimento (DEC-063)
+A metà di ogni freccia di Main, un cerchietto su carta (raggio 0,45 quadretti) con il + in inchiostro diluito, tratto 1.5. Il tocco lo colpisce entro 22 px CSS dal centro a ogni zoom (FR-MOB-04). Hover (solo mouse) con il velo d'inchiostro e il contorno in inchiostro; premuto pieno d'inchiostro con il + su inchiostro; focus da tastiera con il contorno d'inchiostro più spesso. Durante l'esecuzione i punti spariscono. Le etichette Vero e Falso dei cicli stanno a destra del punto, mai sopra.
+
+### Selezione del blocco (B3)
+Contorno d'inchiostro di 2.5px, a 0,3 quadretti dal blocco, angoli di 0,25 quadretti: si distingue dal cerchio rosso dell'errore per colore e forma. La barra della selezione ha il pulsante "Inserisci dopo" (icona del cerchio con il +): sul computer in basso a sinistra del foglio, sul telefono sopra i comandi dello zoom.
+
+### Menu dei blocchi
+Su carta con un bordo pieno del colore del testo, come il menu principale; mai un velo, perché non è modale (B1). Titolo piccolo e tenue "Blocco da inserire", Chiudi a destra, poi otto voci in due colonne: la forma del tipo con la sua tinta (2.25rem) e il nome in 600. Voci alte 44px; hover col velo d'inchiostro, focus con i due tratti d'inchiostro ai lati, premuta piena d'inchiostro. Sul computer si apre accanto al punto; sul telefono è un pannello in basso a tutta larghezza, con il bordo solo in alto.
 
 ### Elenco degli errori
 Sopra il foglio, su carta, separato da una riga di penna rossa di 2px. Una frase in penna rossa 600 dice quanti errori impediscono l'esecuzione, o che l'esecuzione si è fermata per un errore. Ogni voce è un pulsante alto almeno 44px: lo stesso numero rosso del disegno, il messaggio in penna rossa 600 entro 60ch e, sotto, il testo del blocco in monospazio. Un tocco inquadra il blocco al centro del foglio; hover e premuto con il velo di penna.
@@ -389,5 +401,4 @@ Breve e funzionale: 100ms per il premuto (fondo, colore, contrazione), 160ms per
 
 ## Decisioni aperte
 
-- **Punto di inserimento:** il disegno ha già una freccia di due quadretti tra due blocchi e in ogni ramo vuoto, che diventerà il punto da toccare (passo 9); il suo segno a ogni livello di zoom si decide con l'editor. L'invito "Toccare la freccia per inserire il primo blocco" arriva con lui; per ora il diagramma vuoto rimanda al menu.
 - **Lavagna nel tema chiaro e foglio nel tema scuro:** il costruito ha scelto (lavagna verde scura anche nel tema chiaro; foglio blu notte con quadretti scuri nel tema scuro), ma la scelta non è ancora stata confermata dall'autore.

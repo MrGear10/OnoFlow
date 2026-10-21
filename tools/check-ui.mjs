@@ -1,5 +1,5 @@
 /*
- * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–8).
+ * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–9).
  *
  * Dipendenze: playwright (solo in tools/, mai nell'applicazione).
  *
@@ -21,7 +21,10 @@
  *   - errore durante l'esecuzione: il blocco è inquadrato tornando al diagramma (FR-MOB-03);
  *   - file nuovo salvato con gli attributi di DEC-061, senza dati dell'utente (D-01);
  *   - modifiche non salvate: barra con Salva, Non salvare e Chiudi prima di Nuovo ed Esempi,
- *     avviso del browser alla chiusura della pagina (FR-FILE-08, FR-FILE-11).
+ *     avviso del browser alla chiusura della pagina (FR-FILE-08, FR-FILE-11);
+ *   - inserimento: punto sulla freccia → menu → blocco, nei rami dell'if, "Inserisci dopo",
+ *     da tastiera, area di tocco di 44 px anche con lo zoom ridotto, punti nascosti durante
+ *     l'esecuzione (FR-EDIT-01, FR-EDIT-03, FR-EDIT-07, FR-MOB-04, FR-MOB-05, DEC-063).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -153,6 +156,7 @@ async function checkLongRun(page, checks) {
     await page.waitForSelector('#diagram [data-id]');
     const startedAt = Date.now();
     await page.click('#run');
+    checks.ok(!(await page.isVisible('#diagram .dg-slots')), 'durante l\'esecuzione i punti di inserimento spariscono (FR-EDIT-07)');
     await page.waitForSelector('.console-note--question', { timeout: 10000 });
     const elapsed = Date.now() - startedAt;
     checks.ok(elapsed >= 4500 && elapsed < 8000, `domanda dopo circa 5 secondi (${elapsed} ms)`);
@@ -313,6 +317,58 @@ async function checkUnsaved(page, checks) {
     checks.ok(asked, 'chiusura con modifiche: il browser chiede conferma');
 }
 
+/* Inserimento dei blocchi dalle frecce, al tocco o con il mouse. */
+async function checkInsert(page, checks, viewport) {
+    const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
+    await page.click('#menu-button');
+    await page.click('#cmd-new');
+    checks.ok(await page.locator('#diagram [data-slot]').count() === 1, 'diagramma nuovo: un punto di inserimento');
+    await press('[data-slot="0"]');
+    checks.ok(await page.isVisible('.block-menu'), 'un tocco sul punto apre il menu dei blocchi');
+    const menuBox = await page.locator('.block-menu').boundingBox();
+    checks.ok(menuBox.x >= 0 && menuBox.x + menuBox.width <= viewport.width + 1, 'il menu sta dentro lo schermo');
+    for (const item of await page.locator('.block-menu-item').all()) {
+        const box = await item.boundingBox();
+        checks.ok(box.height >= 44, 'voce del menu alta almeno 44 px');
+    }
+    await press('[data-kind="if"]');
+    checks.ok(!(await page.isVisible('.block-menu')), 'dopo la scelta il menu si chiude');
+    checks.ok(await page.isVisible('#modified'), 'dopo l\'inserimento: "Non salvato"');
+    checks.ok(await page.locator('#diagram-errors .diagram-error').count() === 1, 'il blocco vuoto è un errore (FR-EDIT-03)');
+    checks.ok(await page.isVisible('#selection-bar'), 'il blocco nuovo è selezionato, con "Inserisci dopo"');
+    // Ramo Vero dell'if: il terzo punto (Main prima, ramo Vero, ramo Falso, Main dopo).
+    const slots = await page.evaluate(() => Array.from(document.querySelectorAll('#diagram [data-slot]')).map((node) => node.getAttribute('aria-label')));
+    const thenIndex = slots.findIndex((label) => label.includes('ramo Vero'));
+    checks.ok(thenIndex !== -1, `punto con il nome del ramo Vero (${slots.join(' | ')})`);
+    await press(`[data-slot="${thenIndex}"]`);
+    await press('[data-kind="output"]');
+    await press('#insert-after');
+    await press('[data-kind="assign"]');
+    const shape = await page.evaluate(() => {
+        const main = window.OnoFlow.Format.importFprg(sessionStorage.getItem('onoflow.diagram') && JSON.parse(sessionStorage.getItem('onoflow.diagram')).text).program.functions[0];
+        return main.body.map((block) => block.kind + (block.kind === 'if' ? '[' + block.then.map((inner) => inner.kind).join(',') + ']' : '')).join(' ');
+    });
+    checks.ok(shape === 'if[output,assign]', `struttura dopo gli inserimenti, anche nella copia di sessione: ${shape}`);
+    checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale della pagina dopo gli inserimenti');
+    if (!viewport.phone) {
+        // Tastiera: Invio su un punto apre il menu, Esc lo chiude e il focus torna al punto.
+        await page.focus('#diagram [data-slot="0"]');
+        await page.keyboard.press('Enter');
+        checks.ok(await page.isVisible('.block-menu'), 'Invio su un punto apre il menu');
+        await page.keyboard.press('Escape');
+        checks.ok(await page.evaluate(() => document.activeElement.getAttribute('data-slot') === '0'), 'Esc chiude e il focus torna al punto');
+        // Zoom ridotto: il punto si colpisce ancora a 18 px dal centro (area di 44 px, FR-MOB-04).
+        await page.click('#zoom-out');
+        await page.click('#zoom-out');
+        await page.click('#zoom-out');
+        const point = await page.locator('#diagram [data-slot="0"] .dg-slot-mark').boundingBox();
+        await page.mouse.click(point.x + point.width / 2 + 18, point.y + point.height / 2);
+        checks.ok(await page.isVisible('.block-menu'), `con lo zoom al ${(await page.textContent('#zoom-reset')).trim()} il punto si colpisce a 18 px`);
+        await page.keyboard.press('Escape');
+        await page.click('#zoom-reset');
+    }
+}
+
 async function checkViewport(browser, engineName, viewport, screenshotsDir) {
     const checks = new Checks(`${engineName} ${viewport.name}`);
     const context = await browser.newContext({
@@ -348,6 +404,7 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
         await checkBadFile(page, checks);
         await checkRestore(page, checks);
         await checkNewFile(page, checks);
+        await checkInsert(page, checks, viewport);
         if (!viewport.phone) {
             await checkMenuKeyboard(page, checks);
             await checkLongRun(page, checks);

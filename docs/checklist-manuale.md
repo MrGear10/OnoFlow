@@ -121,3 +121,22 @@ L'editor non c'è ancora: un diagramma risulta modificato solo se la pagina è s
 - [ ] Con "Non salvato", chiudere la scheda o ricaricare: Firefox chiede conferma.
 - [ ] Cambiare solo il nome del file non fa comparire "Non salvato".
 - [ ] **Telefono:** la barra è leggibile, con i pulsanti sotto il testo.
+
+---
+
+## Passo 9 — Inserimento dalle frecce
+
+La finestra di modifica arriva al passo 10: per ora un blocco inserito resta vuoto e segnato in rosso.
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (347 test).
+- [ ] **Menu → Nuovo**: tra Inizio e Fine c'è un cerchietto con il +, e il messaggio invita a toccarlo.
+- [ ] Clic sul +: accanto si apre il riquadro "Blocco da inserire" con otto voci, ognuna con la forma e la tinta del suo tipo. Scegliere **If**: il rombo compare con il cerchio rosso e il numero 1, l'elenco sopra il foglio dice che il campo è vuoto, accanto al nome c'è "Non salvato".
+- [ ] Ogni freccia ha il suo +, anche nei rami vuoti dell'if e nei cicli. Inserire un **Output** nel ramo Vero e un **While** nel ramo Falso: il diagramma si allarga e resta in ordine.
+- [ ] Clic su un blocco: contorno blu e, in basso a sinistra, **Inserisci dopo**. Il blocco scelto dal menu va subito dopo, nello stesso ramo. Clic sul foglio vuoto o Esc: la selezione si toglie.
+- [ ] In un esempio con più funzioni, le funzioni diverse da Main non hanno + e non si selezionano.
+- [ ] **Esegui** con blocchi vuoti: non parte ed elenca gli errori. Con un ciclo infinito che gira, i + spariscono e tornano alla fine.
+- [ ] Tastiera: Tab arriva ai + e ai blocchi; Invio su un + apre il menu, le frecce scorrono le voci, Invio sceglie, Esc chiude e torna al +.
+- [ ] Con lo zoom al 50% i + si colpiscono ancora facilmente.
+- [ ] Ricaricando la pagina dopo qualche inserimento, il diagramma torna con i blocchi inseriti e "Non salvato".
+- [ ] **Telefono:** il + si colpisce al primo tocco; il menu è un pannello in basso con le voci su due colonne senza parole spezzate; "Inserisci dopo" sta sopra i comandi dello zoom; nessuno scorrimento orizzontale della pagina.
+- [ ] In fondo al foglio una sola riga piccola con "Copia locale" (online: hosting su GitHub Pages e "Privacy di GitHub") e **Informazioni**. Informazioni (anche da **Menu → Progetto**) apre un pannello con indipendenza, uso dell'IA, hosting, copia di sessione e licenza; Chiudi o Esc lo chiudono.

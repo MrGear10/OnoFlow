@@ -783,6 +783,192 @@ button.diagram-error-entry:active {
     font-size: var(--text-body);
 }
 
+/* --- Editor: punti di inserimento e selezione (DEC-063) ---------------------------- */
+
+/* Punto di inserimento: cerchio con il +, a metà della freccia. Premuto pieno, focus più marcato. */
+.dg-slot {
+    cursor: pointer;
+    outline: none;
+}
+
+.dg-slot-mark {
+    fill: var(--paper);
+    stroke: var(--ink-soft);
+    stroke-width: 1.5;
+    transition: fill var(--duration-press) var(--ease-out);
+}
+
+.dg-slot-plus {
+    fill: none;
+    stroke: var(--ink-soft);
+    stroke-width: 1.75;
+    stroke-linecap: round;
+}
+
+.dg-slot:active .dg-slot-mark {
+    fill: var(--ink);
+    stroke: var(--ink);
+}
+
+.dg-slot:active .dg-slot-plus {
+    stroke: var(--on-ink);
+}
+
+.dg-slot:focus-visible .dg-slot-mark {
+    stroke: var(--ink);
+    stroke-width: 2.5;
+}
+
+.dg-slot:focus-visible .dg-slot-plus {
+    stroke: var(--ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dg-slot:hover .dg-slot-mark {
+        fill: var(--info-soft);
+        stroke: var(--ink);
+    }
+
+    .dg-slot:hover .dg-slot-plus {
+        stroke: var(--ink);
+    }
+}
+
+/* Durante l'esecuzione non si modifica (FR-EDIT-07): i punti spariscono. */
+.app[data-run-state="running"] .dg-slots,
+.app[data-run-state="paused"] .dg-slots,
+.app[data-run-state="waitingInput"] .dg-slots {
+    display: none;
+}
+
+.dg-block.is-selectable {
+    cursor: pointer;
+    outline: none;
+}
+
+/* Selezione e focus da tastiera: contorno d'inchiostro, mai rosso o giallo (regola del segno unico). */
+.dg-selected {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 2.5;
+}
+
+.dg-block.is-selectable:focus-visible .dg-shape {
+    stroke-width: 3;
+}
+
+/* --- Menu dei blocchi (FR-EDIT-01) ------------------------------------------------- */
+
+.block-menu {
+    position: absolute;
+    z-index: 5;
+    width: min(25rem, calc(100% - 2 * var(--space-3)));
+    padding: var(--space-2) var(--space-3) var(--space-3);
+    background: var(--paper);
+    border: 1px solid var(--text);
+    border-radius: var(--radius);
+}
+
+/* Sul telefono: pannello in basso, a tutta larghezza. */
+.block-menu--sheet {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    padding: var(--space-2) var(--space-2) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+    border-width: 1px 0 0;
+    border-radius: 0;
+}
+
+.block-menu--sheet .block-menu-title {
+    padding-left: var(--space-1);
+}
+
+/* Due colonne anche a 360 px: margini stretti, le parole non si spezzano. */
+.block-menu--sheet .block-menu-item {
+    padding-inline: var(--space-1);
+}
+
+.block-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.block-menu-title {
+    font-size: var(--text-small);
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.block-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-1);
+}
+
+.block-menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+    min-height: var(--touch);
+    padding: var(--space-1) var(--space-2);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    color: var(--text);
+    font: inherit;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.block-menu-item:focus-visible {
+    border-color: var(--ink);
+    outline: none;
+    box-shadow: inset 2px 0 0 var(--ink), inset -2px 0 0 var(--ink);
+}
+
+.block-menu-item:active {
+    background: var(--ink);
+    color: var(--on-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .block-menu-item:hover {
+        background: var(--info-soft);
+    }
+}
+
+.block-icon {
+    flex: none;
+    width: 2.25rem;
+    height: 1.25rem;
+    overflow: visible;
+}
+
+.block-icon .dg-shape,
+.block-icon .dg-detail {
+    stroke-width: 1.25;
+}
+
+/* --- Barra della selezione (B3) ----------------------------------------------------- */
+
+.selection-bar {
+    position: absolute;
+    left: calc(var(--space-3) + env(safe-area-inset-left, 0px));
+    bottom: var(--space-3);
+    display: flex;
+    background: var(--paper);
+    border-radius: var(--radius);
+}
+
+.selection-bar[hidden] {
+    display: none;
+}
+
 /* --- Comandi dello zoom (FR-MOB-06) ----------------------------------------------- */
 
 .pane--diagram {
@@ -816,20 +1002,87 @@ button.diagram-error-entry:active {
 
 .footer {
     flex: none;
-    /* In basso c'è posto per i comandi dello zoom, che stanno sopra il foglio. */
-    padding: var(--space-3) var(--square) calc(var(--touch) + 2 * var(--space-3) + env(safe-area-inset-bottom, 0px)) calc(var(--margin-line) + var(--square));
-    border-top: 1px solid var(--line);
+    /* Una riga piccola e tenue (DEC-065); in basso c'è posto per i comandi dello zoom. */
+    padding: var(--space-2) var(--square) calc(var(--touch) + 2 * var(--space-3) + env(safe-area-inset-bottom, 0px)) calc(var(--margin-line) + var(--square));
     background: var(--paper);
-    font-size: var(--text-small);
+    font-size: 0.75rem;
+    line-height: 1.5;
     color: var(--text-muted);
 }
 
-.footer p {
-    max-width: 75ch;
+.footer a,
+.footer-link {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
 }
 
-.footer p + p {
-    margin-top: var(--space-1);
+/* Collegamenti piccoli, ma con l'area di tocco di 44 px (FR-MOB-04) senza alzare la riga. */
+.footer a,
+.footer-link {
+    display: inline-block;
+    padding: 0.85rem 0;
+    margin: -0.85rem 0;
+}
+
+.footer-link {
+    background: none;
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
+/* --- Pannello Informazioni (FR-INFO-02) ---------------------------------------------- */
+
+.info-panel {
+    position: absolute;
+    z-index: 6;
+    top: var(--space-3);
+    right: var(--space-3);
+    left: var(--space-3);
+    max-width: 38rem;
+    max-height: calc(100% - 2 * var(--space-3));
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-2) var(--space-4) var(--space-4);
+    background: var(--paper);
+    border: 1px solid var(--text);
+    border-radius: var(--radius);
+    color: var(--text);
+}
+
+.info-panel:focus {
+    outline: none;
+}
+
+.info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.info-title {
+    margin: 0;
+    font-size: var(--text-title);
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.info-panel p {
+    max-width: 65ch;
+}
+
+.info-panel p + p {
+    margin-top: var(--space-3);
+}
+
+.info-lead {
+    color: var(--ink);
+}
+
+.footer-line {
+    max-width: 90ch;
 }
 
 /* --- Lavagna (console) ------------------------------------------------------------- */
@@ -1155,6 +1408,13 @@ button.diagram-error-entry:active {
 
     .sheet {
         --margin-line: calc(var(--square) * var(--zoom));
+    }
+
+    /* Sul telefono la barra della selezione sta sopra i comandi dello zoom. */
+    .selection-bar {
+        left: auto;
+        right: calc(var(--space-3) + env(safe-area-inset-right, 0px));
+        bottom: calc(var(--touch) + 2 * var(--space-3));
     }
 
     .sheet-content {

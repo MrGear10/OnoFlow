@@ -158,6 +158,14 @@
             'block.for.dec.step': 'for {variable} = {start} down to {end} step {step}',
             'block.call': 'Call {expression}',
             'block.comment': '// {text}',
+            'block.name.declare': 'Dichiarazione',
+            'block.name.assign': 'Assegnazione',
+            'block.name.input': 'Input',
+            'block.name.output': 'Output',
+            'block.name.if': 'If',
+            'block.name.while': 'While',
+            'block.name.do': 'Do',
+            'block.name.for': 'For',
 
             // Interfaccia (§11.1). Tono impersonale, lo stesso nome per la stessa azione (DEC-050).
             'ui.subtitle': 'Editor web di diagrammi di flusso, compatibile con i file .fprg',
@@ -193,7 +201,16 @@
             'ui.diagram.then': 'Vero',
             'ui.diagram.else': 'Falso',
             'ui.diagram.function': 'Funzione {name}',
-            'ui.diagram.empty': 'Il diagramma è vuoto. Dal menu si può aprire un file .fprg o scegliere un esempio.',
+            'ui.diagram.empty': 'Il diagramma è vuoto. Toccando il + sulla freccia si inserisce il primo blocco; dal menu si può anche aprire un file .fprg o scegliere un esempio.',
+            'ui.insert.title': 'Blocco da inserire',
+            'ui.insert.point': 'Punto di inserimento {where}',
+            'ui.insert.where.start': 'dopo Inizio',
+            'ui.insert.where.after': 'dopo «{text}»',
+            'ui.insert.where.then': 'all\'inizio del ramo Vero di «{text}»',
+            'ui.insert.where.else': 'all\'inizio del ramo Falso di «{text}»',
+            'ui.insert.where.body': 'all\'inizio del ciclo «{text}»',
+            'ui.selection.label': 'Blocco selezionato',
+            'ui.selection.insertAfter': 'Inserisci dopo',
             'ui.diagram.errorsOne': 'Un errore impedisce l\'esecuzione: è segnato in rosso sul blocco.',
             'ui.diagram.errors': '{count} errori impediscono l\'esecuzione: sono segnati in rosso sui blocchi.',
             'ui.diagram.runtimeError': 'L\'esecuzione si è fermata per un errore: è segnato in rosso sul blocco.',
@@ -238,7 +255,16 @@
             'ui.footer.hosting': 'Il sito è ospitato su GitHub Pages, un servizio di GitHub, Inc., con sede negli Stati Uniti, fuori dall\'Unione Europea. GitHub registra l\'indirizzo IP dei visitatori per motivi di sicurezza; OnoFlow non invia altri dati.',
             'ui.footer.hostingLink': 'Informativa sulla privacy di GitHub',
             'ui.footer.local': 'Copia locale: la pagina è aperta dal disco, quindi nessun dato raggiunge GitHub.',
-            'ui.footer.ai': 'Sviluppato con l\'assistenza di Claude (Anthropic).'
+            'ui.footer.ai': 'Sviluppato con l\'assistenza di Claude (Anthropic).',
+            'ui.footer.short.independent': 'Progetto indipendente, non affiliato a Flowgorithm',
+            'ui.footer.short.hosting': 'Ospitato su GitHub Pages (USA, fuori dall\'UE), che registra l\'IP dei visitatori; OnoFlow non invia altri dati',
+            'ui.footer.short.privacyLink': 'Privacy di GitHub',
+            'ui.footer.short.local': 'Copia locale: nessun dato inviato',
+            'ui.menu.about': 'Progetto',
+            'ui.info.open': 'Informazioni',
+            'ui.info.title': 'Informazioni',
+            'ui.info.session': 'Per ripristinare il diagramma se la pagina si ricarica, il browser ne conserva una copia solo in questa scheda; la cancella quando la scheda si chiude. Non vengono salvate preferenze né cronologia.',
+            'ui.info.license': 'Codice libero, con licenza MIT.'
         }
     });
 })(window.OnoFlow.Localization);

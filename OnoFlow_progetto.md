@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Prodotto** | OnoFlow — editor web di diagrammi di flusso, compatibile con i file `.fprg` |
-| **Versione del documento** | 1.12 — 21 ottobre 2026 |
+| **Versione del documento** | 1.13 — 22 ottobre 2026 |
 | **Stato** | Base per una nuova implementazione da zero |
 | **Origine** | Sintesi del documento di progetto (rev. 7) e di un prototipo che ha completato i passi 1–6 della fase 1 |
 | **Licenza prevista** | MIT |
@@ -723,7 +723,7 @@ Questa architettura è stata **validata nel prototipo** dei passi 1–6. È racc
 - **Su telefono:** indicazione "non salvato" ben visibile e messaggio di ripristino quando la pagina si riapre (FR-MOB-15); barra dei comandi compatta (Esegui/Ferma sempre visibili, il resto in un menu), finestra di modifica a tutto schermo con la barra dei simboli, diagramma con scorrimento, zoom e "adatta allo schermo".
 - Durante l'esecuzione Nuovo, Apri, Esempi e la modifica del diagramma sono disabilitati; Pausa è disabilitato mentre si attende un input.
 - Un diagramma nuovo mostra un invito a inserire il primo blocco cliccando sulla freccia.
-- **Piè di pagina:** progetto indipendente e non affiliato a Flowgorithm; i file non lasciano il browser; **avviso sull'hosting** su GitHub Pages, fuori dall'UE, con il collegamento all'informativa di GitHub (FR-INFO-03), sostituito da "copia locale" quando l'app è aperta da `file://` (FR-INFO-04).
+- **Piè di pagina:** una sola riga piccola (DEC-065): progetto indipendente e non affiliato a Flowgorithm; **avviso sull'hosting** su GitHub Pages, fuori dall'UE, con il collegamento all'informativa di GitHub (FR-INFO-03), sostituito da "copia locale" quando l'app è aperta da `file://` (FR-INFO-04); collegamento a **Informazioni** (FR-INFO-02), un pannello non modale con i testi completi, aperto anche dal menu.
 - **Testi:** frasi semplici, verbi d'azione; lo stesso nome per la stessa azione ovunque (es. "Ferma" sia nel pulsante sia nell'avviso del ciclo infinito). Tono **impersonale**, senza "tu" (DEC-050).
 - **Priorità:** quando le esigenze sono in conflitto vince la leggibilità al proiettore (DEC-050).
 
@@ -791,7 +791,7 @@ La prima versione si pubblica solo quando creazione da zero e modifica funzionan
 | 6 | Interfaccia minima | Apertura, esempi, esecuzione con input in linea, errori, salvataggio; passaggio diagramma/console su telefono (FR-MOB-01…03) |
 | 7 | Renderer SVG | Diagramma in sola lettura, evidenziazione tramite ID; scorrimento, zoom e "adatta allo schermo" (FR-MOB-06) |
 | 8 | Nuovo diagramma e stato "modificato" | FR-FILE-07, FR-FILE-08, FR-FILE-11 |
-| 9 | Inserimento dalle frecce | FR-EDIT-01, FR-EDIT-03, FR-MOB-04, FR-MOB-05 |
+| 9 | Inserimento dalle frecce | FR-EDIT-01, FR-EDIT-03 (la finestra di modifica che si apre subito arriva al passo 10, DEC-064), FR-MOB-04, FR-MOB-05 |
 | 10 | Finestra di modifica con errore mentre si scrive | FR-EDIT-02, FR-EDIT-08, FR-MOB-07…09 |
 | 11 | Cancellazione | FR-EDIT-04 |
 | 12 | Annulla/ripeti | FR-EDIT-05, QA-13 |
@@ -829,12 +829,12 @@ La prima versione si pubblica solo quando creazione da zero e modifica funzionan
 | D-01 | Attributi di un file creato in OnoFlow — **decisa (DEC-061):** `name`, `authors` vuoto, `about` vuoto, `saved`; niente `created`/`edited` | Prima del passo 8 |
 | D-02 | Meccanismo di annulla/ripeti (comandi reversibili o copie del modello) e limite della storia | Prima del passo 12 |
 | D-03 | Forma dello spostamento dei blocchi (trascinamento o taglia/incolla) | Fase 2 |
-| D-04 | Interazione dell'editor al tocco: punti di inserimento sulle frecce, comando "inserisci dopo" sul blocco selezionato, o entrambi (FR-MOB-05) | Prima del passo 9 |
+| D-04 | Interazione dell'editor al tocco — **decisa (DEC-063):** entrambi; punti con il + sempre visibili sulle frecce (nascosti durante l'esecuzione) e "Inserisci dopo" sul blocco selezionato | Prima del passo 9 |
 | D-05 | "Valore completo" nel pannello delle variabili (es. `0.30000000000000004`) e con quale separatore | Fase 2 |
 | D-06 | Suggerimento sulle maiuscole nell'analisi statica (`x = True` → "intendevi `true`?") | Fase 2 |
 | D-07 | Array in C++: `std::vector` o array statici | Fase 3 |
 | D-08 | Il codice generato replica la stampa a due decimali con la virgola, o usa il formato nativo? | Fase 3 |
-| D-09 | Un blocco nuovo appena inserito parte vuoto o con un contenuto di esempio (es. `x` ← `0`)? | Prima del passo 9 |
+| D-09 | Contenuto di un blocco nuovo — **decisa (DEC-063):** vuoto, con un suggerimento grigio nel campo che non entra nel file | Prima del passo 9 |
 | D-10 | Cosa succede salvando un file importato e modificato: `edited` resta com'era (potrebbe non corrispondere più al contenuto) o si toglie? Dipende da Q-04 | Prima del passo 13 |
 | D-11 | Modo di passare tra diagramma e console su telefono: schede in basso, pulsante, scorrimento laterale (FR-MOB-01) | Prima del passo 6 |
 | D-12 | Tastiera per l'input numerico nella console su telefono: testo normale o tastiera numerica (`inputmode`)? Alcune tastiere numeriche, in particolare su iOS, non hanno il segno meno o la virgola | Prima del passo 6 |

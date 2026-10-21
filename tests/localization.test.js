@@ -158,7 +158,7 @@
             // ("assegnale"); "usa" va bene solo dopo "si".
             var secondPerson = /\b(tu|ti|tuo|tua|tuoi|tue|hai|puoi|devi|vuoi|(?:scrivi|riscrivi|aggiungi|togli|correggi|inserisci|scegli|premi|apri|metti|dividi)(?:lo|la|li|le|ne|gli)?|(?:usa|assegna|segnala|cancella|controlla|indica)(?:lo|la|li|le|ne|gli))\b/i;
             function hasSecondPerson(text) {
-                var usa = /\busa\b/gi;
+                var usa = /\b[Uu]sa\b/g; // non "USA", gli Stati Uniti
                 var match;
                 while ((match = usa.exec(text)) !== null) {
                     if (!/\bsi $/i.test(text.slice(0, match.index))) return true;
@@ -168,12 +168,13 @@
             assert.isTrue(hasSecondPerson('Per unire testi usa &.'), 'il controllo riconosce il "tu"');
             assert.isTrue(hasSecondPerson('Usa le parentesi.'), 'anche a inizio frase');
             assert.isFalse(hasSecondPerson('Si usa un solo indice.'), '"si usa" è impersonale');
+            assert.isFalse(hasSecondPerson('Ospitato negli USA.'), '"USA" è un paese');
 
             // I nomi dei comandi (§11.1: Nuovo, Apri, Salva, Esegui, Ferma...) sono etichette
             // di azioni, non frasi rivolte allo studente: restano all'imperativo.
             var commandNames = ['ui.new', 'ui.open', 'ui.save', 'ui.run', 'ui.pause', 'ui.resume', 'ui.stop',
                 'ui.undo', 'ui.redo', 'ui.console.continue', 'ui.notice.close', 'ui.zoom.out', 'ui.zoom.in', 'ui.zoom.fit',
-                'ui.unsaved.save', 'ui.unsaved.discard'];
+                'ui.unsaved.save', 'ui.unsaved.discard', 'ui.selection.insertAfter'];
             var messages = Localization.catalogOf('it').messages;
             assert.deepEqual(Object.keys(messages).filter(function (key) {
                 return commandNames.indexOf(key) === -1 && hasSecondPerson(messages[key]);

@@ -12,11 +12,20 @@
  * I messaggi degli errori non stanno nel disegno ma nell'elenco sopra il foglio
  * (js/ui/diagram-errors.js), con lo stesso numero.
  *
+ * Editor (passo 9, DEC-063): nelle funzioni modificabili ogni freccia ha un punto di
+ * inserimento (cerchio con il +) e ogni blocco si può selezionare. Punti e blocchi sono
+ * raggiungibili da tastiera (tabindex, role="button"); il tocco li trova con hitTest anche
+ * quando il disegno è piccolo (FR-MOB-04). La selezione è un contorno d'inchiostro.
+ *
  *     createMeasurer(document) → { measure(testo, stile), metrics() → { square, fontSize }, reset() }
  *         misura i testi con un SVG nascosto nella pagina, con gli stessi stili del disegno.
- *     render(container, program, { t, measurer }) svuota container, disegna e restituisce
- *         { element, size: { width, height }, setRunning(id | null), setErrors(errori),
+ *     render(container, program, { t, measurer, editable(functionId), describeSlot(slot) })
+ *         svuota container, disegna e restituisce
+ *         { element, size: { width, height }, slots, setRunning(id | null), setErrors(errori),
+ *           setSelected(id | null), hitTest(punto, raggio), slotBox(indice),
  *           nodeBox(id) → { x, y, width, height } | null, hasNode(id) }
+ * punto e rettangoli sono in pixel al 100% rispetto all'angolo dell'SVG; hitTest restituisce
+ * { slot: indice } o { block: id } o null.
  * nodeBox è in pixel al 100%, rispetto all'angolo in alto a sinistra dell'SVG.
  * Ogni testo del file entra nella pagina come testo, mai come HTML (NFR-SEC-01).
  */
@@ -200,7 +209,7 @@
             viewBox: [-margin, -margin, width, height].map(round).join(' '),
             width: round(width),
             height: round(height),
-            role: 'img'
+            role: 'group'
         }, 'diagram');
         svg.setAttribute('aria-label', t('ui.tab.diagram'));
         var markerId = 'dg-arrow-' + (++markerCount);
@@ -214,10 +223,17 @@
         svg.appendChild(defs);
         var linesLayer = svgElement('g', {}, 'dg-lines');
         var shapesLayer = svgElement('g', {}, 'dg-shapes');
+        var selectionLayer = svgElement('g', {}, 'dg-selection');
+        var slotsLayer = svgElement('g', {}, 'dg-slots');
         var marksLayer = svgElement('g', {}, 'dg-marks');
         svg.appendChild(linesLayer);
         svg.appendChild(shapesLayer);
+        svg.appendChild(selectionLayer);
+        svg.appendChild(slotsLayer);
         svg.appendChild(marksLayer);
+        var editable = options.editable || function () { return false; };
+        var functionIds = Object.create(null);
+        program.functions.forEach(function (programFunction) { functionIds[programFunction.id] = true; });
 
         var groupsById = Object.create(null);
         var shapesById = Object.create(null);
@@ -248,11 +264,35 @@
                     group.setAttribute('data-id', item.id);
                     groupsById[item.id] = group;
                     shapesById[item.id] = item;
+                    if (!functionIds[item.id] && editable(item.functionId)) {
+                        group.setAttribute('tabindex', '0');
+                        group.setAttribute('role', 'button');
+                        group.setAttribute('aria-pressed', 'false');
+                        group.classList.add('is-selectable');
+                    }
                 }
                 outline(item).forEach(function (part) { group.appendChild(part); });
                 group.appendChild(textNode(item));
                 shapesLayer.appendChild(group);
             }
+        });
+
+        // Punti di inserimento a metà delle frecce, solo nelle funzioni modificabili (DEC-063).
+        var slots = result.slots.filter(function (slot) { return editable(slot.functionId); });
+        var slotRadius = 0.45 * s;
+        slots.forEach(function (slot, index) {
+            var cx = slot.x;
+            var cy = (slot.y1 + slot.y2) / 2;
+            var group = svgElement('g', { 'data-slot': index, tabindex: '0', role: 'button' }, 'dg-slot');
+            if (options.describeSlot) {
+                group.setAttribute('aria-label', options.describeSlot(slot));
+            }
+            group.appendChild(svgElement('circle', { cx: round(cx), cy: round(cy), r: round(slotRadius) }, 'dg-slot-mark'));
+            var arm = slotRadius * 0.5;
+            group.appendChild(svgElement('path', {
+                d: 'M' + round(cx - arm) + ',' + round(cy) + 'h' + round(2 * arm) + 'M' + round(cx) + ',' + round(cy - arm) + 'v' + round(2 * arm)
+            }, 'dg-slot-plus'));
+            slotsLayer.appendChild(group);
         });
 
         container.textContent = '';
@@ -350,6 +390,64 @@
             });
         }
 
+        var selected = null;
+
+        /* Selezione (B3): contorno d'inchiostro attorno al blocco; null la toglie. */
+        function setSelected(nodeId) {
+            selectionLayer.textContent = '';
+            if (selected) {
+                selected.classList.remove('is-selected');
+                selected.setAttribute('aria-pressed', 'false');
+            }
+            selected = nodeId && groupsById[nodeId] && groupsById[nodeId].classList.contains('is-selectable') ? groupsById[nodeId] : null;
+            if (selected) {
+                var item = shapesById[nodeId];
+                var pad = 0.3 * s;
+                selected.classList.add('is-selected');
+                selected.setAttribute('aria-pressed', 'true');
+                selectionLayer.appendChild(svgElement('rect', {
+                    x: round(item.x - pad), y: round(item.y - pad),
+                    width: round(item.width + 2 * pad), height: round(item.height + 2 * pad), rx: round(0.25 * s)
+                }, 'dg-selected'));
+            }
+        }
+
+        /*
+         * Cosa c'è sotto un punto (pixel al 100% dall'angolo dell'SVG): prima un blocco
+         * selezionabile, poi il punto di inserimento più vicino entro radius. Così l'area di
+         * tocco dei punti resta di 44 px CSS anche quando lo zoom li rimpicciolisce (FR-MOB-04).
+         */
+        function hitTest(point, radius) {
+            var x = point.x - margin;
+            var y = point.y - margin;
+            var ids = Object.keys(groupsById);
+            for (var i = 0; i < ids.length; i++) {
+                var item = shapesById[ids[i]];
+                if (groupsById[ids[i]].classList.contains('is-selectable') &&
+                        x >= item.x && x <= item.x + item.width && y >= item.y && y <= item.y + item.height) {
+                    return { block: ids[i] };
+                }
+            }
+            var best = null;
+            var bestDistance = radius;
+            slots.forEach(function (slot, index) {
+                var distance = Math.hypot(x - slot.x, y - (slot.y1 + slot.y2) / 2);
+                if (distance <= bestDistance) {
+                    best = index;
+                    bestDistance = distance;
+                }
+            });
+            return best === null ? null : { slot: best };
+        }
+
+        function slotBox(index) {
+            var slot = slots[index];
+            return slot ? {
+                x: slot.x - slotRadius + margin, y: (slot.y1 + slot.y2) / 2 - slotRadius + margin,
+                width: 2 * slotRadius, height: 2 * slotRadius
+            } : null;
+        }
+
         function nodeBox(nodeId) {
             var box = result.nodes[nodeId];
             if (!box) {
@@ -361,13 +459,27 @@
         return {
             element: svg,
             size: { width: width, height: height },
-            slots: result.slots,
+            slots: slots,
             setRunning: setRunning,
             setErrors: setErrors,
+            setSelected: setSelected,
+            hitTest: hitTest,
+            slotBox: slotBox,
             nodeBox: nodeBox,
             hasNode: function (nodeId) { return Boolean(result.nodes[nodeId]); }
         };
     }
 
-    OnoFlow.DiagramRenderer = { render: render, createMeasurer: createMeasurer };
+    /* Piccola forma di un tipo di blocco, con la sua tinta, per il menu dei blocchi. */
+    function blockIcon(kind) {
+        var svg = svgElement('svg', { viewBox: '-2 -2 52 28', 'aria-hidden': 'true' }, 'block-icon');
+        var group = svgElement('g', {}, 'dg-block dg-block--' + Layout.COLOR_OF_KIND[kind]);
+        var shape = Layout.SHAPE_OF_KIND[kind];
+        outline({ shape: shape, x: 0, y: shape === 'diamond' ? 0 : 3, width: 48, height: shape === 'diamond' ? 24 : 18, inset: shape === 'hexagon' ? 8 : 6 })
+            .forEach(function (part) { group.appendChild(part); });
+        svg.appendChild(group);
+        return svg;
+    }
+
+    OnoFlow.DiagramRenderer = { render: render, createMeasurer: createMeasurer, blockIcon: blockIcon };
 })(window.OnoFlow);

@@ -14,7 +14,9 @@
  *   - schede Diagramma e Console sul telefono (D-11, FR-MOB-01, FR-MOB-02);
  *   - copia di sessione per il ripristino (FR-MOB-15, NFR-PRIV-08);
  *   - avviso delle modifiche non salvate prima di Nuovo, Apri, Esempi, trascinamento e alla
- *     chiusura della pagina (FR-FILE-08).
+ *     chiusura della pagina (FR-FILE-08);
+ *   - editor: punti di inserimento sulle frecce, selezione di un blocco con "Inserisci dopo",
+ *     menu dei blocchi (js/ui/block-menu.js, js/core/editor.js; FR-EDIT-01, DEC-063).
  * Ogni testo viene dal catalogo (NFR-I18N-01) e ogni dato del file entra come testo (NFR-SEC-01).
  */
 (function (OnoFlow) {
@@ -34,6 +36,8 @@
     var ConsoleView = OnoFlow.ConsoleView;
     var SessionCopy = OnoFlow.SessionCopy;
     var DiagramDocument = OnoFlow.DiagramDocument;
+    var Editor = OnoFlow.Editor;
+    var BlockMenu = OnoFlow.BlockMenu;
 
     var DEFAULT_EXTENSION = '.fprg';
     var MAX_FILE_BYTES = 5 * 1024 * 1024; // NFR-PERF-02
@@ -41,6 +45,8 @@
     // Differenza di altezza oltre la quale si considera aperta la tastiera del telefono.
     var KEYBOARD_THRESHOLD_PX = 120;
     var ACTIVE_STATES = ['running', 'paused', 'waitingInput'];
+    // Metà dell'area di tocco minima (44 px, FR-MOB-04): vale a ogni zoom.
+    var TOUCH_RADIUS_PX = 22;
 
     var t = Localization.t;
     var formatError = Localization.formatError;
@@ -98,6 +104,8 @@
         var diagramErrors = byId('diagram-errors');
         var sheet = byId('sheet');
         var zoomButtons = { out: byId('zoom-out'), reset: byId('zoom-reset'), 'in': byId('zoom-in'), fit: byId('zoom-fit') };
+        var selectionBar = byId('selection-bar');
+        var insertAfterButton = byId('insert-after');
         var consoleEmpty = byId('console-empty');
         var tabs = { diagram: byId('tab-diagram'), console: byId('tab-console') };
         var commands = {
@@ -117,6 +125,8 @@
             diagram: null,          // disegno del programma aperto (DiagramRenderer)
             marked: { errors: [], runtime: false },
             runningId: null,
+            selectedId: null,       // blocco selezionato (B3)
+            insertSlot: null,       // punto in cui il menu dei blocchi inserirà
             pendingReveal: null     // blocco da inquadrare quando si torna al diagramma (FR-MOB-03)
         };
         var measurer = DiagramRenderer.createMeasurer(document);
@@ -294,13 +304,132 @@
             return state.diagram ? sheetView.reveal(state.diagram.nodeBox(nodeId), options) : false;
         }
 
-        /* Disegna il programma aperto, con gli stati di adesso (errori, blocco in esecuzione). */
+        /* Nome di un punto di inserimento per i lettori di schermo e la tastiera. */
+        function describeSlot(slot) {
+            var where;
+            if (slot.index > 0) {
+                var owner = Model.findById(state.program, slot.ownerId).node;
+                where = t('ui.insert.where.after', { text: BlockText.plainText(owner[slot.list][slot.index - 1], t, 'tail') });
+            } else if (slot.ownerId === slot.functionId) {
+                where = t('ui.insert.where.start');
+            } else {
+                var block = Model.findById(state.program, slot.ownerId).node;
+                var key = slot.list === 'body' ? 'ui.insert.where.body' : 'ui.insert.where.' + slot.list;
+                where = t(key, { text: BlockText.plainText(block, t, block.kind === 'do' ? 'tail' : 'head') });
+            }
+            return t('ui.insert.point', { where: where });
+        }
+
+        /* Disegna il programma aperto, con gli stati di adesso (errori, esecuzione, selezione). */
         function drawDiagram() {
-            state.diagram = DiagramRenderer.render(diagram, state.program, { t: t, measurer: measurer });
+            state.diagram = DiagramRenderer.render(diagram, state.program, {
+                t: t,
+                measurer: measurer,
+                // Si modifica solo Main (DEC-004).
+                editable: function (functionId) { return Editor.canEdit(state.program, functionId); },
+                describeSlot: describeSlot
+            });
             sheetView.attach(state.diagram);
             state.diagram.setErrors(state.marked.errors);
             state.diagram.setRunning(state.runningId);
+            state.diagram.setSelected(state.selectedId);
         }
+
+        // --- Editor: inserimento (passo 9, DEC-063) ---------------------------------
+
+        function select(nodeId) {
+            state.selectedId = nodeId;
+            state.diagram.setSelected(nodeId);
+            selectionBar.hidden = !nodeId || isActive();
+        }
+
+        var blockMenu = BlockMenu.create(byId('panel-diagram'), {
+            t: t,
+            onChoose: function (kind) {
+                if (!state.insertSlot || isActive()) {
+                    return;
+                }
+                var block = Editor.createNewBlock(kind);
+                Editor.insertAt(state.program, state.insertSlot, block);
+                state.insertSlot = null;
+                afterEdit(block.id);
+            }
+        });
+
+        function openInsertMenu(slot, anchor) {
+            state.insertSlot = slot;
+            blockMenu.open(anchor.getBoundingClientRect(), { sheet: narrow.matches, returnFocus: anchor });
+        }
+
+        /* Dopo ogni modifica: documento modificato, errori, disegno, copia di sessione (FR-EDIT-06). */
+        function afterEdit(focusId) {
+            state.document.markChanged();
+            state.outcome = null;
+            state.runningId = null;
+            state.staticErrors = StaticCheck.check(state.program);
+            state.marked = { errors: [], runtime: false };
+            state.selectedId = focusId;
+            drawDiagram();
+            showStaticErrors();
+            select(focusId);
+            var group = diagram.querySelector('[data-id="' + focusId + '"]');
+            if (group) {
+                group.focus({ preventScroll: true });
+            }
+            revealNode(focusId, { quiet: true });
+            updateFileState();
+            updateControls();
+            storeSessionCopy();
+        }
+
+        /* Tocco o clic sul foglio: un punto di inserimento, un blocco, oppure niente (toglie la selezione). */
+        function activate(event, target) {
+            if (isActive()) {
+                return;
+            }
+            var hit = null;
+            if (target && target.hasAttribute('data-slot')) {
+                hit = { slot: Number(target.getAttribute('data-slot')) };
+            } else if (target) {
+                hit = { block: target.getAttribute('data-id') };
+            } else if (state.diagram) {
+                var point = sheetView.pointAt(event);
+                hit = point ? state.diagram.hitTest(point, TOUCH_RADIUS_PX / sheetView.zoom()) : null;
+            }
+            if (hit && hit.slot !== undefined) {
+                openInsertMenu(state.diagram.slots[hit.slot], diagram.querySelector('[data-slot="' + hit.slot + '"]'));
+            } else if (hit) {
+                select(hit.block);
+            } else {
+                select(null);
+            }
+        }
+
+        sheet.addEventListener('click', function (event) {
+            if (!diagram.contains(event.target) && event.target !== sheet && !event.target.classList.contains('sheet-content')) {
+                return; // piè di pagina e altro: non è il disegno
+            }
+            activate(event, event.target.closest ? event.target.closest('[data-slot], .is-selectable') : null);
+        });
+
+        diagram.addEventListener('keydown', function (event) {
+            var target = event.target.closest ? event.target.closest('[data-slot], .is-selectable') : null;
+            if (target && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+                activate(event, target);
+            } else if (event.key === 'Escape' && state.selectedId) {
+                select(null);
+            }
+        });
+
+        insertAfterButton.addEventListener('click', function () {
+            if (!state.selectedId || isActive()) {
+                return;
+            }
+            var group = diagram.querySelector('[data-id="' + state.selectedId + '"]');
+            state.insertSlot = Editor.slotAfter(state.program, state.selectedId);
+            blockMenu.open((group || insertAfterButton).getBoundingClientRect(), { sheet: narrow.matches, returnFocus: insertAfterButton });
+        });
 
         var sheetView = DiagramViewport.create(sheet, {
             content: byId('sheet-content'),
@@ -337,6 +466,10 @@
             state.outcome = null;
             state.runningId = null;
             state.pendingReveal = null;
+            state.selectedId = null;
+            state.insertSlot = null;
+            blockMenu.close({ restoreFocus: false });
+            selectionBar.hidden = true;
             state.marked = { errors: [], runtime: false };
             drawDiagram();
             sheetView.reset(); // si apre sempre al 100% (DEC-057)
@@ -504,6 +637,9 @@
                 return;
             }
             closeMenu();
+            // Durante l'esecuzione non si modifica (FR-EDIT-07): via menu dei blocchi e selezione.
+            blockMenu.close({ restoreFocus: false });
+            select(null);
             consoleView.clear();
             consoleEmpty.hidden = true;
             showStaticErrors();
@@ -719,19 +855,62 @@
             storeSessionCopy();
         });
 
-        // --- Piè di pagina (FR-INFO-01, FR-INFO-03, FR-INFO-04) ------------------------
+        // --- Piè di pagina e Informazioni (FR-INFO-01…04, DEC-065) ----------------------
 
-        var hosting = byId('footer-hosting');
-        if (window.location.protocol === 'file:') {
-            hosting.textContent = t('ui.footer.local');
-        } else {
-            hosting.textContent = t('ui.footer.hosting') + ' ';
+        function privacyLink(key) {
             var link = document.createElement('a');
             link.href = HOSTING_PRIVACY_URL;
             link.rel = 'noopener';
-            link.textContent = t('ui.footer.hostingLink');
-            hosting.appendChild(link);
+            link.textContent = t(key);
+            return link;
         }
+
+        // In fondo una sola riga, piccola; i testi completi stanno in Informazioni.
+        var hosting = byId('footer-hosting');
+        var infoHosting = byId('info-hosting');
+        if (window.location.protocol === 'file:') {
+            hosting.textContent = t('ui.footer.short.local');
+            infoHosting.textContent = t('ui.footer.local');
+        } else {
+            hosting.textContent = t('ui.footer.short.hosting');
+            var separator = document.createElement('span');
+            separator.className = 'footer-sep';
+            separator.setAttribute('aria-hidden', 'true');
+            separator.textContent = ' · ';
+            hosting.appendChild(separator);
+            hosting.appendChild(privacyLink('ui.footer.short.privacyLink'));
+            infoHosting.textContent = t('ui.footer.hosting') + ' ';
+            infoHosting.appendChild(privacyLink('ui.footer.hostingLink'));
+        }
+
+        // Pannello Informazioni (FR-INFO-02): sopra il foglio, non modale, Chiudi o Esc.
+        var infoPanel = byId('info-panel');
+        var infoReturnFocus = null;
+        function openInfo(returnFocus) {
+            closeMenu();
+            if (narrow.matches) {
+                showTab('diagram');
+            }
+            infoReturnFocus = returnFocus;
+            infoPanel.hidden = false;
+            infoPanel.focus();
+        }
+        function closeInfo() {
+            infoPanel.hidden = true;
+            if (infoReturnFocus && infoReturnFocus.isConnected) {
+                infoReturnFocus.focus();
+            }
+            infoReturnFocus = null;
+        }
+        byId('footer-info').addEventListener('click', function () { openInfo(byId('footer-info')); });
+        byId('cmd-info').addEventListener('click', function () { openInfo(menuButton); });
+        byId('info-close').addEventListener('click', closeInfo);
+        infoPanel.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeInfo();
+            }
+        });
 
         // --- Tastiera del telefono (FR-MOB-19) -----------------------------------------
 

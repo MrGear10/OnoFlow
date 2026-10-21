@@ -404,3 +404,30 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 - **Avviso (FR-FILE-08, B1):** prima di Nuovo, Apri, un esempio o un file trascinato, se ci sono modifiche compare una barra in linea: «Il diagramma «nome» ha modifiche non salvate, che andrebbero perse.», con **Salva** (scarica il file, poi continua), **Non salvare** (continua) e **Chiudi** (rinuncia). Il focus va su Salva. Non si usa "Annulla" perché è già il nome di annulla/ripeti (§11.1: un nome per azione).
 - **Chiusura della pagina:** con modifiche, `beforeunload` chiede conferma al browser. Sui telefoni non è affidabile: lì protegge la copia di sessione (FR-MOB-15).
 - **Senza editor:** fino al passo 9 un diagramma risulta modificato solo se è stato ripristinato con modifiche non salvate. È il caso usato nelle verifiche automatiche.
+
+## DEC-063 — Inserimento al tocco e blocchi nuovi (D-04, D-09)
+
+- **Passo:** prima del passo 9 · **Decisa da:** autore · **Tocca:** FR-EDIT-01, FR-EDIT-03, FR-EDIT-07, FR-MOB-04, FR-MOB-05, B3
+- **D-04, inserimento:** **entrambi i modi.** A metà di ogni freccia c'è un punto di inserimento **sempre visibile**: un piccolo cerchio con il +, in inchiostro diluito, con un'area di tocco di almeno 44 × 44 px. Toccandolo si apre il menu dei blocchi. Durante l'esecuzione i punti si nascondono (FR-EDIT-07). Inoltre, come in B3, sul blocco selezionato compare "Inserisci dopo". Solo i punti permettono di inserire il primo blocco e di riempire un ramo vuoto.
+- **Menu dei blocchi** (sviluppo, salvo obiezioni dell'autore): un pannello in basso sul telefono e un riquadro vicino alla freccia sul computer, mai una finestra modale (B1). Contiene gli otto tipi di blocco della §7.3, ciascuno con la sua forma e la sua tinta (DEC-057).
+- **D-09, blocco nuovo:** parte **vuoto**, con un **suggerimento grigio** nel campo (per esempio "es. x + 1"). Il suggerimento non entra né nel file né nel diagramma. Il blocco apre subito la finestra di modifica e resta segnato in rosso finché non è completo (FR-EDIT-03).
+
+## DEC-064 — Inserimento: forma del passo 9
+
+- **Passo:** 9 · **Decisa da:** sviluppo · **Tocca:** FR-EDIT-01, FR-EDIT-03, FR-EDIT-06, FR-EDIT-07, FR-MOB-04, FR-MOB-05, NFR-ACC-01, DEC-063
+- **Moduli:** `js/core/editor.js` (blocchi nuovi, inserimento in un punto, "Inserisci dopo"; solo in Main, DEC-004) e `js/ui/block-menu.js` (menu dei blocchi). Il renderer disegna i punti e la selezione.
+- **Area di tocco:** i punti si trovano con un calcolo sul punto toccato, non con la misura del disegno. Un tocco entro 22 px CSS dal centro di un punto lo colpisce a ogni zoom, così l'area resta di 44 px (FR-MOB-04). Un blocco toccato direttamente ha la precedenza.
+- **Tastiera:** punti e blocchi di Main sono pulsanti raggiungibili con Tab, con Invio o Spazio. Ogni punto ha un nome che dice dove inserisce, per esempio «dopo «x = 0»» o «all'inizio del ramo Vero di «if x > 0»». Nel menu le frecce scorrono le voci, Esc chiude e il focus torna al punto.
+- **Selezione (B3):** contorno d'inchiostro attorno al blocco, mai rosso o giallo. Un tocco sul foglio vuoto o Esc la tolgono. La barra della selezione ha per ora solo "Inserisci dopo"; "Modifica" arriva con la finestra di modifica (passo 10), la cancellazione al passo 11.
+- **FR-EDIT-03 in due tempi:** al passo 9 il blocco nuovo resta vuoto, segnato in rosso (con l'errore nell'elenco), e viene selezionato e messo a fuoco. Al passo 10 aprirà subito la finestra di modifica.
+- **Durante l'esecuzione** (FR-EDIT-07) i punti si nascondono, il menu si chiude e la selezione si toglie.
+- **Ogni inserimento** (FR-EDIT-06): il documento risulta modificato, gli errori si ricalcolano, il disegno si rifà con lo stesso zoom e la copia di sessione si aggiorna.
+
+## DEC-065 — Piè di pagina in una riga e pannello Informazioni
+
+- **Passo:** 9 · **Decisa da:** autore (opzione consigliata) · **Tocca:** FR-INFO-01…04, §11.1
+- **Richiesta:** il piè di pagina era troppo grande e invadente.
+- **Decisione:** in fondo al foglio resta **una sola riga**, piccola (0,75rem) e tenue: «Progetto indipendente, non affiliato a Flowgorithm · Ospitato su GitHub Pages (USA, fuori dall'UE), che registra l'IP dei visitatori; OnoFlow non invia altri dati · Privacy di GitHub · Informazioni». Aperta dal disco: «Copia locale: nessun dato inviato · Informazioni». FR-INFO-03 resta rispettato in forma breve.
+- **Informazioni (FR-INFO-02):** un pannello sopra il foglio, non modale (Chiudi o Esc), aperto dalla riga e dal menu (sezione "Progetto"). Contiene nome e sottotitolo, indipendenza da Flowgorithm, uso dell'IA, avviso completo sull'hosting con il collegamento all'informativa di GitHub (o la copia locale), copia di sessione (NFR-PRIV-08), licenza MIT.
+- **Tocco:** i collegamenti della riga sono piccoli ma hanno l'area di 44 px (FR-MOB-04), senza alzare la riga.
+- **Test del tono:** il controllo del "tu" (DEC-050) scambiava "USA" per l'imperativo "usa"; ora distingue le maiuscole.

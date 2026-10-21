@@ -16,7 +16,8 @@
  *
  *     create(scroller, { content, onChange(zoom) }) → {
  *         attach(view), zoom(), setZoom(z, ancora?), zoomBy(fattore, ancora?), reset(), fit(),
- *         reveal(box, { quiet }) → true se il foglio è visibile e il blocco è stato inquadrato
+ *         reveal(box, { quiet }) → true se il foglio è visibile e il blocco è stato inquadrato,
+ *         pointAt(evento) → punto del disegno in pixel al 100% (per hitTest del renderer)
  *     }
  * scroller è il foglio che scorre, content l'elemento con i margini del foglio attorno all'SVG;
  * view è il risultato di DiagramRenderer.render; box è in pixel al 100% rispetto all'SVG.
@@ -277,7 +278,8 @@
                 scroller.scrollTop = 0;
             },
             fit: fit,
-            reveal: reveal
+            reveal: reveal,
+            pointAt: function (event) { return view ? contentPoint(event) : null; }
         };
     }
 

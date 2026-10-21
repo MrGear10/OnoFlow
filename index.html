@@ -52,6 +52,8 @@
                     <p class="menu-heading" data-i18n="ui.menu.edit"></p>
                     <button class="menu-item" id="cmd-undo" type="button" role="menuitem" data-i18n="ui.undo" disabled></button>
                     <button class="menu-item" id="cmd-redo" type="button" role="menuitem" data-i18n="ui.redo" disabled></button>
+                    <p class="menu-heading" data-i18n="ui.menu.about"></p>
+                    <button class="menu-item" id="cmd-info" type="button" role="menuitem" data-i18n="ui.info.open"></button>
                 </div>
             </div>
         </div>
@@ -68,10 +70,28 @@
                     <div class="diagram-host" id="diagram"></div>
                 </div>
                 <footer class="footer">
-                    <p data-i18n="ui.footer.independent"></p>
-                    <p id="footer-hosting"></p>
-                    <p data-i18n="ui.footer.ai"></p>
+                    <p class="footer-line">
+                        <span data-i18n="ui.footer.short.independent"></span><span class="footer-sep" aria-hidden="true"> · </span><span id="footer-hosting"></span><span class="footer-sep" aria-hidden="true"> · </span><button class="footer-link" id="footer-info" type="button" data-i18n="ui.info.open"></button>
+                    </p>
                 </footer>
+            </div>
+            <section class="info-panel" id="info-panel" role="region" aria-labelledby="info-title" tabindex="-1" hidden>
+                <div class="info-header">
+                    <h2 class="info-title" id="info-title" data-i18n="ui.info.title"></h2>
+                    <button class="button button--quiet" id="info-close" type="button" data-i18n="ui.notice.close"></button>
+                </div>
+                <p class="info-lead"><strong>OnoFlow</strong> · <span data-i18n="ui.subtitle"></span></p>
+                <p data-i18n="ui.footer.independent"></p>
+                <p data-i18n="ui.footer.ai"></p>
+                <p id="info-hosting"></p>
+                <p data-i18n="ui.info.session"></p>
+                <p data-i18n="ui.info.license"></p>
+            </section>
+            <div class="selection-bar" id="selection-bar" role="group" data-i18n-label="ui.selection.label" hidden>
+                <button class="button selection-insert" id="insert-after" type="button">
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="M7 10h6M10 7v6"/></svg>
+                    <span data-i18n="ui.selection.insertAfter"></span>
+                </button>
             </div>
             <div class="zoom" role="group" data-i18n-label="ui.zoom.label">
                 <button class="button zoom-button" id="zoom-out" type="button" data-i18n-label="ui.zoom.out" data-i18n-title="ui.zoom.out">
@@ -123,12 +143,14 @@
 <script src="js/core/interpreter.js"></script>
 <script src="js/core/scheduler.js"></script>
 <script src="js/core/diagram-document.js"></script>
+<script src="js/core/editor.js"></script>
 <script src="js/examples/examples.js"></script>
 <script src="js/ui/block-text.js"></script>
 <script src="js/ui/diagram-layout.js"></script>
 <script src="js/ui/diagram-renderer.js"></script>
 <script src="js/ui/diagram-errors.js"></script>
 <script src="js/ui/diagram-viewport.js"></script>
+<script src="js/ui/block-menu.js"></script>
 <script src="js/ui/console-view.js"></script>
 <script src="js/ui/session-copy.js"></script>
 <script src="js/app.js"></script>

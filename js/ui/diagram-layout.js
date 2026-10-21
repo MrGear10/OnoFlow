@@ -18,7 +18,7 @@
  *         items: [ shape | line | label | junction | title ]  (la forma Inizio porta l'ID della funzione;
  *                 shape.inset è il rientro degli angoli, per disegnarla),
  *         nodes: { id: { x, y, width, height } },   rettangolo da inquadrare (funzioni: Inizio)
- *         slots: [ { ownerId, list, index, x, y1, y2 } ]  frecce dove si inserirà un blocco (passo 9)
+ *         slots: [ { functionId, ownerId, list, index, x, y1, y2 } ]  frecce dove si inserisce un blocco
  *     }
  * measure(testo, stile) dà la larghezza del testo; stili: 'keyword', 'code', 'label', 'title'.
  * Tutte le coordinate sono in pixel CSS al 100%; lo zoom le scala tutte insieme.
@@ -66,6 +66,7 @@
         var items = [];
         var nodes = Object.create(null);
         var slots = [];
+        var currentFunctionId = null; // la funzione che si sta disponendo, per i punti di inserimento
 
         /* Arrotonda per eccesso a un multiplo di passo (due quadretti per le larghezze). */
         function ceilTo(value, step) {
@@ -128,6 +129,7 @@
                 place: function (axis, top) {
                     var item = {
                         type: 'shape', id: id, color: color, shape: shape,
+                        functionId: currentFunctionId,
                         x: axis - width / 2, y: top, width: width, height: height, inset: insetOf(shape),
                         text: { x: axis - text.width / 2, y: top + height / 2, segments: text.segments }
                     };
@@ -174,7 +176,10 @@
                     for (var index = 0; index <= measured.length; index++) {
                         var last = index === measured.length;
                         line([[axis, y], [axis, y + ARROW]], !last || arrowAtEnd);
-                        slots.push({ ownerId: ownerId, list: listName, index: index, x: axis, y1: y, y2: y + ARROW });
+                        slots.push({
+                            functionId: currentFunctionId, ownerId: ownerId, list: listName, index: index,
+                            x: axis, y1: y, y2: y + ARROW
+                        });
                         y += ARROW;
                         if (!last) {
                             measured[index].place(axis, y);
@@ -255,7 +260,8 @@
                     var bodyBottom = bodyTop + body.height;
                     var exit = bodyBottom + s;
                     body.place(axis, bodyTop, false);
-                    label(labelThen, axis + LABEL_GAP, bodyTop + s, 'start');
+                    // A destra del punto di inserimento, che sta a metà della freccia (raggio 0,45 quadretti).
+                    label(labelThen, axis + 0.7 * s, bodyTop + s, 'start', 'middle');
                     // Ritorno: dalla fine del corpo, a sinistra e su fino alla condizione.
                     line([[axis, bodyBottom], [axis - leftLane, bodyBottom], [axis - leftLane, middle], [axis - half, middle]], true);
                     // Uscita: a destra, giù oltre il corpo e di nuovo sull'asse.
@@ -275,7 +281,7 @@
             return {
                 height: body.height + BOX_HEIGHT,
                 left: leftLane,
-                right: Math.max(half, body.right, measure(keyword, 'label') + 1.5 * s),
+                right: Math.max(half, body.right, measure(keyword, 'label') + 1.5 * s, 0.7 * s + labelWidth),
                 place: function (axis, top) {
                     items.push({ type: 'junction', x: axis, y: top });
                     label(keyword, axis + 0.5 * s, top, 'start', 'middle');
@@ -286,7 +292,7 @@
                     // La punta si ferma sul bordo del punto d'incontro (raggio 0,2 quadretti, diagram-renderer.js).
                     line([[axis - half, middle], [axis - leftLane, middle], [axis - leftLane, top], [axis - 0.2 * s, top]], true);
                     label(labelThen, axis - half - LABEL_GAP, middle - LABEL_GAP, 'end');
-                    label(labelElse, axis + LABEL_GAP, hexagonTop + BOX_HEIGHT + s, 'start');
+                    label(labelElse, axis + 0.7 * s, hexagonTop + BOX_HEIGHT + s, 'start', 'middle');
                 }
             };
         }
@@ -315,6 +321,7 @@
                 width = Math.max(width, measure(title, 'title'));
             }
             var axis = left;
+            currentFunctionId = programFunction.id;
             var startItem = start.place(axis, top);
             startItem.id = programFunction.id;
             remember(programFunction.id, startItem);
