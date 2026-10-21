@@ -7,7 +7,8 @@
  * Tiene lo stato del diagramma aperto (programma, formato del file, testo di origine,
  * nome del file, salvato o no) e lo collega a:
  *   - barra superiore: nome del file (B2), stato dell'esecuzione, Esegui, Pausa, Ferma, menu;
- *   - zona del diagramma: schema provvisorio fino al passo 7 (js/ui/diagram-outline.js);
+ *   - zona del diagramma: disegno SVG (js/ui/diagram-renderer.js), elenco degli errori sopra il
+ *     foglio (js/ui/diagram-errors.js), scorrimento e zoom (js/ui/diagram-viewport.js);
  *   - console (js/ui/console-view.js) e scheduler (js/core/scheduler.js);
  *   - avvisi in linea sotto la barra, mai finestre modali (B1, FR-CON-03);
  *   - schede Diagramma e Console sul telefono (D-11, FR-MOB-01, FR-MOB-02);
@@ -25,7 +26,9 @@
     var NumberFormat = OnoFlow.NumberFormat;
     var Examples = OnoFlow.Examples;
     var BlockText = OnoFlow.BlockText;
-    var DiagramOutline = OnoFlow.DiagramOutline;
+    var DiagramRenderer = OnoFlow.DiagramRenderer;
+    var DiagramErrors = OnoFlow.DiagramErrors;
+    var DiagramViewport = OnoFlow.DiagramViewport;
     var ConsoleView = OnoFlow.ConsoleView;
     var SessionCopy = OnoFlow.SessionCopy;
 
@@ -43,13 +46,16 @@
         return document.getElementById(id);
     }
 
-    /* Testi della pagina: data-i18n → testo, data-i18n-label → aria-label. */
+    /* Testi della pagina: data-i18n → testo, data-i18n-label → aria-label, data-i18n-title → title. */
     function translatePage(root) {
         Array.prototype.forEach.call(root.querySelectorAll('[data-i18n]'), function (node) {
             node.textContent = t(node.getAttribute('data-i18n'));
         });
         Array.prototype.forEach.call(root.querySelectorAll('[data-i18n-label]'), function (node) {
             node.setAttribute('aria-label', t(node.getAttribute('data-i18n-label')));
+        });
+        Array.prototype.forEach.call(root.querySelectorAll('[data-i18n-title]'), function (node) {
+            node.setAttribute('title', t(node.getAttribute('data-i18n-title')));
         });
     }
 
@@ -70,6 +76,8 @@
         var numberFormat = Localization.numberFormat();
         var session = SessionCopy.create(SessionCopy.defaultStorage());
         var narrow = window.matchMedia('(max-width: 55.99rem)');
+        // Da 80rem in su crescono testo e quadretto (css/tokens.css): il disegno va rifatto.
+        var large = window.matchMedia('(min-width: 80rem)');
 
         var app = byId('app');
         var fileNameField = byId('file-name');
@@ -84,7 +92,9 @@
         var fileInput = byId('file-input');
         var notices = byId('notices');
         var diagram = byId('diagram');
-        var diagramSummary = byId('diagram-summary');
+        var diagramErrors = byId('diagram-errors');
+        var sheet = byId('sheet');
+        var zoomButtons = { out: byId('zoom-out'), reset: byId('zoom-reset'), 'in': byId('zoom-in'), fit: byId('zoom-fit') };
         var consoleEmpty = byId('console-empty');
         var tabs = { diagram: byId('tab-diagram'), console: byId('tab-console') };
         var commands = {
@@ -104,8 +114,12 @@
             staticErrors: [],
             scheduler: null,
             outcome: null,
-            outline: null
+            diagram: null,          // disegno del programma aperto (DiagramRenderer)
+            marked: { errors: [], runtime: false },
+            runningId: null,
+            pendingReveal: null     // blocco da inquadrare quando si torna al diagramma (FR-MOB-03)
         };
+        var measurer = DiagramRenderer.createMeasurer(document);
 
         function formatValue(value) {
             var text = NumberFormat.formatValue(value.type, value.value, numberFormat);
@@ -134,6 +148,12 @@
             });
             if (name === 'console') {
                 tabs.console.removeAttribute('data-badge');
+            }
+            if (name === 'diagram' && state.pendingReveal) {
+                // Sul telefono il blocco dell'errore è già inquadrato quando si passa al diagramma.
+                if (revealNode(state.pendingReveal)) {
+                    state.pendingReveal = null;
+                }
             }
             if (options && options.focus) {
                 tabs[name].focus();
@@ -207,14 +227,62 @@
             modifiedMark.hidden = state.saved;
         }
 
-        function showStaticErrors() {
-            state.outline.setErrors(state.staticErrors);
-            var count = state.staticErrors.length;
-            diagramSummary.hidden = count === 0;
-            diagramSummary.textContent = count === 1
-                ? t('ui.diagram.errorsOne')
-                : t('ui.diagram.errors', { count: NumberFormat.formatInteger(count, numberFormat) });
+        /* Segni sul disegno ed elenco numerato sopra il foglio, con gli stessi numeri (DEC-057). */
+        function showErrors(errors, runtime) {
+            state.marked = { errors: errors, runtime: Boolean(runtime) };
+            state.diagram.setErrors(errors);
+            DiagramErrors.render(diagramErrors, errors, {
+                t: t,
+                formatError: formatError,
+                describeBlock: describeBlock,
+                runtime: runtime,
+                formatCount: function (count) { return NumberFormat.formatInteger(count, numberFormat); },
+                onSelect: function (nodeId) { revealNode(nodeId); }
+            });
         }
+
+        function showStaticErrors() {
+            showErrors(state.staticErrors, false);
+        }
+
+        function setRunning(nodeId) {
+            state.runningId = nodeId;
+            state.diagram.setRunning(nodeId);
+        }
+
+        /* Inquadra un blocco; false se il foglio non si vede (scheda Console sul telefono). */
+        function revealNode(nodeId, options) {
+            return state.diagram ? sheetView.reveal(state.diagram.nodeBox(nodeId), options) : false;
+        }
+
+        /* Disegna il programma aperto, con gli stati di adesso (errori, blocco in esecuzione). */
+        function drawDiagram() {
+            state.diagram = DiagramRenderer.render(diagram, state.program, { t: t, measurer: measurer });
+            sheetView.attach(state.diagram);
+            state.diagram.setErrors(state.marked.errors);
+            state.diagram.setRunning(state.runningId);
+        }
+
+        var sheetView = DiagramViewport.create(sheet, {
+            content: byId('sheet-content'),
+            onChange: function (zoom) {
+                var percent = NumberFormat.formatInteger(Math.round(zoom * 100), numberFormat);
+                zoomButtons.reset.textContent = t('ui.zoom.percent', { percent: percent });
+                zoomButtons.reset.setAttribute('aria-label', t('ui.zoom.reset', { percent: percent }));
+                zoomButtons.out.disabled = zoom <= DiagramViewport.MIN_ZOOM;
+                zoomButtons['in'].disabled = zoom >= DiagramViewport.MAX_ZOOM;
+            }
+        });
+        zoomButtons.out.addEventListener('click', function () { sheetView.zoomOut(); });
+        zoomButtons['in'].addEventListener('click', function () { sheetView.zoomIn(); });
+        zoomButtons.reset.addEventListener('click', function () { sheetView.setZoom(1); });
+        zoomButtons.fit.addEventListener('click', function () { sheetView.fit(); });
+        large.addEventListener('change', function () {
+            if (state.program) {
+                measurer.reset();
+                drawDiagram();
+            }
+        });
 
         /* Mostra un programma caricato; options: { saved }. */
         function useProgram(program, format, sourceText, fileName, options) {
@@ -224,7 +292,13 @@
             state.fileName = normalizeFileName(fileName);
             state.saved = options.saved;
             state.outcome = null;
-            state.outline = DiagramOutline.render(diagram, program, { t: t, formatError: formatError });
+            state.runningId = null;
+            state.pendingReveal = null;
+            state.marked = { errors: [], runtime: false };
+            drawDiagram();
+            sheetView.reset(); // si apre sempre al 100% (DEC-057)
+            // Inizio al centro in orizzontale: con cicli e if l'asse può stare oltre il bordo del telefono.
+            state.pendingReveal = revealNode(program.functions[0].id) ? null : program.functions[0].id;
             // Errori che impediscono l'esecuzione già all'apertura (FR-ERR-04, L-12).
             state.staticErrors = StaticCheck.check(program);
             showStaticErrors();
@@ -356,22 +430,29 @@
             statusLabel.hidden = statusLabel.textContent === '';
         }
 
+        /* Blocco dell'errore: inquadrato subito se il foglio si vede, altrimenti al ritorno (FR-MOB-03). */
+        function markForReveal(nodeId) {
+            state.pendingReveal = nodeId && !revealNode(nodeId) ? nodeId : null;
+        }
+
         function finish(outcome) {
             state.outcome = outcome;
             consoleView.flush();
-            state.outline.setRunning(null);
+            setRunning(null);
             if (outcome.status === 'done') {
                 consoleView.showDone();
                 badgeConsole('new');
             } else if (outcome.status === 'invalid') {
                 consoleView.showInvalid(outcome.errors);
-                state.outline.setErrors(outcome.errors);
+                showErrors(outcome.errors, false);
+                markForReveal(outcome.errors[0].nodeId);
                 badgeConsole('error');
             } else if (outcome.error.code === 'ERR_STOPPED') {
                 consoleView.showStopped(outcome.error);
             } else {
                 consoleView.showRuntimeError(outcome.error);
-                state.outline.setErrors([outcome.error]);
+                showErrors([outcome.error], true);
+                markForReveal(outcome.error.nodeId);
                 badgeConsole('error');
             }
             updateControls();
@@ -386,6 +467,7 @@
             consoleEmpty.hidden = true;
             showStaticErrors();
             state.outcome = null;
+            state.pendingReveal = null;
             // All'avvio la console viene in primo piano (FR-MOB-02, D-11).
             showTab('console');
             state.scheduler = Scheduler.create(state.program, {
@@ -396,11 +478,11 @@
                 },
                 onStep: function (nodeId) {
                     consoleView.flush();
-                    state.outline.setRunning(nodeId);
+                    setRunning(nodeId);
                 },
                 onInput: function (event) {
-                    state.outline.setRunning(event.nodeId);
-                    state.outline.reveal(event.nodeId, { quiet: true });
+                    setRunning(event.nodeId);
+                    revealNode(event.nodeId, { quiet: true });
                     consoleView.requestInput(event);
                     if (narrow.matches) {
                         showTab('console');
@@ -424,7 +506,7 @@
             var current = schedulerState();
             if (current === 'running') {
                 state.scheduler.pause();
-                state.outline.reveal(state.scheduler.currentNodeId(), { quiet: true });
+                revealNode(state.scheduler.currentNodeId(), { quiet: true });
             } else if (current === 'paused') {
                 consoleView.hideLongRun();
                 state.scheduler.resume();
@@ -453,8 +535,9 @@
             },
             onStop: stop,
             onReveal: function (nodeId) {
+                state.pendingReveal = null;
                 showTab('diagram');
-                state.outline.reveal(nodeId);
+                revealNode(nodeId);
             }
         });
 

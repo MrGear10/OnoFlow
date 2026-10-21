@@ -318,6 +318,8 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 
 ## DEC-052 — Schema testuale del diagramma fino al renderer
 
+- **Superata al passo 7** da DEC-057 e DEC-058: lo schema è sostituito dal disegno SVG.
+
 - **Passo:** 6 · **Decisa da:** autore (proposta consigliata) · **Tocca:** §5.2, FR-VIEW-02, FR-VIEW-03
 - **Decisione:** fino al renderer SVG (passo 7) la zona del diagramma mostra un elenco rientrato sul foglio a quadretti: una riga per blocco, con la forma del suo tipo, il testo come è scritto e l'ID in `data-id`. Evidenziatore e penna rossa funzionano già, con la sottolineatura nel punto esatto dei campi (`js/ui/diagram-outline.js`). Il do si mostra su due righe (`do` in alto, `while …` in fondo).
 - **Perché:** esecuzione ed errori si verificano già al passo 6; al passo 7 si sostituisce solo il disegno, collegato agli stessi ID.
@@ -347,3 +349,37 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 
 - **Passo:** 6 · **Decisa da:** sviluppo · **Tocca:** QA-09, QA-14, DEC-005
 - **Decisione:** `tools/check-ui.mjs` apre `index.html` da `file://` in Chromium e Firefox, a 1440 × 900, 360 × 640 e 375 × 667. Verifica che non ci sia scorrimento orizzontale e prova questi percorsi: esempio, esecuzione con gli input di QA-04, console in primo piano sul telefono, salvataggio, file non valido, ripristino dopo il ricaricamento, menu da tastiera, ciclo infinito con la pausa dopo 5 secondi. Non sostituisce la prova su telefoni veri: tastiera, aree sicure e download su iOS si verificano solo lì.
+
+## DEC-057 — Decisioni dell'autore per il renderer SVG
+
+- **Passo:** 7 · **Decisa da:** autore · **Tocca:** FR-VIEW-01, FR-VIEW-03, FR-MOB-06, §11.2, DEC-051
+- **Rami dell'`if`:** affiancati sotto il rombo, **Falso a sinistra e Vero a destra**, come in Flowgorithm; si riuniscono sotto in un punto. Con `if` annidati il diagramma si allarga e si usano scorrimento e zoom.
+- **Messaggi d'errore:** sul blocco solo i segni (cerchio di penna rossa, onda nel punto esatto, numero rosso); i messaggi in un elenco numerato sopra il foglio, fuori dal disegno. Toccando un messaggio si inquadra il suo blocco.
+- **Colore dei blocchi:** oltre alla forma, **un riempimento tenue per tipo**. Le tinte stanno lontano dal giallo dell'evidenziatore e dal rosso della penna, così la regola del segno unico resta valida. Il blocco in esecuzione prende il giallo pieno al posto della sua tinta.
+- **Zoom:** un diagramma si apre sempre al **100%**; "Adatta allo schermo" è un comando a un tocco; lo zoom non si memorizza.
+
+## DEC-058 — Struttura del renderer
+
+- **Passo:** 7 · **Decisa da:** sviluppo · **Tocca:** §10.2, FR-VIEW-01, FR-VIEW-02, NFR-CODE-03
+- **Decisione:** il renderer è diviso in quattro moduli. `js/ui/diagram-layout.js` calcola la disposizione senza toccare la pagina (provato con una misura finta dei testi). `js/ui/diagram-renderer.js` disegna l'SVG, con un `<g data-id>` per blocco, e gestisce evidenziatore e penna rossa. `js/ui/diagram-errors.js` mostra l'elenco degli errori. `js/ui/diagram-viewport.js` si occupa di zoom e inquadratura. `js/ui/diagram-outline.js` (DEC-052) è tolto.
+- **Misura dei testi:** con lo stesso SVG nascosto nella pagina (`getComputedTextLength`) e gli stessi stili del disegno, non con un canvas: i font di sistema come `ui-monospace` non sono garantiti nel canvas di ogni browser. La misura funziona anche con la scheda Diagramma nascosta sul telefono.
+- **Funzioni:** una sotto l'altra, ciascuna con il suo asse e, se sono più d'una, il nome. Un errore della funzione si segna sul suo Inizio.
+- **Punti di inserimento:** il layout restituisce già, per ogni freccia di una sequenza, il punto dove si potrà inserire un blocco (`slots`: proprietario, elenco, posizione). Una sequenza di n blocchi ne ha n + 1, anche un ramo vuoto. Il disegno del punto si decide al passo 9 (D-04).
+
+## DEC-059 — Geometria del disegno
+
+- **Passo:** 7 · **Decisa da:** sviluppo · **Tocca:** FR-VIEW-01, FR-MOB-04, DESIGN.md
+- **Misure in quadretti:** i blocchi sono alti 2 quadretti (il rombo 3) e larghi un multiplo di 2, almeno 4. Le frecce tra i blocchi sono lunghe 2 quadretti. Così gli assi cadono sulle righe del foglio, e al passo 9 una freccia offre un'area di tocco vicina ai 44 px.
+- **Testo:** su una sola riga e mai accorciato (FR-VIEW-05). Un testo lungo allarga il blocco.
+- **Parole chiave:** il testo dei blocchi resta quello del catalogo (DEC-053), con la parola chiave (`if`, `while`, `Output`). Forma, tinta e parola dicono il tipo tre volte, e si legge anche senza distinguere i colori.
+- **Cicli:** while e for hanno il ritorno a sinistra e l'uscita a destra (Falso); il do ha il ritorno a sinistra (Vero) fino a un punto d'incontro con l'etichetta `do`.
+
+## DEC-060 — Zoom e inquadratura
+
+- **Passo:** 7 · **Decisa da:** sviluppo · **Tocca:** FR-MOB-03, FR-MOB-06, FR-MOB-21, NFR-PERF-04
+- **Scorrimento:** è quello nativo del foglio, fluido anche sui telefoni lenti. Lo zoom cambia la misura dell'SVG, del margine e dei quadretti. Quando i quadretti scendono sotto gli 8 px se ne disegna uno ogni 2 o 4.
+- **Gesti:** sul foglio `touch-action: pan-x pan-y`. Il pizzico a due dita arriva con gli eventi touch (`preventDefault`, perché Safari ignora `user-scalable=no`); sono gestiti anche i gesti di Safari, Ctrl + rotella (che è anche il pizzico dei touchpad) e i tasti + − 0. Il punto sotto le dita resta fermo.
+- **Limiti:** dal 10% al 300%, a passi del 25%. Il 10% serve perché "Adatta allo schermo" faccia entrare in un telefono anche l'Appendice A, alta circa 2700 px al 100%. "Adatta allo schermo" non va oltre il 200%.
+- **Apertura:** al 100% (DEC-057), con Inizio al centro in orizzontale. Con cicli e if l'asse può stare oltre il bordo del telefono.
+- **FR-MOB-03 (B5):** alla fine con un errore, il blocco si inquadra subito se il foglio è visibile; altrimenti si inquadra appena si passa alla scheda Diagramma. Lo fanno anche "Mostra nel diagramma" nella console e un tocco su un messaggio dell'elenco.
+- **Da verificare su telefoni veri:** il pizzico su iPhone e su Android, soprattutto se il dito ha già cominciato a scorrere il foglio prima che arrivi il secondo.

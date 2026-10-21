@@ -62,16 +62,28 @@
 
     <main class="work">
         <section class="pane pane--diagram" id="panel-diagram" role="tabpanel" aria-labelledby="tab-diagram">
+            <div class="diagram-errors" id="diagram-errors" role="region" data-i18n-label="ui.diagram.errorsLabel" hidden></div>
             <div class="sheet" id="sheet" role="region" tabindex="0" data-i18n-label="ui.tab.diagram">
-                <div class="sheet-content">
-                    <p class="diagram-summary" id="diagram-summary" role="status" hidden></p>
-                    <div class="outline" id="diagram"></div>
+                <div class="sheet-content" id="sheet-content">
+                    <div class="diagram-host" id="diagram"></div>
                 </div>
                 <footer class="footer">
                     <p data-i18n="ui.footer.independent"></p>
                     <p id="footer-hosting"></p>
                     <p data-i18n="ui.footer.ai"></p>
                 </footer>
+            </div>
+            <div class="zoom" role="group" data-i18n-label="ui.zoom.label">
+                <button class="button zoom-button" id="zoom-out" type="button" data-i18n-label="ui.zoom.out" data-i18n-title="ui.zoom.out">
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10"/></svg>
+                </button>
+                <button class="button zoom-level" id="zoom-reset" type="button"></button>
+                <button class="button zoom-button" id="zoom-in" type="button" data-i18n-label="ui.zoom.in" data-i18n-title="ui.zoom.in">
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10M10 5v10"/></svg>
+                </button>
+                <button class="button zoom-button" id="zoom-fit" type="button" data-i18n-label="ui.zoom.fit" data-i18n-title="ui.zoom.fit">
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 7.5v-4h4M12.5 3.5h4v4M16.5 12.5v4h-4M7.5 16.5h-4v-4"/></svg>
+                </button>
             </div>
         </section>
 
@@ -112,7 +124,10 @@
 <script src="js/core/scheduler.js"></script>
 <script src="js/examples/examples.js"></script>
 <script src="js/ui/block-text.js"></script>
-<script src="js/ui/diagram-outline.js"></script>
+<script src="js/ui/diagram-layout.js"></script>
+<script src="js/ui/diagram-renderer.js"></script>
+<script src="js/ui/diagram-errors.js"></script>
+<script src="js/ui/diagram-viewport.js"></script>
 <script src="js/ui/console-view.js"></script>
 <script src="js/ui/session-copy.js"></script>
 <script src="js/app.js"></script>

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Prodotto** | OnoFlow — editor web di diagrammi di flusso, compatibile con i file `.fprg` |
-| **Versione del documento** | 1.11 — 20 ottobre 2026 |
+| **Versione del documento** | 1.12 — 21 ottobre 2026 |
 | **Stato** | Base per una nuova implementazione da zero |
 | **Origine** | Sintesi del documento di progetto (rev. 7) e di un prototipo che ha completato i passi 1–6 della fase 1 |
 | **Licenza prevista** | MIT |
@@ -694,7 +694,7 @@ Questa architettura è stata **validata nel prototipo** dei passi 1–6. È racc
 | Formato | Import con `DOMParser`; export scritto a mano (§7.6). `importFprg` restituisce anche il formato del file (a capo, BOM, a capo finale), tenuto fuori dal modello (DEC-028) |
 | Interprete | Esecuzione basata su **funzioni generatore** |
 | Scheduler | Esecuzione continua a budget di passi, pausa, passo-passo, stop |
-| Renderer | Layout e disegno SVG, collegato al modello tramite ID |
+| Renderer | Layout e disegno SVG, collegato al modello tramite ID; elenco degli errori; zoom e inquadratura (DEC-058) |
 | Console | Output, input in linea, errori con variabili, avvisi |
 | Editor | Inserimento, modifica, cancellazione, annulla/ripeti; ogni modifica passa dal modello e il disegno si aggiorna di conseguenza |
 | Generatori di codice | Fase 3: un *visitor* sul modello per linguaggio |
@@ -739,7 +739,9 @@ Il prototipo ha validato una direzione basata sugli **oggetti della classe**:
 
 È una proposta che ha funzionato, non un vincolo: chi riparte PUÒ sceglierne un'altra, rispettando NFR-PRIV-02 e §9.5.
 
-**Scelta (DEC-051):** questa direzione, in versione sobria, con la grammatica degli stati della segnaletica stradale (ogni stato un segno con un solo significato), linee a un pixel, niente gradienti, ombre o rilievi, quadretti tenui e contenuto al massimo contrasto. Contesto di prodotto in `PRODUCT.md`; sistema visivo in `DESIGN.md`, scritto alla fine del passo 6.
+**Scelta (DEC-051):** questa direzione, in versione sobria, con la grammatica degli stati della segnaletica stradale (ogni stato un segno con un solo significato), linee a un pixel, niente gradienti, ombre o rilievi, quadretti tenui e contenuto al massimo contrasto. Contesto di prodotto in `PRODUCT.md`; sistema visivo in `DESIGN.md`, scritto alla fine del passo 6 e aggiornato al passo 7.
+
+**Diagramma (DEC-057):** forme classiche con contorno d'inchiostro e **una tinta tenue per tipo**, lontana dal giallo e dal rosso degli stati; rami dell'`if` affiancati, **Falso a sinistra e Vero a destra**; i messaggi d'errore in un elenco numerato sopra il foglio, con lo stesso numero sul blocco; un diagramma si apre al 100%.
 
 ---
 

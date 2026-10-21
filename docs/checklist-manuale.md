@@ -84,3 +84,22 @@ Aprire `index.html` con doppio clic, in Firefox. Poi le stesse prove da telefono
 - [ ] Al proiettore, dal fondo dell'aula: testo del diagramma e della console leggibile.
 - [ ] **Telefono:** schede Diagramma e Console in basso; Esegui porta da solo alla console; il campo della console resta sopra la tastiera (Android e iPhone); toccando un campo la pagina non si ingrandisce; nessuno scorrimento orizzontale; dopo un errore **Mostra nel diagramma** porta al blocco.
 - [ ] **iPhone:** Salva mette il file in File → Download con il nome e l'estensione `.fprg` (FR-MOB-20).
+
+---
+
+## Passo 7 — Renderer SVG
+
+Aprire `index.html` con doppio clic, in Firefox. Poi le prove di zoom e inquadratura da telefono (Android e iPhone), dalla copia pubblicata.
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (321 test).
+- [ ] **Menu → Esempi → Somma, massimo e minimo**: il diagramma è disegnato con le forme classiche, al 100%, con Inizio in alto e al centro. Ogni tipo ha la sua forma e la sua tinta: dichiarazioni lavanda con le due righe, assegnazioni azzurre, input acqua e output verdi a parallelogramma, if lilla a rombo, cicli ciano a esagono.
+- [ ] Gli `if` hanno **Falso a sinistra e Vero a destra**, e i rami si riuniscono sotto in un punto. Il `do` ha il ritorno a sinistra fino al punto con l'etichetta `do`; il `for` e il `while` hanno il ritorno a sinistra e l'uscita a destra.
+- [ ] I testi dei blocchi sono esattamente quelli del file, spazi compresi, e stanno dentro le forme.
+- [ ] **Esegui** con gli input di QA-04: il blocco in attesa diventa giallo al posto della sua tinta; se è fuori vista, il foglio scorre fino a lui.
+- [ ] Comandi dello zoom in basso a destra: − e + cambiano la percentuale (125%, 156%…), la percentuale riporta al 100%, **Adatta allo schermo** fa entrare tutto il diagramma. I quadretti e il margine rosso crescono con il disegno; la pagina non si ingrandisce mai.
+- [ ] Sul computer: **Ctrl + rotella** sul foglio ingrandisce attorno al puntatore; con il foglio a fuoco (Tab) i tasti **+**, **−** e **0** fanno lo stesso.
+- [ ] Un file con errori di sintassi: sopra il foglio l'elenco numerato degli errori, con il messaggio e il testo del blocco; sul disegno il cerchio rosso, lo stesso numero e l'onda sotto il pezzo sbagliato. Toccando un messaggio il suo blocco va al centro.
+- [ ] Un errore durante l'esecuzione (per esempio `x = 1 / 0` in fondo a un diagramma lungo): l'elenco dice che l'esecuzione si è fermata; il blocco è inquadrato.
+- [ ] Tema scuro del sistema: tinte scure dello stesso colore, testo e frecce leggibili.
+- [ ] Al proiettore, dal fondo dell'aula: testi dei blocchi ed etichette Vero/Falso leggibili al 100%.
+- [ ] **Telefono:** scorrimento del foglio con un dito; **pizzico a due dita** per lo zoom, senza ingrandire la pagina (soprattutto su iPhone, FR-MOB-21); dopo un errore durante l'esecuzione, toccando la scheda **Diagramma** il blocco dell'errore è già inquadrato (FR-MOB-03).

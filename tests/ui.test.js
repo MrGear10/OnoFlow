@@ -1,6 +1,6 @@
 /*
- * OnoFlow — test dei moduli dell'interfaccia (passo 6): testo dei blocchi, schema del
- * diagramma, console, copia di sessione, nome del file.
+ * OnoFlow — test dei moduli dell'interfaccia (passo 6): testo dei blocchi, console, copia di
+ * sessione, nome del file. Il disegno del diagramma è in tests/diagram.test.js (passo 7).
  *
  * Dipendenze: tests/framework/*, tests/helpers.js, js/core/*, js/i18n/*, js/ui/*, js/app.js.
  * I moduli che disegnano lavorano su elementi staccati dalla pagina.
@@ -81,101 +81,6 @@
             assert.equal(expression.role, 'field');
             assert.equal(expression.error.code, 'ERR_SYNTAX_UNEXPECTED_TOKEN');
             assert.equal(parts[0].field, 'variable');
-        });
-    });
-
-    T.suite('Interfaccia › schema del diagramma (FR-VIEW-02, FR-VIEW-03)', function () {
-        function draw(program) {
-            var container = document.createElement('div');
-            var view = OnoFlow.DiagramOutline.render(container, program, { t: t, formatError: formatError });
-            return { container: container, view: view };
-        }
-
-        T.test('ogni blocco ha una riga con il suo ID, anche dentro if e cicli', function (assert) {
-            var inner = H.output('i');
-            var branch = H.assign('x', '1');
-            var program = H.program([H.loop('i < 3', [inner]), H.when('x > 0', [branch], [])]);
-            var drawn = draw(program);
-            Model.walk(program, function (target) {
-                assert.isTrue(drawn.container.querySelector('[data-id="' + target.id + '"]') !== null, 'riga di ' + target.id);
-                assert.isTrue(drawn.view.hasNode(target.id));
-            });
-            var row = drawn.container.querySelector('[data-id="' + inner.id + '"] .row-text');
-            assert.equal(row.textContent, 'Output i');
-        });
-
-        T.test('i testi del file entrano come testo, mai come HTML (NFR-SEC-01)', function (assert) {
-            var drawn = draw(H.program([H.output('"<b>x</b>"')]));
-            assert.equal(drawn.container.querySelector('b'), null);
-            assert.isTrue(drawn.container.textContent.indexOf('"<b>x</b>"') !== -1);
-        });
-
-        T.test('evidenziatore su un solo blocco alla volta', function (assert) {
-            var first = H.output('1');
-            var second = H.output('2');
-            var drawn = draw(H.program([first, second]));
-            drawn.view.setRunning(first.id);
-            drawn.view.setRunning(second.id);
-            var running = drawn.container.querySelectorAll('.is-running');
-            assert.equal(running.length, 1);
-            assert.equal(running[0].parentNode.getAttribute('data-id'), second.id);
-            drawn.view.setRunning(null);
-            assert.equal(drawn.container.querySelectorAll('.is-running').length, 0);
-        });
-
-        T.test('penna rossa sul blocco e onda sotto il punto esatto', function (assert) {
-            var wrong = H.assign('x', 'a + 2,5');
-            var program = H.program([wrong]);
-            var drawn = draw(program);
-            drawn.view.setErrors(OnoFlow.StaticCheck.check(program));
-            var row = drawn.container.querySelector('[data-id="' + wrong.id + '"] > .row-line');
-            assert.isTrue(row.classList.contains('is-error'));
-            var wave = row.querySelector('[data-field="expression"] .pen-wave');
-            assert.isTrue(wave !== null, 'sottolineatura presente');
-            assert.equal(wave.textContent, '2,5', 'tutto il numero scritto con la virgola');
-            assert.equal(row.querySelector('[data-field="expression"]').textContent, 'a + 2,5', 'il testo non cambia');
-            assert.equal(drawn.container.querySelectorAll('.row-error').length, 1);
-
-            drawn.view.setErrors([]);
-            assert.isFalse(row.classList.contains('is-error'));
-            assert.equal(drawn.container.querySelectorAll('.pen-wave, .row-error').length, 0);
-            assert.equal(row.querySelector('[data-field="expression"]').textContent, 'a + 2,5');
-        });
-
-        T.test('un errore alla fine del campo ha comunque il suo segno', function (assert) {
-            var wrong = H.output('"a" +');
-            var program = H.program([wrong]);
-            var drawn = draw(program);
-            drawn.view.setErrors(OnoFlow.StaticCheck.check(program));
-            assert.isTrue(drawn.container.querySelector('.pen-wave--point') !== null);
-        });
-
-        T.test('più errori sullo stesso blocco restano in ordine', function (assert) {
-            var target = H.output('x');
-            var drawn = draw(H.program([target]));
-            drawn.view.setErrors([
-                { code: 'ERR_DIVISION_BY_ZERO', params: {}, nodeId: target.id },
-                { code: 'ERR_STOPPED', params: {}, nodeId: target.id }
-            ]);
-            var notes = drawn.container.querySelectorAll('.row-error');
-            assert.equal(notes.length, 2);
-            assert.equal(notes[0].textContent, t('ERR_DIVISION_BY_ZERO'));
-            assert.equal(notes[1].textContent, t('ERR_STOPPED'));
-        });
-
-        T.test('diagramma vuoto: Inizio, Fine e il messaggio', function (assert) {
-            var drawn = draw(Model.createEmptyProgram());
-            assert.equal(drawn.container.querySelectorAll('.row--terminal').length, 2);
-            assert.equal(drawn.container.querySelector('.outline-empty').textContent, t('ui.diagram.empty'));
-        });
-
-        T.test('con più funzioni compare il nome di ognuna', function (assert) {
-            var program = Model.createProgram({
-                functions: [Model.createFunction({ name: 'Main' }), Model.createFunction({ name: 'Doppio' })]
-            });
-            var names = Array.prototype.map.call(draw(program).container.querySelectorAll('.outline-function-name'),
-                function (node) { return node.textContent; });
-            assert.deepEqual(names, [t('ui.diagram.function', { name: 'Main' }), t('ui.diagram.function', { name: 'Doppio' })]);
         });
     });
 

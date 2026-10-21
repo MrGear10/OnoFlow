@@ -27,6 +27,13 @@ colors:
   chalk-yellow: "#f3d75f"
   chalk-pen: "#ff9d93"
   chalk-field: "#2b4840"
+  block-declare: "#e8ecff"
+  block-assign: "#d8f2ff"
+  block-input: "#cff9ef"
+  block-output: "#dff7da"
+  block-if: "#f8e7ff"
+  block-loop: "#cdf7ff"
+  block-call: "#e9eff6"
 typography:
   title:
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, sans-serif"
@@ -162,15 +169,25 @@ components:
   notice-warning:
     backgroundColor: "{colors.warning-soft}"
     textColor: "{colors.text}"
-  block-row:
-    backgroundColor: "transparent"
+  diagram-block:
+    backgroundColor: "{colors.block-assign}"
     textColor: "{colors.text}"
     typography: "{typography.content}"
-    rounded: "{rounded.row}"
-    padding: "0.35em 0.6em"
-  block-row-running:
+    rounded: "0"
+    height: "calc(2 * {spacing.square})"
+  diagram-block-running:
     backgroundColor: "{colors.highlighter}"
     textColor: "{colors.on-highlighter}"
+  diagram-error-list:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.pen}"
+    typography: "{typography.body}"
+    padding: "0.75rem {spacing.gutter}"
+  zoom-controls:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.radius}"
+    height: "{spacing.touch}"
   sheet:
     backgroundColor: "{colors.paper}"
     textColor: "{colors.text}"
@@ -192,7 +209,7 @@ Il diagramma sta su un foglio di quaderno a quadretti, con il margine rosso; la 
 
 La densità è bassa e il contrasto del contenuto è massimo, perché la priorità è il docente al proiettore: diagramma e console usano un corpo più grande del resto dell'interfaccia e crescono ancora sugli schermi da 80rem in su. Il resto (barra, menu, piè di pagina) resta sottile e grigio-carta, perché non competa con il contenuto. Tutto è disegnato con linee a un pixel su superfici piatte: niente ombre, rilievi o sfumature decorative, solo font di sistema (nessuna risorsa esterna, NFR-PRIV-02). La metafora resta sobria: il quaderno è suggerito dai quadretti e dal margine, non da texture, carta strappata o caratteri scritti a mano. Si rifiutano la tela grigia da editor di forme e la barra piena di icone.
 
-Il diagramma, al passo 6, è uno **schema testuale provvisorio** (DEC-052): un elenco rientrato sul foglio, una riga per blocco con la piccola forma del suo tipo. Il renderer SVG arriva al passo 7 e sostituirà solo il disegno, collegato agli stessi ID; gli stati (evidenziatore, penna rossa, onda nel punto esatto) sono già quelli definitivi.
+Dal passo 7 il diagramma è un **disegno SVG** sul foglio (FR-VIEW-01): forme classiche dei diagrammi di flusso in inchiostro blu, ognuna con la tinta tenue del suo tipo (DEC-057), unite da frecce d'inchiostro diluito su un asse verticale. Gli stati sono gli stessi segni dello schema provvisorio del passo 6: evidenziatore sul blocco in esecuzione, penna rossa attorno al blocco sbagliato con l'onda nel punto esatto.
 
 **Key Characteristics:**
 - Due superfici fisse: foglio a quadretti (diagramma) e lavagna (console), affiancati su computer, una alla volta sul telefono.
@@ -208,7 +225,7 @@ Una carta bianca e fredda con inchiostro blu scuro, una cornice grigio-chiara, u
 
 ### Primary
 - **Inchiostro di biro** (`ink`): blocchi del diagramma (forme, parole chiave, Inizio e Fine), titoli delle funzioni, marchio, bordi e testo dei pulsanti, pulsante principale pieno, scheda attiva, anello del focus, segno "Non salvato".
-- **Inchiostro diluito** (`ink-soft`): filo del flusso a sinistra dei blocchi annidati, etichette dei rami Vero/Falso, hover del pulsante principale, barra di scorrimento del foglio.
+- **Inchiostro diluito** (`ink-soft`): frecce e linee del flusso, punti d'incontro, etichette Vero/Falso e `do`, hover del pulsante principale, barra di scorrimento del foglio.
 - **Su inchiostro** (`on-ink`): testo e icone sopra l'inchiostro pieno (pulsante principale, stato premuto).
 
 ### Secondary
@@ -227,6 +244,9 @@ Una carta bianca e fredda con inchiostro blu scuro, una cornice grigio-chiara, u
 - **Ocra d'avviso** (`warning`) e **velo d'avviso** (`warning-soft`): avviso di file aperto con avvisi (bordo e fondo).
 - **Velo d'inchiostro** (`info-soft`): hover dei pulsanti e delle voci di menu, avviso informativo, selezione del testo, scheda premuta.
 
+### Tinte dei blocchi (DEC-057)
+Un riempimento tenue per tipo, sotto l'inchiostro del contorno e del testo: **dichiarazione** lavanda (`block-declare`), **assegnazione** azzurro (`block-assign`), **input** acqua (`block-input`), **output** verde (`block-output`), **if** lilla (`block-if`), **cicli** (while, do, for) ciano (`block-loop`), **chiamata** grigio-azzurro (`block-call`). Inizio, Fine e i commenti restano su carta. Le tinte sono tutte nella fascia verde-blu-viola (OKLCH 95%, croma 0,045; nel tema scuro 30%, croma 0,05), lontano dal giallo e dal rosso: la tinta dice il tipo, mai uno stato. Contrasto dell'inchiostro sulle tinte: almeno 9:1 in chiaro e 7,3:1 in scuro.
+
 ### Neutral
 - **Carta** (`paper`): fondo del foglio, del menu, del campo del nome file e del piè di pagina.
 - **Quadretto** (`paper-grid`): la griglia del foglio, tenue.
@@ -236,10 +256,10 @@ Una carta bianca e fredda con inchiostro blu scuro, una cornice grigio-chiara, u
 - **Riga** (`line`): separatori interni (menu, piè di pagina), bordo dei pulsanti disabilitati.
 
 ### Tema scuro
-Segue il sistema (`prefers-color-scheme`, NFR-ACC-02) e ridefinisce gli stessi token in `css/tokens.css`; i segni conservano il loro significato. Il foglio diventa carta blu notte (`paper` #12161e, quadretti #1f2633, margine #6a2f35) con inchiostro chiaro (`ink` #a8bfff, `on-ink` #10131a); la cornice è #1a1f29; la penna rossa si schiarisce (#ff7b73) e l'evidenziatore resta giallo (#f5e15a). La lavagna diventa più scura del foglio (`slate` #172a24, `chalk-field` #213a33), separata da una riga (#335046). Il colore della barra del browser segue la cornice (`theme-color` #f4f5f7 / #1a1f29).
+Segue il sistema (`prefers-color-scheme`, NFR-ACC-02) e ridefinisce gli stessi token in `css/tokens.css`; i segni conservano il loro significato. Il foglio diventa carta blu notte (`paper` #12161e, quadretti #1f2633, margine #6a2f35) con inchiostro chiaro (`ink` #a8bfff, `on-ink` #10131a); la cornice è #1a1f29; le tinte dei blocchi diventano scure con la stessa tonalità (es. assegnazione #192f46, cicli #03343c); la penna rossa si schiarisce (#ff7b73) e l'evidenziatore resta giallo (#f5e15a). La lavagna diventa più scura del foglio (`slate` #172a24, `chalk-field` #213a33), separata da una riga (#335046). Il colore della barra del browser segue la cornice (`theme-color` #f4f5f7 / #1a1f29).
 
 ### Named Rules
-**La regola del segno unico.** Ogni colore di stato ha un solo significato e non si presta ad altro: il rosso è solo errore, il giallo evidenziatore è solo il blocco in esecuzione, il giallo gesso è solo ciò che si è digitato. "Fermato" non è un errore e non usa la penna rossa (DEC-055).
+**La regola del segno unico.** Ogni colore di stato ha un solo significato e non si presta ad altro: il rosso è solo errore, il giallo evidenziatore è solo il blocco in esecuzione, il giallo gesso è solo ciò che si è digitato. "Fermato" non è un errore e non usa la penna rossa (DEC-055). Le tinte dei blocchi dicono il tipo e restano fuori dal giallo e dal rosso; in esecuzione il giallo prende il posto della tinta.
 
 **La regola della lavagna scura.** La console è ardesia scura in entrambi i temi; nel tema scuro è più scura del foglio, non più chiara.
 
@@ -252,8 +272,9 @@ Segue il sistema (`prefers-color-scheme`, NFR-ACC-02) e ridefinisce gli stessi t
 
 ### Hierarchy
 - **Title** (700, 1.25rem, 1.45): marchio "OnoFlow" (-0.01em; 1.125rem sotto i 56rem) e nome della funzione sopra il suo schema.
-- **Content** (400, 1.125rem, 1.45; 1.25rem da 80rem in su): righe del diagramma; parole chiave dei blocchi in 600 e inchiostro. Si legge da fondo aula.
+- **Content** (400, 1.125rem, 1.45; 1.25rem da 80rem in su): testo dei blocchi del diagramma al 100% di zoom; parole chiave in 600 e inchiostro. Si legge da fondo aula.
 - **Content code** (monospazio, stessa misura di Content): console intera; nel diagramma i campi dei blocchi a 0.95em.
+- **Etichette del flusso** (600, 0.8 × Content, inchiostro diluito): Vero, Falso e `do` accanto alle frecce. Crescono con il contenuto, non con la cornice.
 - **Body** (400, 1rem, 1.45): testo della cornice, voci di menu, avvisi, messaggi d'errore sotto il blocco (600, penna rossa), note della console in font dell'interfaccia. Righe lunghe limitate a 60ch (messaggi) e 75ch (piè di pagina).
 - **Label** (600, 0.875rem): stato dell'esecuzione, "Non salvato", etichette Vero/Falso, intestazioni della tabella delle variabili, pulsanti piccoli. Le intestazioni del menu e il piè di pagina usano la stessa misura a 400, in testo tenue.
 
@@ -274,7 +295,9 @@ L'applicazione occupa l'altezza visibile (`--viewport-height` da visualViewport,
 - **Da 80rem in su (proiettore):** `--text-content` passa a 1.25rem e il quadretto a 1.375rem.
 - **Aree sicure:** barra, schede, avvisi e piè di pagina rispettano `env(safe-area-inset-*)`.
 
-Il foglio ha un rientro sinistro pari al margine (due quadretti) più un quadretto; le righe dei blocchi sono alte almeno due quadretti e tra due funzioni c'è uno spazio di due quadretti. Fuori dal foglio la scala è `space-1`…`space-6` (4–24px). Ogni area da toccare misura almeno `--touch` (44px).
+Il foglio ha un rientro sinistro pari al margine (due quadretti) più un quadretto. Nel disegno i blocchi sono alti due quadretti (il rombo tre), larghi un multiplo di due quadretti, e tra due blocchi la freccia è lunga due quadretti: così gli assi cadono sulle righe del foglio. Tra due funzioni ci sono tre quadretti. Lo zoom (10%–300%) fa crescere insieme disegno, margine e quadretti; sotto gli 8px se ne disegna uno ogni 2 o 4.
+
+Sopra il foglio, fuori dallo scorrimento, l'elenco degli errori (al massimo un terzo dell'altezza, con il suo scorrimento). In basso a destra, sopra il foglio, i comandi dello zoom; il piè di pagina lascia loro lo spazio. Fuori dal foglio la scala è `space-1`…`space-6` (4–24px). Ogni area da toccare misura almeno `--touch` (44px).
 
 ### Named Rules
 **La regola del quadretto.** Sul foglio le distanze si contano in quadretti (`--square`): margine, rientri, altezza delle righe, spazio tra funzioni.
@@ -292,7 +315,9 @@ I gradienti CSS compaiono solo come strumento di disegno, mai come sfumatura: la
 
 Angoli appena smussati (4px) per pulsanti, campo del nome file e menu; il campo della console è squadrato, con la sola riga di gesso giallo sotto, come una riga di lavagna. La riga di un blocco ha un raggio ampio (1.25em) che resta invisibile a riposo e diventa il cerchio di penna rossa quando c'è un errore (bordo di 2px). I segni dello stato accanto al nome del file sono forme geometriche con un significato fisso: quadrato giallo (in esecuzione), quadrato vuoto a bordo doppio (in pausa), quadrato d'ardesia con base di gesso giallo (in attesa di un valore), cerchio rosso (errore o non eseguito), quadrato a bordo doppio (fermato), quadrato pieno d'inchiostro (terminato). I pallini (0.5rem) segnano "Non salvato" e le novità sulla scheda Console.
 
-**Firma dei blocchi nello schema provvisorio.** Ogni tipo ha una piccola forma (28×18, tratto 1.5 non scalabile, inchiostro) dalle forme classiche dei diagrammi di flusso: terminale a pillola (Inizio, Fine), rettangolo con riga in alto (dichiarazione), rettangolo (assegnazione), parallelogramma (input e output), rombo (if), esagono (while, do, for), rettangolo con due righe verticali (chiamata), parentesi aperta (commento). Il do occupa due righe: `do` in alto e `while …` in fondo. I blocchi annidati pendono da un filo verticale a un pixel di inchiostro diluito.
+**Firma dei blocchi nel diagramma** (FR-VIEW-01). Contorno d'inchiostro a 1.5, riempimento con la tinta del tipo, testo centrato: terminale a pillola (Inizio, Fine), rettangolo con una riga in alto e una a sinistra come il simbolo della memoria (dichiarazione), rettangolo (assegnazione), parallelogramma (input e output, distinti dalla tinta), rombo alto tre quadretti (if), esagono (while, do, for), rettangolo con due righe verticali (chiamata), parentesi aperta su carta (commento). Il testo è quello del blocco come è scritto, con la parola chiave (`if`, `while`, `Output`…): forma, tinta e parola dicono la stessa cosa tre volte, perché si legga anche da lontano o senza distinguere i colori.
+
+**Disposizione del flusso.** Una sequenza sta in colonna su un asse, con una freccia verso ogni blocco. L'if apre i rami ai due vertici del rombo, **Falso a sinistra e Vero a destra** (DEC-057), e li riunisce sotto in un punto. while e for: esagono, corpo sotto (Vero), ritorno a sinistra con la freccia nella punta dell'esagono, uscita a destra (Falso). do: punto d'incontro con l'etichetta `do`, corpo, esagono in fondo con il `while`; il ritorno (Vero) sale a sinistra fino al punto d'incontro.
 
 Le icone dei comandi sono SVG in linea a 20px, tratto 1.75 arrotondato; quelle dei comandi pieni (Esegui, Ferma) sono riempite.
 
@@ -328,8 +353,14 @@ Barra non bloccante sotto la barra superiore, a tutta larghezza, con il pulsante
 ### Stato dell'esecuzione
 Testo in Label accanto al nome del file, preceduto dal suo segno (vedi Shapes); per gli errori anche il testo è in penna rossa. Annunciato ai lettori di schermo (`role="status"`).
 
-### Riga del blocco (signature)
-La riga è larga quanto il suo testo: forma del tipo, poi il testo esattamente come è scritto, con parole chiave in inchiostro 600 e campi in monospazio. **In esecuzione:** fondo d'evidenziatore, testo e forma in testo sotto evidenziatore; la transizione del fondo dura 160ms. **Errore:** cerchio di penna rossa (2px) attorno alla riga, onda rossa (2px) sotto il punto esatto del campo, o un trattino rosso di 3px dove manca qualcosa; il messaggio in penna rossa 600 subito sotto, entro 60ch. Sopra lo schema, un riepilogo in penna rossa conta gli errori.
+### Blocco del diagramma (signature)
+Forma e tinta del tipo, testo come è scritto, parole chiave in inchiostro 600 e campi in monospazio. **In esecuzione:** il riempimento diventa evidenziatore, contorno e testo in testo sotto evidenziatore, con una transizione di 160ms. **Errore:** cerchio di penna rossa (2px) attorno al blocco, numero in un tondo rosso sull'angolo in alto a destra (più errori sullo stesso blocco: i numeri in fila), onda rossa (2px) sotto il pezzo sbagliato del campo, o un trattino rosso di 3px dove manca qualcosa.
+
+### Elenco degli errori
+Sopra il foglio, su carta, separato da una riga di penna rossa di 2px. Una frase in penna rossa 600 dice quanti errori impediscono l'esecuzione, o che l'esecuzione si è fermata per un errore. Ogni voce è un pulsante alto almeno 44px: lo stesso numero rosso del disegno, il messaggio in penna rossa 600 entro 60ch e, sotto, il testo del blocco in monospazio. Un tocco inquadra il blocco al centro del foglio; hover e premuto con il velo di penna.
+
+### Comandi dello zoom
+Un gruppo su carta con bordo di riga di cornice, in basso a destra sopra il foglio: Riduci (−), la percentuale (un tocco riporta al 100%), Ingrandisci (+), Adatta allo schermo (quattro angoli). Pulsanti di 44px separati da righe sottili, focus a parentesi, barrati al minimo e al massimo. Un diagramma si apre al 100% con Inizio al centro in orizzontale; lo zoom non si memorizza. Sul foglio funzionano anche il pizzico a due dita, Ctrl + rotella e i tasti + − 0.
 
 ### Lavagna (console)
 Testo in gesso, monospazio, alla misura del contenuto. Valori digitati in gesso giallo. Le note (fine, fermato, errore, domanda dopo 5 secondi) stanno nel flusso, in font dell'interfaccia: fine in gesso sbiadito, errori in gesso rosso con il blocco coinvolto in monospazio, il pulsante "Mostra nel diagramma" e la tabella delle variabili di quel momento (righe d'ardesia, intestazioni piccole e sbiadite, cifre tabulari). Se l'output supera circa 200.000 caratteri, una nota sbiadita in alto avvisa che le righe più vecchie sono state tolte.
@@ -358,6 +389,5 @@ Breve e funzionale: 100ms per il premuto (fondo, colore, contrazione), 160ms per
 
 ## Decisioni aperte
 
-- **Punto di inserimento:** non ancora disegnato. L'invito "Toccare la freccia per inserire il primo blocco" e la freccia attiva arrivano con l'editor (passo 9); il disegno del punto di inserimento a ogni livello di zoom resta da decidere con il renderer SVG (passo 7). Per ora il diagramma vuoto rimanda al menu.
-- **Firma visiva dei blocchi nel diagramma vero:** lo schema provvisorio fissa già una forma per tipo (vedi Shapes), ma dimensioni, riempimenti, frecce e connettori del disegno SVG si decidono al passo 7.
+- **Punto di inserimento:** il disegno ha già una freccia di due quadretti tra due blocchi e in ogni ramo vuoto, che diventerà il punto da toccare (passo 9); il suo segno a ogni livello di zoom si decide con l'editor. L'invito "Toccare la freccia per inserire il primo blocco" arriva con lui; per ora il diagramma vuoto rimanda al menu.
 - **Lavagna nel tema chiaro e foglio nel tema scuro:** il costruito ha scelto (lavagna verde scura anche nel tema chiaro; foglio blu notte con quadretti scuri nel tema scuro), ma la scelta non è ancora stata confermata dall'autore.

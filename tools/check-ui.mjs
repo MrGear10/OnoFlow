@@ -1,5 +1,5 @@
 /*
- * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passo 6).
+ * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6 e 7).
  *
  * Dipendenze: playwright (solo in tools/, mai nell'applicazione).
  *
@@ -15,7 +15,10 @@
  *   - un file non valido lascia aperto il diagramma di prima (FR-FILE-04);
  *   - ricaricando la pagina il diagramma si ripristina (FR-MOB-15);
  *   - menu da tastiera: Esc lo chiude e il focus torna al pulsante (NFR-ACC-01);
- *   - ciclo infinito: pausa con la domanda dopo 5 secondi, poi Ferma (FR-RUN-04).
+ *   - ciclo infinito: pausa con la domanda dopo 5 secondi, poi Ferma (FR-RUN-04);
+ *   - diagramma SVG: un gruppo per blocco, zoom dai comandi senza ingrandire la pagina, "Adatta
+ *     allo schermo", Ctrl + rotella sul computer, pizzico a due dita sul telefono (FR-MOB-06);
+ *   - errore durante l'esecuzione: il blocco è inquadrato tornando al diagramma (FR-MOB-03).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -156,6 +159,90 @@ async function checkLongRun(page, checks) {
     checks.ok((await page.textContent('#status')).trim() === 'Fermato', 'stato "Fermato" dopo Ferma');
 }
 
+async function zoomLabel(page) {
+    return (await page.textContent('#zoom-reset')).trim();
+}
+
+async function checkDiagram(page, checks, viewport, engineName) {
+    const blocks = await page.locator('#diagram svg.diagram g[data-id]').count();
+    checks.ok(blocks > 20, `un gruppo SVG per blocco (${blocks})`);
+    checks.ok(await zoomLabel(page) === '100%', 'l\'esempio si apre al 100%');
+    const startBox = await page.locator('#diagram .dg-block--terminal').first().boundingBox();
+    const sheetBox = await page.locator('#sheet').boundingBox();
+    checks.ok(startBox && startBox.x >= sheetBox.x && startBox.x + startBox.width <= sheetBox.x + sheetBox.width,
+        'Inizio è dentro il foglio all\'apertura');
+    const width = async () => (await page.locator('#diagram svg.diagram').boundingBox()).width;
+    const before = await width();
+    await page.click('#zoom-in');
+    checks.ok(await zoomLabel(page) === '125%', `Ingrandisci porta al 125% (${await zoomLabel(page)})`);
+    checks.ok(Math.abs(await width() - before * 1.25) < 2, 'il disegno cresce del 25%');
+    checks.ok(await page.evaluate(() => !window.visualViewport || window.visualViewport.scale === 1), 'la pagina non si ingrandisce');
+    checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale della pagina con lo zoom');
+    await page.click('#zoom-fit');
+    const fitted = await page.locator('#diagram svg.diagram').boundingBox();
+    const sheet = await page.evaluate(() => {
+        const node = document.getElementById('sheet');
+        return { width: node.clientWidth, height: node.clientHeight };
+    });
+    checks.ok(fitted.width <= sheet.width + 1 && fitted.height <= sheet.height + 1, 'Adatta allo schermo: il diagramma entra tutto');
+    await page.click('#zoom-reset');
+    checks.ok(await zoomLabel(page) === '100%', 'il pulsante della percentuale riporta al 100%');
+    if (!viewport.phone) {
+        await page.mouse.move(sheetBox.x + 200, sheetBox.y + 200);
+        await page.keyboard.down('Control');
+        await page.mouse.wheel(0, -200);
+        await page.keyboard.up('Control');
+        await page.waitForTimeout(100);
+        checks.ok(await zoomLabel(page) !== '100%', `Ctrl + rotella cambia lo zoom del diagramma (${await zoomLabel(page)})`);
+        await page.click('#zoom-reset');
+    } else if (engineName === 'chromium') {
+        // Pizzico simulato con eventi touch: due dita che si allontanano.
+        await page.evaluate(() => {
+            const sheetNode = document.getElementById('sheet');
+            const box = sheetNode.getBoundingClientRect();
+            const cx = box.left + box.width / 2;
+            const cy = box.top + box.height / 2;
+            const touches = (gap) => [0, 1].map((id) => new Touch({
+                identifier: id, target: sheetNode, clientX: cx + (id ? gap : -gap), clientY: cy
+            }));
+            const send = (type, list) => sheetNode.dispatchEvent(new TouchEvent(type, {
+                touches: list, targetTouches: list, changedTouches: list, bubbles: true, cancelable: true
+            }));
+            send('touchstart', touches(40));
+            send('touchmove', touches(80));
+            send('touchend', []);
+        });
+        await page.waitForTimeout(100);
+        checks.ok(await zoomLabel(page) === '200%', `pizzico a due dita: zoom al 200% (${await zoomLabel(page)})`);
+        await page.click('#zoom-reset');
+    }
+}
+
+/* Errore alla fine di un diagramma lungo: tornando al diagramma il blocco è inquadrato. */
+async function checkRuntimeReveal(page, checks, viewport) {
+    const text = await page.evaluate(() => {
+        const Model = window.OnoFlow.Model;
+        const body = [Model.createBlock('declare', { names: 'x', type: 'Integer' })];
+        for (let i = 0; i < 15; i++) {
+            body.push(Model.createBlock('output', { expression: '"riga ' + i + '"' }));
+        }
+        body.push(Model.createBlock('assign', { variable: 'x', expression: '1 / 0' }));
+        return window.OnoFlow.Format.exportFprg(Model.createProgram({ functions: [Model.createFunction({ name: 'Main', body })] }));
+    });
+    await page.setInputFiles('#file-input', { name: 'errore.fprg', mimeType: 'application/octet-stream', buffer: Buffer.from(text) });
+    await page.waitForSelector('#diagram [data-id]');
+    await page.click('#run');
+    await page.waitForSelector('.console-note--error');
+    if (viewport.phone) {
+        await page.click('#tab-diagram');
+    }
+    const ring = await page.locator('#diagram .dg-ring').boundingBox();
+    const sheet = await page.locator('#sheet').boundingBox();
+    checks.ok(ring !== null && ring.y >= sheet.y && ring.y + ring.height <= sheet.y + sheet.height,
+        'il blocco dell\'errore è inquadrato nel diagramma (FR-MOB-03)');
+    checks.ok((await page.locator('#diagram-errors .diagram-error').count()) === 1, 'l\'errore è nell\'elenco sopra il foglio');
+}
+
 async function checkViewport(browser, engineName, viewport, screenshotsDir) {
     const checks = new Checks(`${engineName} ${viewport.name}`);
     const context = await browser.newContext({
@@ -169,7 +256,7 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
     page.on('pageerror', (error) => pageErrors.push(error.message));
     try {
         await page.goto(URL);
-        await page.waitForSelector('#diagram .row--terminal');
+        await page.waitForSelector('#diagram .dg-block--terminal');
         checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale all\'apertura');
         checks.ok(await page.isVisible('.tabs') === viewport.phone, viewport.phone ? 'schede visibili' : 'schede nascoste');
         if (screenshotsDir) {
@@ -178,12 +265,15 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
 
         await chooseExample(page);
         checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale con l\'esempio');
+        await checkDiagram(page, checks, viewport, engineName);
         await runQa04(page, checks, viewport);
         checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale dopo l\'esecuzione');
         if (screenshotsDir) {
             await page.screenshot({ path: path.join(screenshotsDir, `${engineName}-${viewport.name}-eseguito.png`) });
         }
 
+        await checkRuntimeReveal(page, checks, viewport);
+        await chooseExample(page);
         await checkSave(page, checks);
         await checkBadFile(page, checks);
         await checkRestore(page, checks);

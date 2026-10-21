@@ -36,6 +36,15 @@
     --warning-soft: #fdf3dc;
     --info-soft: #e8edf9;
 
+    /* Tinte dei blocchi, una per tipo (DEC-057): tenui, mai gialle o rosse (regola del segno unico) */
+    --block-declare: #e8ecff;
+    --block-assign: #d8f2ff;
+    --block-input: #cff9ef;
+    --block-output: #dff7da;
+    --block-if: #f8e7ff;
+    --block-loop: #cdf7ff;
+    --block-call: #e9eff6;
+
     /* Lavagna (console) */
     --slate: #213a33;
     --slate-line: #3c5a50;
@@ -96,6 +105,14 @@
         --warning: #f1c46b;
         --warning-soft: #33290f;
         --info-soft: #1d2638;
+
+        --block-declare: #292b46;
+        --block-assign: #192f46;
+        --block-input: #07362f;
+        --block-output: #20341b;
+        --block-if: #352641;
+        --block-loop: #03343c;
+        --block-call: #282f35;
 
         /* Lavagna più scura del foglio, separata da una linea */
         --slate: #172a24;
