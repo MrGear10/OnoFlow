@@ -15,8 +15,9 @@
  *   - copia di sessione per il ripristino (FR-MOB-15, NFR-PRIV-08);
  *   - avviso delle modifiche non salvate prima di Nuovo, Apri, Esempi, trascinamento e alla
  *     chiusura della pagina (FR-FILE-08);
- *   - editor: punti di inserimento sulle frecce, selezione di un blocco con "Inserisci dopo",
- *     menu dei blocchi (js/ui/block-menu.js, js/core/editor.js; FR-EDIT-01, DEC-063).
+ *   - editor: punti di inserimento sulle frecce, selezione di un blocco con "Modifica" e
+ *     "Inserisci dopo", menu dei blocchi, finestra di modifica (js/ui/block-menu.js,
+ *     js/ui/block-editor.js, js/core/editor.js; FR-EDIT-01…03, FR-EDIT-08, DEC-063, DEC-066).
  * Ogni testo viene dal catalogo (NFR-I18N-01) e ogni dato del file entra come testo (NFR-SEC-01).
  */
 (function (OnoFlow) {
@@ -38,6 +39,7 @@
     var DiagramDocument = OnoFlow.DiagramDocument;
     var Editor = OnoFlow.Editor;
     var BlockMenu = OnoFlow.BlockMenu;
+    var BlockEditor = OnoFlow.BlockEditor;
 
     var DEFAULT_EXTENSION = '.fprg';
     var MAX_FILE_BYTES = 5 * 1024 * 1024; // NFR-PERF-02
@@ -106,6 +108,7 @@
         var zoomButtons = { out: byId('zoom-out'), reset: byId('zoom-reset'), 'in': byId('zoom-in'), fit: byId('zoom-fit') };
         var selectionBar = byId('selection-bar');
         var insertAfterButton = byId('insert-after');
+        var editButton = byId('edit-block');
         var consoleEmpty = byId('console-empty');
         var tabs = { diagram: byId('tab-diagram'), console: byId('tab-console') };
         var commands = {
@@ -341,6 +344,67 @@
             state.selectedId = nodeId;
             state.diagram.setSelected(nodeId);
             selectionBar.hidden = !nodeId || isActive();
+            editButton.disabled = !nodeId || !canOpenEditor(nodeId);
+        }
+
+        function blockGroup(nodeId) {
+            return diagram.querySelector('[data-id="' + nodeId + '"]');
+        }
+
+        // --- Editor: finestra di modifica (passo 10, DEC-066) ------------------------
+
+        /* Chiamate e commenti si modificano nella fase 2 (FR-EDIT-10). */
+        function canOpenEditor(nodeId) {
+            var found = Model.findById(state.program, nodeId);
+            return Boolean(found) && Boolean(BlockEditor.FIELDS[found.node.kind]) && Editor.canEdit(state.program, nodeId);
+        }
+
+        var redrawFrame = 0;
+        var sessionTimer = 0;
+
+        /* Modifica mentre si scrive: documento, errori e disegno subito; copia di sessione poco dopo. */
+        function afterFieldChange() {
+            state.document.markChanged();
+            state.outcome = null;
+            state.runningId = null;
+            state.staticErrors = StaticCheck.check(state.program);
+            state.marked = { errors: [], runtime: false };
+            updateFileState();
+            if (!redrawFrame) {
+                redrawFrame = window.requestAnimationFrame(function () {
+                    redrawFrame = 0;
+                    drawDiagram();
+                    showStaticErrors();
+                });
+            }
+            window.clearTimeout(sessionTimer);
+            sessionTimer = window.setTimeout(storeSessionCopy, 400);
+        }
+
+        var blockEditor = BlockEditor.create(byId('work'), {
+            t: t,
+            formatError: formatError,
+            onChange: afterFieldChange,
+            onClose: function () {
+                app.classList.remove('is-editing');
+                window.clearTimeout(sessionTimer);
+                storeSessionCopy();
+                var group = state.selectedId ? blockGroup(state.selectedId) : null;
+                if (group) {
+                    group.focus({ preventScroll: true });
+                }
+            }
+        });
+
+        function openEditor(nodeId) {
+            if (isActive() || !canOpenEditor(nodeId)) {
+                return;
+            }
+            blockMenu.close({ restoreFocus: false });
+            select(nodeId);
+            app.classList.add('is-editing');
+            blockEditor.open(Model.findById(state.program, nodeId).node);
+            revealNode(nodeId, { quiet: true });
         }
 
         var blockMenu = BlockMenu.create(byId('panel-diagram'), {
@@ -352,7 +416,7 @@
                 var block = Editor.createNewBlock(kind);
                 Editor.insertAt(state.program, state.insertSlot, block);
                 state.insertSlot = null;
-                afterEdit(block.id);
+                afterInsert(block.id);
             }
         });
 
@@ -382,6 +446,12 @@
             storeSessionCopy();
         }
 
+        /* Un blocco appena inserito apre subito la finestra di modifica (FR-EDIT-03). */
+        function afterInsert(nodeId) {
+            afterEdit(nodeId);
+            openEditor(nodeId);
+        }
+
         /* Tocco o clic sul foglio: un punto di inserimento, un blocco, oppure niente (toglie la selezione). */
         function activate(event, target) {
             if (isActive()) {
@@ -399,7 +469,12 @@
             if (hit && hit.slot !== undefined) {
                 openInsertMenu(state.diagram.slots[hit.slot], diagram.querySelector('[data-slot="' + hit.slot + '"]'));
             } else if (hit) {
-                select(hit.block);
+                // Secondo tocco sul blocco selezionato, o un altro blocco mentre si modifica: si apre la modifica (B3).
+                if (hit.block === state.selectedId || blockEditor.isOpen()) {
+                    openEditor(hit.block);
+                } else {
+                    select(hit.block);
+                }
             } else {
                 select(null);
             }
@@ -419,6 +494,20 @@
                 activate(event, target);
             } else if (event.key === 'Escape' && state.selectedId) {
                 select(null);
+            }
+        });
+
+        // Doppio clic sul blocco: modifica (FR-EDIT-02).
+        sheet.addEventListener('dblclick', function (event) {
+            var target = event.target.closest ? event.target.closest('.is-selectable') : null;
+            if (target) {
+                openEditor(target.getAttribute('data-id'));
+            }
+        });
+
+        editButton.addEventListener('click', function () {
+            if (state.selectedId) {
+                openEditor(state.selectedId);
             }
         });
 
@@ -469,6 +558,7 @@
             state.selectedId = null;
             state.insertSlot = null;
             blockMenu.close({ restoreFocus: false });
+            blockEditor.close();
             selectionBar.hidden = true;
             state.marked = { errors: [], runtime: false };
             drawDiagram();
@@ -637,8 +727,9 @@
                 return;
             }
             closeMenu();
-            // Durante l'esecuzione non si modifica (FR-EDIT-07): via menu dei blocchi e selezione.
+            // Durante l'esecuzione non si modifica (FR-EDIT-07): via menu, finestra di modifica e selezione.
             blockMenu.close({ restoreFocus: false });
+            blockEditor.close();
             select(null);
             consoleView.clear();
             consoleEmpty.hidden = true;
@@ -934,7 +1025,7 @@
                 if (viewport.offsetTop > 0) {
                     window.scrollTo(0, 0);
                 }
-                if (open && !keyboardOpen) {
+                if (open && !keyboardOpen && !blockEditor.isOpen()) {
                     consoleView.focusInput(); // il campo resta sopra la tastiera (FR-MOB-02)
                 }
                 keyboardOpen = open;

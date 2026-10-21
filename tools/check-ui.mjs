@@ -1,5 +1,5 @@
 /*
- * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–9).
+ * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–10).
  *
  * Dipendenze: playwright (solo in tools/, mai nell'applicazione).
  *
@@ -24,7 +24,10 @@
  *     avviso del browser alla chiusura della pagina (FR-FILE-08, FR-FILE-11);
  *   - inserimento: punto sulla freccia → menu → blocco, nei rami dell'if, "Inserisci dopo",
  *     da tastiera, area di tocco di 44 px anche con lo zoom ridotto, punti nascosti durante
- *     l'esecuzione (FR-EDIT-01, FR-EDIT-03, FR-EDIT-07, FR-MOB-04, FR-MOB-05, DEC-063).
+ *     l'esecuzione (FR-EDIT-01, FR-EDIT-03, FR-EDIT-07, FR-MOB-04, FR-MOB-05, DEC-063);
+ *   - creazione da zero con la finestra di modifica: dichiarazione, input, output, poi
+ *     esecuzione con un valore; errore mentre si scrive; barra dei simboli; finestra a tutto
+ *     schermo sul telefono; secondo tocco per modificare (FR-EDIT-02, FR-MOB-07…09, B3).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -333,6 +336,7 @@ async function checkInsert(page, checks, viewport) {
     }
     await press('[data-kind="if"]');
     checks.ok(!(await page.isVisible('.block-menu')), 'dopo la scelta il menu si chiude');
+    await press('.edit-done'); // il blocco nuovo apre la finestra di modifica (passo 10): qui si lascia vuoto
     checks.ok(await page.isVisible('#modified'), 'dopo l\'inserimento: "Non salvato"');
     checks.ok(await page.locator('#diagram-errors .diagram-error').count() === 1, 'il blocco vuoto è un errore (FR-EDIT-03)');
     checks.ok(await page.isVisible('#selection-bar'), 'il blocco nuovo è selezionato, con "Inserisci dopo"');
@@ -342,8 +346,10 @@ async function checkInsert(page, checks, viewport) {
     checks.ok(thenIndex !== -1, `punto con il nome del ramo Vero (${slots.join(' | ')})`);
     await press(`[data-slot="${thenIndex}"]`);
     await press('[data-kind="output"]');
+    await press('.edit-done');
     await press('#insert-after');
     await press('[data-kind="assign"]');
+    await press('.edit-done');
     const shape = await page.evaluate(() => {
         const main = window.OnoFlow.Format.importFprg(sessionStorage.getItem('onoflow.diagram') && JSON.parse(sessionStorage.getItem('onoflow.diagram')).text).program.functions[0];
         return main.body.map((block) => block.kind + (block.kind === 'if' ? '[' + block.then.map((inner) => inner.kind).join(',') + ']' : '')).join(' ');
@@ -366,6 +372,69 @@ async function checkInsert(page, checks, viewport) {
         checks.ok(await page.isVisible('.block-menu'), `con lo zoom al ${(await page.textContent('#zoom-reset')).trim()} il punto si colpisce a 18 px`);
         await page.keyboard.press('Escape');
         await page.click('#zoom-reset');
+    }
+}
+
+/* Costruire da zero ed eseguire, solo con l'editor (verso QA-11). */
+async function checkBuildAndRun(page, checks, viewport) {
+    const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
+    const typeInto = async (selector, text) => {
+        await page.locator(selector).fill(text);
+    };
+    await page.click('#menu-button');
+    await page.click('#cmd-new');
+    // Il controllo di prima ha lasciato modifiche non salvate: c'è la barra (FR-FILE-08).
+    checks.ok(await page.isVisible('.notice-action'), 'Nuovo dopo gli inserimenti: la barra delle modifiche non salvate');
+    await press('.notice-action:has-text("Non salvare")');
+    await press('#diagram [data-slot="0"]');
+    await press('[data-kind="declare"]');
+    checks.ok(await page.isVisible('.block-editor'), 'il blocco nuovo apre subito la finestra di modifica (FR-EDIT-03)');
+    checks.ok(await page.evaluate(() => document.activeElement.classList.contains('edit-input')), 'il focus è nel primo campo');
+    if (viewport.phone) {
+        const box = await page.locator('.block-editor').boundingBox();
+        checks.ok(box.x <= 0 && box.width >= viewport.width - 1 && box.height >= viewport.height * 0.9,
+            'sul telefono la finestra è a tutto schermo (FR-MOB-07)');
+        const field = await page.locator('.edit-input').first().boundingBox();
+        checks.ok(field.y < 160, 'il campo è in alto');
+        checks.ok(await page.isVisible('.edit-symbols'), 'la barra dei simboli è visibile (FR-MOB-08)');
+    }
+    await typeInto('.edit-input >> nth=0', 'n');
+    await press('.edit-done');
+    await press('#insert-after');
+    await press('[data-kind="input"]');
+    await typeInto('.edit-input >> nth=0', 'n');
+    await press('.edit-done');
+    await press('#insert-after');
+    await press('[data-kind="output"]');
+    // Errore mentre si scrive, poi corretto; il simbolo * dalla barra.
+    await typeInto('.edit-input >> nth=0', 'n 2,5');
+    checks.ok(await page.isVisible('.edit-error .pen-wave'), 'errore mentre si scrive, con l\'onda');
+    await typeInto('.edit-input >> nth=0', 'n ');
+    await page.locator('.edit-input').first().press('End');
+    await press('[data-symbol="*"]');
+    await page.locator('.edit-input').first().press('End');
+    await page.keyboard.type(' 2');
+    checks.ok((await page.inputValue('.edit-input >> nth=0')) === 'n * 2', `simbolo dalla barra: ${await page.inputValue('.edit-input >> nth=0')}`);
+    checks.ok(!(await page.isVisible('.edit-error:not([hidden])')), 'corretto: nessun errore');
+    await press('.edit-done');
+    checks.ok(!(await page.isVisible('.block-editor')), 'Fatto chiude la finestra');
+    checks.ok((await page.locator('#diagram-errors .diagram-error').count()) === 0, 'nessun errore nel diagramma');
+    // Secondo tocco sul blocco selezionato: si riapre la modifica (B3).
+    const selected = await page.evaluate(() => document.querySelector('#diagram .is-selected').getAttribute('data-id'));
+    await press(`#diagram [data-id="${selected}"]`);
+    checks.ok(await page.isVisible('.block-editor'), 'un secondo tocco sul blocco selezionato apre la modifica');
+    await press('.edit-done');
+
+    await page.click('#run');
+    const field = page.locator('.console-field');
+    await field.waitFor();
+    await field.fill('21');
+    await field.press('Enter');
+    await page.waitForSelector('.console-note--done');
+    const output = (await page.textContent('#console-log')).split('\n').map((line) => line.trim()).filter(Boolean);
+    checks.ok(output[output.length - 2] === '42' || output.includes('42'), `il programma costruito da zero stampa 42 (${output.join(' | ')})`);
+    if (viewport.phone) {
+        await page.click('#tab-diagram');
     }
 }
 
@@ -405,6 +474,7 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
         await checkRestore(page, checks);
         await checkNewFile(page, checks);
         await checkInsert(page, checks, viewport);
+        await checkBuildAndRun(page, checks, viewport);
         if (!viewport.phone) {
             await checkMenuKeyboard(page, checks);
             await checkLongRun(page, checks);

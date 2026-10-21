@@ -140,3 +140,18 @@ La finestra di modifica arriva al passo 10: per ora un blocco inserito resta vuo
 - [ ] Ricaricando la pagina dopo qualche inserimento, il diagramma torna con i blocchi inseriti e "Non salvato".
 - [ ] **Telefono:** il + si colpisce al primo tocco; il menu è un pannello in basso con le voci su due colonne senza parole spezzate; "Inserisci dopo" sta sopra i comandi dello zoom; nessuno scorrimento orizzontale della pagina.
 - [ ] In fondo al foglio una sola riga piccola con "Copia locale" (online: hosting su GitHub Pages e "Privacy di GitHub") e **Informazioni**. Informazioni (anche da **Menu → Progetto**) apre un pannello con indipendenza, uso dell'IA, hosting, copia di sessione e licenza; Chiudi o Esc lo chiudono.
+
+---
+
+## Passo 10 — Finestra di modifica
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (360 test).
+- [ ] **Nuovo**, + → **Dichiarazione**: si apre subito la finestra (sul computer al posto della console), con il focus su "Nomi delle variabili" e il suggerimento «es. n, somma». Scrivere `n`: il diagramma si aggiorna mentre si scrive. **Fatto** chiude.
+- [ ] **Inserisci dopo → Input** `n`; **Inserisci dopo → Output** `n * 2`. **Esegui**, scrivere `21`: la console stampa `42`.
+- [ ] Nell'output scrivere `n 2,5`: sotto il campo compaiono il messaggio rosso e il testo con l'onda sotto `2,5`; sul diagramma il cerchio rosso. Correggendo spariscono entrambi.
+- [ ] Un campo lasciato vuoto non è rosso mentre lo si scrive; lo diventa passando al campo successivo.
+- [ ] Dichiarazione: cambiare il tipo in Real, spuntare **Array**: compare "Numero di elementi". Output: togliere "A capo". For: verso Decrescente, il blocco diventa `for … down to …`.
+- [ ] Riaprire la modifica: con **Modifica**, con un secondo clic sul blocco selezionato, con un doppio clic. Invio passa al campo dopo, Esc chiude e torna al blocco.
+- [ ] Con un esempio importato, le funzioni diverse da Main non si modificano; un commento o una chiamata in Main hanno **Modifica** barrato.
+- [ ] **Telefono:** la finestra è a tutto schermo con il campo in alto; con la tastiera aperta la barra dei simboli sta subito sopra la tastiera e un tocco su un simbolo non la chiude; nessuna correzione automatica o maiuscola iniziale; il campo non fa ingrandire la pagina.
+- [ ] **iPhone:** scrivere una stringa con le virgolette della tastiera: nel campo diventano subito dritte `"`.

@@ -174,7 +174,7 @@
             // di azioni, non frasi rivolte allo studente: restano all'imperativo.
             var commandNames = ['ui.new', 'ui.open', 'ui.save', 'ui.run', 'ui.pause', 'ui.resume', 'ui.stop',
                 'ui.undo', 'ui.redo', 'ui.console.continue', 'ui.notice.close', 'ui.zoom.out', 'ui.zoom.in', 'ui.zoom.fit',
-                'ui.unsaved.save', 'ui.unsaved.discard', 'ui.selection.insertAfter'];
+                'ui.unsaved.save', 'ui.unsaved.discard', 'ui.selection.insertAfter', 'ui.selection.edit'];
             var messages = Localization.catalogOf('it').messages;
             assert.deepEqual(Object.keys(messages).filter(function (key) {
                 return commandNames.indexOf(key) === -1 && hasSecondPerson(messages[key]);

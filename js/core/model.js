@@ -184,6 +184,16 @@
         return block.fields[fieldName];
     }
 
+    /* Cambia una proprietà semplice (tipo, array, newline, direction, text), con lo stesso controllo della creazione. */
+    function setProperty(block, name, value) {
+        if (!Object.prototype.hasOwnProperty.call(definitionOf(block.kind).properties, name)) {
+            throw new TypeError('Model: ' + block.kind + ' non ha la proprietà "' + name + '"');
+        }
+        checkProperty(block.kind, name, value);
+        block[name] = value;
+        return value;
+    }
+
     function childListsOf(block) {
         return definitionOf(block.kind).children;
     }
@@ -277,6 +287,7 @@
         createProgram: createProgram,
         createEmptyProgram: createEmptyProgram,
         setFieldText: setFieldText,
+        setProperty: setProperty,
         childListsOf: childListsOf,
         activeFieldNames: activeFieldNames,
         walk: walk,

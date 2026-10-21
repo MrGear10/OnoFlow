@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Prodotto** | OnoFlow — editor web di diagrammi di flusso, compatibile con i file `.fprg` |
-| **Versione del documento** | 1.13 — 22 ottobre 2026 |
+| **Versione del documento** | 1.14 — 22 ottobre 2026 |
 | **Stato** | Base per una nuova implementazione da zero |
 | **Origine** | Sintesi del documento di progetto (rev. 7) e di un prototipo che ha completato i passi 1–6 della fase 1 |
 | **Licenza prevista** | MIT |

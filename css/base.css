@@ -954,6 +954,200 @@ button.diagram-error-entry:active {
     stroke-width: 1.25;
 }
 
+/* --- Finestra di modifica (FR-EDIT-02, FR-MOB-07, DEC-066) ------------------------- */
+
+/* Sul computer prende il posto della console, accanto al diagramma. */
+.block-editor {
+    grid-column: 2;
+    grid-row: 1;
+    z-index: 4;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--paper);
+    border-left: 1px solid var(--chrome-line);
+}
+
+.block-editor[hidden] {
+    display: none;
+}
+
+.edit-header {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--gutter);
+    border-bottom: 1px solid var(--line);
+    background: var(--chrome);
+}
+
+.edit-icon .block-icon {
+    display: block;
+}
+
+.edit-title {
+    flex: 1;
+    margin: 0;
+    font-size: var(--text-title);
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.edit-fields {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-4) var(--gutter);
+}
+
+.edit-row + .edit-row {
+    margin-top: var(--space-4);
+}
+
+.edit-row[hidden] {
+    display: none;
+}
+
+.edit-label {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-size: var(--text-small);
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* Campi del contenuto: monospazio alla misura del diagramma, mai sotto 16 px (FR-MOB-17). */
+.edit-input,
+.edit-select {
+    width: 100%;
+    min-height: var(--touch);
+    padding: 0 var(--space-2);
+    background: var(--paper);
+    color: var(--text);
+    border: 1px solid var(--chrome-line);
+    border-radius: var(--radius);
+    font-family: var(--font-code);
+    font-size: max(16px, var(--text-content));
+}
+
+.edit-select {
+    font-family: var(--font-ui);
+    font-size: max(16px, var(--text-body));
+}
+
+.edit-input::placeholder {
+    color: var(--text-muted);
+    opacity: 1;
+}
+
+.edit-input:focus,
+.edit-select:focus {
+    outline: none;
+    border-color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.edit-input[aria-invalid="true"] {
+    border-color: var(--pen);
+}
+
+.edit-row--check {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--touch);
+}
+
+.edit-row--check .edit-label {
+    margin: 0;
+    font-size: var(--text-body);
+    font-weight: 400;
+    color: var(--text);
+}
+
+.edit-check {
+    width: 1.375rem;
+    height: 1.375rem;
+    margin: 0;
+    accent-color: var(--ink);
+}
+
+/* Errore mentre si scrive: messaggio in penna rossa e il testo con l'onda nel punto esatto. */
+.edit-error {
+    margin-top: var(--space-2);
+    max-width: 60ch;
+}
+
+.edit-error[hidden] {
+    display: none;
+}
+
+.edit-error-message {
+    display: block;
+    color: var(--pen);
+    font-weight: 600;
+}
+
+.edit-mirror {
+    display: block;
+    margin-top: var(--space-1);
+    font-family: var(--font-code);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--text);
+}
+
+.pen-wave {
+    text-decoration: underline wavy var(--pen);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.25em;
+    text-decoration-skip-ink: none;
+}
+
+.pen-wave--point {
+    display: inline-block;
+    width: 1.5ch;
+    height: 1em;
+    vertical-align: -0.15em;
+    border-bottom: 3px solid var(--pen);
+    text-decoration: none;
+}
+
+/* Barra dei simboli (FR-MOB-08): in fondo al pannello, quindi sopra la tastiera del telefono. */
+.edit-symbols {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr));
+    gap: 1px;
+    padding: 1px;
+    background: var(--line);
+    border-top: 1px solid var(--chrome-line);
+}
+
+.edit-symbol {
+    min-height: var(--touch);
+    background: var(--chrome);
+    border: 0;
+    color: var(--ink);
+    font-family: var(--font-code);
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.edit-symbol:active {
+    background: var(--ink);
+    color: var(--on-ink);
+}
+
+.edit-symbol:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: -3px;
+}
+
 /* --- Barra della selezione (B3) ----------------------------------------------------- */
 
 .selection-bar {
@@ -961,6 +1155,7 @@ button.diagram-error-entry:active {
     left: calc(var(--space-3) + env(safe-area-inset-left, 0px));
     bottom: var(--space-3);
     display: flex;
+    gap: var(--space-2);
     background: var(--paper);
     border-radius: var(--radius);
 }
@@ -1003,7 +1198,7 @@ button.diagram-error-entry:active {
 .footer {
     flex: none;
     /* Una riga piccola e tenue (DEC-065); in basso c'è posto per i comandi dello zoom. */
-    padding: var(--space-2) var(--square) calc(var(--touch) + 2 * var(--space-3) + env(safe-area-inset-bottom, 0px)) calc(var(--margin-line) + var(--square));
+    padding: var(--space-2) var(--square) calc(var(--touch) + 3 * var(--space-3) + env(safe-area-inset-bottom, 0px)) calc(var(--margin-line) + var(--square));
     background: var(--paper);
     font-size: 0.75rem;
     line-height: 1.5;
@@ -1087,7 +1282,15 @@ button.diagram-error-entry:active {
 
 /* --- Lavagna (console) ------------------------------------------------------------- */
 
+.pane--diagram {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+/* Colonna fissa: la finestra di modifica le si sovrappone senza spostarla. */
 .pane--console {
+    grid-column: 2;
+    grid-row: 1;
     border-left: 1px solid var(--slate-line);
 }
 
@@ -1345,6 +1548,7 @@ button.diagram-error-entry:active {
     }
 
     .pane--console {
+        grid-column: 1;
         border-left: 0;
     }
 
@@ -1408,6 +1612,28 @@ button.diagram-error-entry:active {
 
     .sheet {
         --margin-line: calc(var(--square) * var(--zoom));
+    }
+
+    /* Sul telefono la modifica è a tutto schermo, alta quanto la parte visibile sopra la tastiera. */
+    .block-editor {
+        position: fixed;
+        z-index: 30;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--viewport-height, 100dvh);
+        border-left: 0;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-left: env(safe-area-inset-left, 0px);
+        padding-right: env(safe-area-inset-right, 0px);
+    }
+
+    .app.keyboard-open .block-editor .edit-symbols {
+        padding-bottom: 1px;
+    }
+
+    .block-editor .edit-symbols {
+        padding-bottom: calc(1px + env(safe-area-inset-bottom, 0px));
     }
 
     /* Sul telefono la barra della selezione sta sopra i comandi dello zoom. */
