@@ -242,8 +242,8 @@
         T.test('salva e rilegge testo, nome e stato', function (assert) {
             var storage = memoryStorage();
             var copy = OnoFlow.SessionCopy.create(storage);
-            assert.isTrue(copy.save({ text: '<flowgorithm/>', fileName: 'a.fprg', saved: false }));
-            assert.deepEqual(copy.load(), { text: '<flowgorithm/>', fileName: 'a.fprg', saved: false });
+            assert.isTrue(copy.save({ text: '<flowgorithm/>', fileName: 'a.fprg', saved: false, origin: 'new' }));
+            assert.deepEqual(copy.load(), { text: '<flowgorithm/>', fileName: 'a.fprg', saved: false, origin: 'new' });
             assert.deepEqual(Object.keys(storage.data), [OnoFlow.SessionCopy.KEY], 'una sola chiave, niente altro');
             copy.clear();
             assert.equal(copy.load(), null);
@@ -258,6 +258,10 @@
             assert.equal(OnoFlow.SessionCopy.create(broken).load(), null);
             broken.data[OnoFlow.SessionCopy.KEY] = JSON.stringify({ text: 'x', fileName: 'a.fprg' });
             assert.equal(OnoFlow.SessionCopy.create(broken).load(), null, 'manca saved');
+            broken.data[OnoFlow.SessionCopy.KEY] = JSON.stringify({ text: 'x', fileName: 'a.fprg', saved: true, origin: 'altro' });
+            assert.equal(OnoFlow.SessionCopy.create(broken).load(), null, 'origine sconosciuta');
+            broken.data[OnoFlow.SessionCopy.KEY] = JSON.stringify({ text: 'x', fileName: 'a.fprg', saved: true });
+            assert.equal(OnoFlow.SessionCopy.create(broken).load().origin, 'file', 'una copia senza origine viene da un file');
 
             var full = memoryStorage();
             full.setItem = function () { throw new Error('QuotaExceededError'); };

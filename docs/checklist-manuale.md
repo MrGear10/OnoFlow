@@ -103,3 +103,21 @@ Aprire `index.html` con doppio clic, in Firefox. Poi le prove di zoom e inquadra
 - [ ] Tema scuro del sistema: tinte scure dello stesso colore, testo e frecce leggibili.
 - [ ] Al proiettore, dal fondo dell'aula: testi dei blocchi ed etichette Vero/Falso leggibili al 100%.
 - [ ] **Telefono:** scorrimento del foglio con un dito; **pizzico a due dita** per lo zoom, senza ingrandire la pagina (soprattutto su iPhone, FR-MOB-21); dopo un errore durante l'esecuzione, toccando la scheda **Diagramma** il blocco dell'errore è già inquadrato (FR-MOB-03).
+
+---
+
+## Passo 8 — Nuovo diagramma e stato "modificato"
+
+L'editor non c'è ancora: un diagramma risulta modificato solo se la pagina è stata ricaricata con modifiche non salvate. Per provarlo si usa la console degli strumenti per sviluppatori di Firefox (F12).
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (331 test).
+- [ ] **Menu → Nuovo**: foglio con Inizio e Fine, nome `diagramma.fprg`, nessun "Non salvato". Cambiare il nome in `esercizio` e **Salva**: aprendo il file scaricato con un editor di testo, gli attributi sono solo `name` = `esercizio`, `authors` e `about` vuoti, `saved` con l'ora; né `created` né `edited`.
+- [ ] Il file salvato si riapre con **Apri…** senza avvisi.
+- [ ] Un esempio salvato conserva i suoi attributi (`name` = `test_per_WebApp`, `authors`, `created`, `edited`): cambia solo `saved`.
+- [ ] Simulare modifiche non salvate: nella console di F12 scrivere
+  `sessionStorage.setItem('onoflow.diagram', JSON.stringify({ text: OnoFlow.Examples.list[0].text, fileName: 'compito.fprg', saved: false, origin: 'file' }))`
+  e ricaricare: c'è "Non salvato" accanto al nome.
+- [ ] **Menu → Nuovo**: compare la barra gialla «… ha modifiche non salvate …» con **Salva**, **Non salvare** e **Chiudi**. Chiudi lascia tutto com'è; Non salvare apre il foglio nuovo; Salva scarica `compito.fprg` e poi apre il foglio nuovo. Lo stesso con **Apri…** e con un esempio.
+- [ ] Con "Non salvato", chiudere la scheda o ricaricare: Firefox chiede conferma.
+- [ ] Cambiare solo il nome del file non fa comparire "Non salvato".
+- [ ] **Telefono:** la barra è leggibile, con i pulsanti sotto il testo.

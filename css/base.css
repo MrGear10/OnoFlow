@@ -507,8 +507,20 @@ a {
     border-bottom-color: var(--warning);
 }
 
-.notice-close {
+.notice-close,
+.notice-action {
     flex: none;
+}
+
+/* Barra con una scelta (modifiche non salvate): sul telefono i pulsanti vanno sotto il testo. */
+@media (max-width: 55.99rem) {
+    .notice:has(.notice-action) {
+        flex-wrap: wrap;
+    }
+
+    .notice:has(.notice-action) .notice-body {
+        flex-basis: 100%;
+    }
 }
 
 /* --- Foglio a quadretti (diagramma) ------------------------------------------------ */

@@ -4,15 +4,17 @@
  * Dipendenze: tutti gli script di js/, caricati prima da index.html.
  * Definisce: OnoFlow.App.start
  *
- * Tiene lo stato del diagramma aperto (programma, formato del file, testo di origine,
- * nome del file, salvato o no) e lo collega a:
+ * Tiene il diagramma aperto come documento (js/core/diagram-document.js: programma, formato,
+ * origine, nome del file, modificato o no) e lo collega a:
  *   - barra superiore: nome del file (B2), stato dell'esecuzione, Esegui, Pausa, Ferma, menu;
  *   - zona del diagramma: disegno SVG (js/ui/diagram-renderer.js), elenco degli errori sopra il
  *     foglio (js/ui/diagram-errors.js), scorrimento e zoom (js/ui/diagram-viewport.js);
  *   - console (js/ui/console-view.js) e scheduler (js/core/scheduler.js);
  *   - avvisi in linea sotto la barra, mai finestre modali (B1, FR-CON-03);
  *   - schede Diagramma e Console sul telefono (D-11, FR-MOB-01, FR-MOB-02);
- *   - copia di sessione per il ripristino (FR-MOB-15, NFR-PRIV-08).
+ *   - copia di sessione per il ripristino (FR-MOB-15, NFR-PRIV-08);
+ *   - avviso delle modifiche non salvate prima di Nuovo, Apri, Esempi, trascinamento e alla
+ *     chiusura della pagina (FR-FILE-08).
  * Ogni testo viene dal catalogo (NFR-I18N-01) e ogni dato del file entra come testo (NFR-SEC-01).
  */
 (function (OnoFlow) {
@@ -31,6 +33,7 @@
     var DiagramViewport = OnoFlow.DiagramViewport;
     var ConsoleView = OnoFlow.ConsoleView;
     var SessionCopy = OnoFlow.SessionCopy;
+    var DiagramDocument = OnoFlow.DiagramDocument;
 
     var DEFAULT_EXTENSION = '.fprg';
     var MAX_FILE_BYTES = 5 * 1024 * 1024; // NFR-PERF-02
@@ -106,11 +109,8 @@
         };
 
         var state = {
-            program: null,
-            format: Format.DEFAULT_FILE_FORMAT,
-            sourceText: '',
-            fileName: t('ui.fileName.default'),
-            saved: true,
+            document: null,         // il diagramma aperto (DiagramDocument)
+            program: null,          // = state.document.program
             staticErrors: [],
             scheduler: null,
             outcome: null,
@@ -185,8 +185,11 @@
             notices.textContent = '';
         }
 
-        /* Barra non bloccante sotto la barra superiore; kind: 'error', 'warning', 'info'. */
-        function notice(kind, message, items) {
+        /*
+         * Barra non bloccante sotto la barra superiore; kind: 'error', 'warning', 'info'.
+         * actions: pulsanti [{ label, run }] prima di Chiudi; ognuno chiude la barra e poi agisce.
+         */
+        function notice(kind, message, items, actions) {
             var bar = document.createElement('div');
             bar.className = 'notice notice--' + kind;
             bar.setAttribute('role', kind === 'error' ? 'alert' : 'status');
@@ -205,6 +208,19 @@
                 body.appendChild(list);
             }
             bar.appendChild(body);
+            (actions || []).forEach(function (action) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'button notice-action';
+                button.textContent = action.label;
+                button.addEventListener('click', function () {
+                    if (bar.parentNode) {
+                        bar.parentNode.removeChild(bar);
+                    }
+                    action.run();
+                });
+                bar.appendChild(button);
+            });
             var close = document.createElement('button');
             close.type = 'button';
             close.className = 'button button--quiet notice-close';
@@ -214,17 +230,40 @@
             });
             bar.appendChild(close);
             notices.appendChild(bar);
+            return bar;
         }
 
         // --- Diagramma aperto ------------------------------------------------------
 
         function storeSessionCopy() {
-            session.save({ text: state.sourceText, fileName: state.fileName, saved: state.saved });
+            session.save(state.document.sessionCopy(new Date()));
         }
 
         function updateFileState() {
-            fileNameField.value = state.fileName;
-            modifiedMark.hidden = state.saved;
+            fileNameField.value = state.document.fileName;
+            modifiedMark.hidden = !state.document.isModified();
+        }
+
+        /*
+         * Prima di lasciare un diagramma con modifiche non salvate (FR-FILE-08): una barra in
+         * linea, non una finestra modale (B1), con Salva, Non salvare e Chiudi (che rinuncia).
+         * Senza modifiche proceed parte subito.
+         */
+        var unsavedBar = null;
+        function confirmLeave(proceed) {
+            if (unsavedBar && unsavedBar.parentNode) {
+                unsavedBar.parentNode.removeChild(unsavedBar);
+            }
+            unsavedBar = null;
+            if (!state.document.isModified()) {
+                proceed();
+                return;
+            }
+            unsavedBar = notice('warning', t('ui.unsaved.message', { name: state.document.fileName }), null, [
+                { label: t('ui.unsaved.save'), run: function () { save(); proceed(); } },
+                { label: t('ui.unsaved.discard'), run: proceed }
+            ]);
+            unsavedBar.querySelector('.notice-action').focus();
         }
 
         /* Segni sul disegno ed elenco numerato sopra il foglio, con gli stessi numeri (DEC-057). */
@@ -284,13 +323,17 @@
             }
         });
 
-        /* Mostra un programma caricato; options: { saved }. */
+        /* Mostra un programma; options: { saved, origin: 'new' | 'file' }. */
         function useProgram(program, format, sourceText, fileName, options) {
+            state.document = DiagramDocument.create({
+                program: program,
+                format: format,
+                sourceText: sourceText,
+                fileName: normalizeFileName(fileName),
+                origin: options.origin,
+                saved: options.saved
+            });
             state.program = program;
-            state.format = format;
-            state.sourceText = sourceText;
-            state.fileName = normalizeFileName(fileName);
-            state.saved = options.saved;
             state.outcome = null;
             state.runningId = null;
             state.pendingReveal = null;
@@ -311,7 +354,7 @@
 
         function newProgram() {
             var program = Model.createEmptyProgram();
-            useProgram(program, Format.DEFAULT_FILE_FORMAT, Format.exportFprg(program), '', { saved: true });
+            useProgram(program, Format.DEFAULT_FILE_FORMAT, Format.exportFprg(program), '', { saved: true, origin: 'new' });
         }
 
         /* Apre un testo .fprg; se non si apre, il diagramma di prima resta (FR-FILE-04). */
@@ -322,9 +365,9 @@
                 notice('error', t('ui.notice.openFailed', { name: fileName, message: formatError(result.error) }));
                 return false;
             }
-            useProgram(result.program, result.format, text, fileName, { saved: true });
+            useProgram(result.program, result.format, text, fileName, { saved: true, origin: 'file' });
             if (result.warnings.length) {
-                notice('warning', t('ui.notice.warnings', { name: state.fileName }), result.warnings.map(formatError));
+                notice('warning', t('ui.notice.warnings', { name: state.document.fileName }), result.warnings.map(formatError));
             }
             if (narrow.matches) {
                 showTab('diagram');
@@ -358,7 +401,8 @@
         /* Salvataggio come download, con il nome del campo nella barra (FR-FILE-02, FR-MOB-12). */
         function save() {
             var name = normalizeFileName(fileNameField.value);
-            var text = Format.exportFprg(state.program, { format: state.format, now: new Date() });
+            // Un file nuovo prende gli attributi di DEC-061; uno aperto conserva i suoi (FMT-W-06).
+            var text = state.document.save(name, new Date());
             // application/octet-stream: su iOS il file arriva con il suo nome e .fprg (FR-MOB-20, da verificare).
             var blob = new Blob([text], { type: 'application/octet-stream' });
             var link = document.createElement('a');
@@ -369,9 +413,6 @@
             link.click();
             document.body.removeChild(link);
             window.setTimeout(function () { URL.revokeObjectURL(link.href); }, 10000);
-            state.fileName = name;
-            state.sourceText = text;
-            state.saved = true;
             updateFileState();
             storeSessionCopy();
         }
@@ -614,19 +655,22 @@
             item.textContent = t(example.titleKey);
             item.addEventListener('click', function () {
                 closeMenu();
-                openText(example.text, example.fileName);
+                confirmLeave(function () { openText(example.text, example.fileName); });
             });
             byId('examples-list').appendChild(item);
         });
 
         commands['new'].addEventListener('click', function () {
             closeMenu();
-            clearNotices();
-            newProgram();
+            confirmLeave(function () {
+                clearNotices();
+                newProgram();
+            });
         });
         commands.open.addEventListener('click', function () {
             closeMenu();
-            fileInput.click();
+            // Il selettore si apre nello stesso tocco (Apri, oppure Salva o Non salvare nella barra).
+            confirmLeave(function () { fileInput.click(); });
         });
         commands.save.addEventListener('click', function () {
             closeMenu();
@@ -652,12 +696,25 @@
         document.addEventListener('drop', function (event) {
             if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
                 event.preventDefault();
-                openFile(event.dataTransfer.files[0]);
+                var dropped = event.dataTransfer.files[0];
+                if (!isActive()) {
+                    confirmLeave(function () { openFile(dropped); });
+                }
             }
         });
 
+        // Chiusura o ricaricamento della pagina con modifiche: l'avviso del browser (FR-FILE-08).
+        // Sui telefoni non è affidabile: lì protegge la copia di sessione (FR-MOB-15).
+        window.addEventListener('beforeunload', function (event) {
+            if (state.document && state.document.isModified()) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+
+        // Cambiare nome non modifica il diagramma: vale solo per il prossimo salvataggio.
         fileNameField.addEventListener('change', function () {
-            state.fileName = normalizeFileName(fileNameField.value);
+            state.document.setFileName(normalizeFileName(fileNameField.value));
             updateFileState();
             storeSessionCopy();
         });
@@ -714,7 +771,7 @@
         var copy = session.load();
         var restored = copy ? Format.importFprg(copy.text) : null;
         if (restored && restored.ok) {
-            useProgram(restored.program, restored.format, copy.text, copy.fileName, { saved: copy.saved });
+            useProgram(restored.program, restored.format, copy.text, copy.fileName, { saved: copy.saved, origin: copy.origin });
             notice('info', t(copy.saved ? 'ui.notice.restored.saved' : 'ui.notice.restored.unsaved'));
         } else {
             newProgram();

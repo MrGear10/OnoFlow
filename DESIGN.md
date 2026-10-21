@@ -348,7 +348,7 @@ Comandi a contorno, in inchiostro, con il nome all'imperativo (Esegui, Pausa, Ri
 - **Schede (solo sotto i 56rem):** Diagramma e Console in basso, a metà larghezza ciascuna, icona più nome, alte 3.5rem. Attiva in inchiostro con una riga di 2px in alto; inattiva in testo tenue. Sulla scheda Console un pallino d'inchiostro segnala output nuovo, un pallino rosso un errore.
 
 ### Notices (avvisi in linea)
-Barra non bloccante sotto la barra superiore, a tutta larghezza, con il pulsante Chiudi a destra. Informativo con il velo d'inchiostro; errore con il velo di penna, bordo inferiore rosso e prima frase in penna rossa 600; avviso con velo e bordo ocra. Gli elenchi di dettagli vanno a capo dentro la barra.
+Barra non bloccante sotto la barra superiore, a tutta larghezza, con il pulsante Chiudi a destra. Quando chiede una scelta (modifiche non salvate, DEC-062) ha prima di Chiudi i pulsanti a contorno Salva e Non salvare, con il focus su Salva; sul telefono i pulsanti vanno sotto il testo. Informativo con il velo d'inchiostro; errore con il velo di penna, bordo inferiore rosso e prima frase in penna rossa 600; avviso con velo e bordo ocra. Gli elenchi di dettagli vanno a capo dentro la barra.
 
 ### Stato dell'esecuzione
 Testo in Label accanto al nome del file, preceduto dal suo segno (vedi Shapes); per gli errori anche il testo è in penna rossa. Annunciato ai lettori di schermo (`role="status"`).

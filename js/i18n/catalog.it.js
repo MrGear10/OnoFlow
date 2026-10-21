@@ -225,6 +225,9 @@
             'ui.value.more': 'e altri {count}',
 
             'ui.notice.close': 'Chiudi',
+            'ui.unsaved.message': 'Il diagramma «{name}» ha modifiche non salvate, che andrebbero perse.',
+            'ui.unsaved.save': 'Salva',
+            'ui.unsaved.discard': 'Non salvare',
             'ui.notice.openFailed': 'Il file «{name}» non si è aperto. {message} Il diagramma di prima resta aperto.',
             'ui.notice.readFailed': 'Il file «{name}» non si può leggere. Il diagramma di prima resta aperto.',
             'ui.notice.warnings': 'Il file «{name}» si è aperto, con questi avvisi:',

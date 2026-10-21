@@ -1,5 +1,5 @@
 /*
- * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6 e 7).
+ * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–8).
  *
  * Dipendenze: playwright (solo in tools/, mai nell'applicazione).
  *
@@ -18,7 +18,10 @@
  *   - ciclo infinito: pausa con la domanda dopo 5 secondi, poi Ferma (FR-RUN-04);
  *   - diagramma SVG: un gruppo per blocco, zoom dai comandi senza ingrandire la pagina, "Adatta
  *     allo schermo", Ctrl + rotella sul computer, pizzico a due dita sul telefono (FR-MOB-06);
- *   - errore durante l'esecuzione: il blocco è inquadrato tornando al diagramma (FR-MOB-03).
+ *   - errore durante l'esecuzione: il blocco è inquadrato tornando al diagramma (FR-MOB-03);
+ *   - file nuovo salvato con gli attributi di DEC-061, senza dati dell'utente (D-01);
+ *   - modifiche non salvate: barra con Salva, Non salvare e Chiudi prima di Nuovo ed Esempi,
+ *     avviso del browser alla chiusura della pagina (FR-FILE-08, FR-FILE-11).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -243,6 +246,73 @@ async function checkRuntimeReveal(page, checks, viewport) {
     checks.ok((await page.locator('#diagram-errors .diagram-error').count()) === 1, 'l\'errore è nell\'elenco sopra il foglio');
 }
 
+/* Nuovo e Salva: gli attributi di un file creato da zero (DEC-061). */
+async function checkNewFile(page, checks) {
+    await page.click('#menu-button');
+    await page.click('#cmd-new');
+    checks.ok(await page.inputValue('#file-name') === 'diagramma.fprg', 'Nuovo: nome diagramma.fprg');
+    checks.ok(!(await page.isVisible('#modified')), 'Nuovo: nessun segno "Non salvato"');
+    await page.fill('#file-name', 'esercizio');
+    await page.press('#file-name', 'Enter');
+    await page.locator('#file-name').blur();
+    const downloadPromise = page.waitForEvent('download');
+    await page.click('#menu-button');
+    await page.click('#cmd-save');
+    const download = await downloadPromise;
+    const text = await readFile(await download.path(), 'utf8');
+    const names = [...text.matchAll(/<attribute name="([^"]+)" value="([^"]*)"\/>/g)].map((match) => `${match[1]}=${match[2]}`);
+    checks.ok(names.length === 4 && names[0] === 'name=esercizio' && names[1] === 'authors=' && names[2] === 'about=' &&
+        names[3].startsWith('saved='), `attributi del file nuovo: ${names.join(', ')}`);
+}
+
+/* Diagramma ripristinato con modifiche: la barra prima di lasciarlo (FR-FILE-08). */
+async function checkUnsaved(page, checks) {
+    const markUnsaved = async () => {
+        await page.evaluate(() => {
+            const example = window.OnoFlow.Examples.byId('somma-massimo-minimo');
+            sessionStorage.setItem(window.OnoFlow.SessionCopy.KEY, JSON.stringify({
+                text: example.text, fileName: 'compito.fprg', saved: false, origin: 'file'
+            }));
+        });
+        await page.reload();
+        await page.waitForSelector('#diagram [data-id]');
+    };
+    await markUnsaved();
+    checks.ok(await page.isVisible('#modified'), 'ripristinato con modifiche: segno "Non salvato" (FR-FILE-11)');
+    await page.click('#menu-button');
+    await page.click('#cmd-new');
+    const bar = page.locator('.notice:has(.notice-action)');
+    checks.ok(await bar.isVisible(), 'Nuovo con modifiche: la barra chiede cosa fare');
+    checks.ok(await page.evaluate(() => document.activeElement.classList.contains('notice-action')), 'il focus va su Salva');
+    await bar.locator('.notice-close').click();
+    checks.ok(await page.inputValue('#file-name') === 'compito.fprg', 'Chiudi: il diagramma resta');
+    await page.click('#menu-button');
+    await page.click('#cmd-new');
+    await page.locator('.notice-action', { hasText: 'Non salvare' }).click();
+    checks.ok(await page.inputValue('#file-name') === 'diagramma.fprg' && !(await page.isVisible('#modified')),
+        'Non salvare: si apre il diagramma nuovo');
+
+    await markUnsaved();
+    await page.click('#menu-button');
+    await page.click('[data-example="somma-massimo-minimo"]');
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('.notice-action', { hasText: 'Salva' }).first().click();
+    const download = await downloadPromise;
+    checks.ok(download.suggestedFilename() === 'compito.fprg', `Salva scarica il diagramma di prima (${download.suggestedFilename()})`);
+    checks.ok(await page.inputValue('#file-name') === 'somma-massimo-minimo.fprg', 'poi si apre l\'esempio scelto');
+
+    await markUnsaved();
+    let asked = false;
+    page.on('dialog', async (dialog) => {
+        asked = asked || dialog.type() === 'beforeunload';
+        await dialog.dismiss();
+    });
+    await page.click('#sheet'); // il browser chiede conferma solo dopo un'interazione con la pagina
+    await page.close({ runBeforeUnload: true });
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    checks.ok(asked, 'chiusura con modifiche: il browser chiede conferma');
+}
+
 async function checkViewport(browser, engineName, viewport, screenshotsDir) {
     const checks = new Checks(`${engineName} ${viewport.name}`);
     const context = await browser.newContext({
@@ -277,10 +347,12 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
         await checkSave(page, checks);
         await checkBadFile(page, checks);
         await checkRestore(page, checks);
+        await checkNewFile(page, checks);
         if (!viewport.phone) {
             await checkMenuKeyboard(page, checks);
             await checkLongRun(page, checks);
         }
+        await checkUnsaved(page, checks); // per ultima: chiude la pagina
     } catch (error) {
         checks.ok(false, `verifica interrotta: ${error.message.split('\n')[0]}`);
     } finally {

@@ -546,7 +546,7 @@ Il significato del **numero finale** di `created` ed `edited` non è noto: forse
 | FMT-W-07 | L'app **non genera mai** `created` ed `edited`. Quali attributi abbia un file nuovo è la decisione D-01 (prima del passo 8); se Flowgorithm li richiedesse, si usano valori neutri privi di dati dell'utente |
 | FMT-W-08 | Attributi sconosciuti non riscritti |
 | FMT-W-09 | Un'espressione modificata nell'editor si scrive con il testo digitato dall'utente; un blocco nuovo si scrive nella forma della §7.3 |
-| FMT-W-10 | Un file creato da zero ha almeno l'attributo `name` (dal nome scelto al salvataggio) e nessun dato dell'utente; l'insieme completo degli attributi è la decisione D-01 |
+| FMT-W-10 | Un file creato da zero ha gli attributi `name` (nome del file senza `.fprg`), `authors` (vuoto), `about` (vuoto) e `saved`, in quest'ordine, e nessun dato dell'utente (D-01, DEC-061) |
 | FMT-W-11 | `saved` usa l'ora locale e si aggiorna solo se il file lo aveva; senza attributi si scrive `<attributes/>`; la dimensione di una dichiarazione non array si scrive vuota (DEC-033, DEC-034) |
 | FMT-W-12 | Casi in cui il round-trip **non** è identico, accettati: dichiarazione XML diversa da `<?xml version="1.0"?>`, `fileversion` diverso da `4.2`, a capo o tabulazioni scritti letterali (non come `&#10;`) dentro un attributo, attributi sconosciuti, `size` su una variabile semplice (DEC-035) |
 
@@ -610,7 +610,7 @@ Negli errori gli operatori DEVONO essere mostrati in una forma canonica e coeren
 | ID | Requisito |
 |---|---|
 | NFR-PRIV-01 | Nessun `localStorage`, IndexedDB, cookie o altro storage **persistente**: si lavora in memoria e si salva scaricando il file. Unica eccezione la copia di sessione di NFR-PRIV-08 |
-| NFR-PRIV-08 | **Copia di sessione del diagramma** (deroga decisa per i telefoni, FR-MOB-15): l'app PUÒ e DEVE conservare in `sessionStorage` **solo** il diagramma aperto (testo `.fprg`, nome del file, stato "salvato/non salvato"), per sopravvivere ai ricaricamenti e alle schede chiuse dal sistema. Resta solo su quel dispositivo e in quella scheda, il browser la cancella alla chiusura della scheda, non viene mai inviata. Niente preferenze, cronologia o altri dati. L'app DEVE funzionare anche se `sessionStorage` non è disponibile (es. navigazione privata), senza ripristino. Il README DEVE spiegarlo. Non è certo che su tutte le versioni di iOS la copia sopravviva a ogni chiusura in background: va verificato (QA-15) |
+| NFR-PRIV-08 | **Copia di sessione del diagramma** (deroga decisa per i telefoni, FR-MOB-15): l'app PUÒ e DEVE conservare in `sessionStorage` **solo** il diagramma aperto (testo `.fprg`, nome del file, stato "salvato/non salvato", origine "creato in OnoFlow/aperto da un file", DEC-062), per sopravvivere ai ricaricamenti e alle schede chiuse dal sistema. Resta solo su quel dispositivo e in quella scheda, il browser la cancella alla chiusura della scheda, non viene mai inviata. Niente preferenze, cronologia o altri dati. L'app DEVE funzionare anche se `sessionStorage` non è disponibile (es. navigazione privata), senza ripristino. Il README DEVE spiegarlo. Non è certo che su tutte le versioni di iOS la copia sopravviva a ogni chiusura in background: va verificato (QA-15) |
 | NFR-PRIV-02 | **Nessuna risorsa esterna**: niente CDN, font remoti, analytics. Solo font di sistema e codice locale |
 | NFR-PRIV-03 | I file si leggono in locale e si salvano tramite download; non lasciano mai il browser |
 | NFR-PRIV-04 | La scelta della lingua non si memorizza; si può fissare solo con il parametro `?lang=` nell'URL |
@@ -826,7 +826,7 @@ La prima versione si pubblica solo quando creazione da zero e modifica funzionan
 
 | # | Decisione | Quando |
 |---|---|---|
-| D-01 | Attributi di un file creato in OnoFlow (`authors` vuoto? `created`/`edited` assenti o neutri?) | Prima del passo 8 |
+| D-01 | Attributi di un file creato in OnoFlow — **decisa (DEC-061):** `name`, `authors` vuoto, `about` vuoto, `saved`; niente `created`/`edited` | Prima del passo 8 |
 | D-02 | Meccanismo di annulla/ripeti (comandi reversibili o copie del modello) e limite della storia | Prima del passo 12 |
 | D-03 | Forma dello spostamento dei blocchi (trascinamento o taglia/incolla) | Fase 2 |
 | D-04 | Interazione dell'editor al tocco: punti di inserimento sulle frecce, comando "inserisci dopo" sul blocco selezionato, o entrambi (FR-MOB-05) | Prima del passo 9 |

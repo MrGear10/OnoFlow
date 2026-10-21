@@ -383,3 +383,24 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 - **Apertura:** al 100% (DEC-057), con Inizio al centro in orizzontale. Con cicli e if l'asse può stare oltre il bordo del telefono.
 - **FR-MOB-03 (B5):** alla fine con un errore, il blocco si inquadra subito se il foglio è visibile; altrimenti si inquadra appena si passa alla scheda Diagramma. Lo fanno anche "Mostra nel diagramma" nella console e un tocco su un messaggio dell'elenco.
 - **Da verificare su telefoni veri:** il pizzico su iPhone e su Android, soprattutto se il dito ha già cominciato a scorrere il foglio prima che arrivi il secondo.
+
+## DEC-061 — Attributi di un file nuovo (D-01)
+
+- **Passo:** prima del passo 8 · **Decisa da:** autore · **Tocca:** §7.2, FMT-W-07, FMT-W-10, FMT-W-11, NFR-PRIV-05
+- **Decisione:** un file creato da zero in OnoFlow ha gli attributi di Flowgorithm **tranne `created` ed `edited`**, nello stesso ordine: `name`, `authors`, `about`, `saved`.
+  - `name`: il nome del file senza `.fprg`, aggiornato a ogni salvataggio finché il file non è stato importato. Un file importato conserva il suo (FMT-W-06).
+  - `authors`: vuoto. OnoFlow non conosce il nome di chi lo usa e non deve conoscerlo.
+  - `about`: vuoto.
+  - `saved`: ora locale del salvataggio, nel formato `AAAA-MM-GG hh:mm:ss ` (DEC-033).
+- **Perché:** il file assomiglia il più possibile a uno di Flowgorithm, senza dati dell'utente. `created` ed `edited` restano esclusi (FMT-W-07): se Q-04 dimostrasse che Flowgorithm li richiede, si aggiungeranno con valori neutri.
+- **Conseguenza:** dal passo 8 un diagramma nuovo non si salva più con `<attributes/>` (DEC-054), ma con questi quattro attributi (`js/core/diagram-document.js`).
+
+## DEC-062 — Documento aperto e modifiche non salvate
+
+- **Passo:** 8 · **Decisa da:** sviluppo · **Tocca:** FR-FILE-07, FR-FILE-08, FR-FILE-11, NFR-PRIV-08, B1, D-02
+- **Documento:** `js/core/diagram-document.js` tiene il programma aperto con la sua **origine** (`new`, creato in OnoFlow; `file`, aperto da un file o da un esempio) e due contatori, quello delle modifiche e quello del salvataggio. "Modificato" vuol dire che sono diversi. L'editor chiamerà `markChanged()` a ogni modifica; annulla/ripeti (D-02, passo 12) potrà riportare il contatore a un valore già salvato.
+- **Il nome del file non è una modifica:** vale per il prossimo salvataggio e non accende "Non salvato".
+- **Copia di sessione:** oltre a testo, nome e stato salvato conserva l'**origine** (`new`/`file`), così un diagramma nuovo ripristinato continua a prendere gli attributi di DEC-061. Non è un dato dell'utente: NFR-PRIV-08 è aggiornato. Senza modifiche la copia è il testo d'origine, così il round-trip resta identico; con modifiche è il programma di adesso.
+- **Avviso (FR-FILE-08, B1):** prima di Nuovo, Apri, un esempio o un file trascinato, se ci sono modifiche compare una barra in linea: «Il diagramma «nome» ha modifiche non salvate, che andrebbero perse.», con **Salva** (scarica il file, poi continua), **Non salvare** (continua) e **Chiudi** (rinuncia). Il focus va su Salva. Non si usa "Annulla" perché è già il nome di annulla/ripeti (§11.1: un nome per azione).
+- **Chiusura della pagina:** con modifiche, `beforeunload` chiede conferma al browser. Sui telefoni non è affidabile: lì protegge la copia di sessione (FR-MOB-15).
+- **Senza editor:** fino al passo 9 un diagramma risulta modificato solo se è stato ripristinato con modifiche non salvate. È il caso usato nelle verifiche automatiche.

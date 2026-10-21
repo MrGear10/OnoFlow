@@ -5,7 +5,7 @@
  * Definisce: OnoFlow.SessionCopy.{create, defaultStorage, KEY}
  *
  * È l'unica cosa che l'app conserva: il testo .fprg del diagramma aperto, il nome del
- * file e se c'erano modifiche non salvate. Sta in sessionStorage, quindi solo in quella
+ * file, se c'erano modifiche non salvate e se il diagramma era nato in OnoFlow (DEC-062). Sta in sessionStorage, quindi solo in quella
  * scheda e fino alla sua chiusura; non viene mai inviata. Niente preferenze o cronologia.
  *
  * create(storage) restituisce { save(copia), load(), clear() }; storage è di solito
@@ -13,7 +13,7 @@
  * scrivere (navigazione privata, spazio finito) l'app funziona lo stesso, senza ripristino:
  * gli errori dello storage non escono mai da qui.
  *
- *     copia = { text, fileName, saved }
+ *     copia = { text, fileName, saved, origin: 'new' | 'file' }   (origin mancante → 'file')
  */
 (function (OnoFlow) {
     'use strict';
@@ -23,7 +23,8 @@
     function isCopy(value) {
         return value !== null && typeof value === 'object' &&
             typeof value.text === 'string' && typeof value.fileName === 'string' &&
-            typeof value.saved === 'boolean';
+            typeof value.saved === 'boolean' &&
+            (value.origin === undefined || value.origin === 'new' || value.origin === 'file');
     }
 
     function create(storage) {
@@ -32,7 +33,9 @@
                 return false;
             }
             try {
-                storage.setItem(KEY, JSON.stringify({ text: copy.text, fileName: copy.fileName, saved: copy.saved }));
+                storage.setItem(KEY, JSON.stringify({
+                    text: copy.text, fileName: copy.fileName, saved: copy.saved, origin: copy.origin === 'new' ? 'new' : 'file'
+                }));
                 return true;
             } catch (error) {
                 return false;
@@ -46,7 +49,10 @@
             }
             try {
                 var value = JSON.parse(storage.getItem(KEY));
-                return isCopy(value) ? value : null;
+                if (!isCopy(value)) {
+                    return null;
+                }
+                return { text: value.text, fileName: value.fileName, saved: value.saved, origin: value.origin || 'file' };
             } catch (error) {
                 return null;
             }
