@@ -122,6 +122,59 @@
         });
     });
 
+    T.suite('Editor › cancellazione (FR-EDIT-04)', function () {
+        T.test('toglie il blocco e dice dove stava', function (assert) {
+            var first = H.declare('x', 'Integer');
+            var inElse = H.output('2');
+            var test = H.when('x > 0', [H.output('1')], [inElse]);
+            var program = H.program([first, test, H.output('x')]);
+            var main = program.functions[0];
+            var removed = Editor.removeAt(program, inElse.id);
+            assert.equal(removed.block, inElse);
+            assert.deepEqual(removed.slot, { ownerId: test.id, list: 'else', index: 0 });
+            assert.deepEqual(test['else'], []);
+            removed = Editor.removeAt(program, first.id);
+            assert.deepEqual(removed.slot, { ownerId: main.id, list: 'body', index: 0 });
+            assert.deepEqual(kinds(main.body), ['if', 'output']);
+        });
+
+        T.test('if e cicli si cancellano con tutto il contenuto', function (assert) {
+            var inner = H.loop('i < 3', [H.assign('i', 'i + 1'), H.output('i')]);
+            var test = H.when('x', [inner], [H.output('0')]);
+            var program = H.program([test, H.output('fine')]);
+            assert.equal(Editor.countInside(test), 4);
+            assert.equal(Editor.countInside(inner), 2);
+            assert.equal(Editor.countInside(test['else'][0]), 0);
+            Editor.removeAt(program, test.id);
+            assert.deepEqual(kinds(program.functions[0].body), ['output']);
+            assert.equal(Model.findById(program, inner.id), null, 'il contenuto non resta nel programma');
+            assert.equal(OnoFlow.StaticCheck.check(program).length, 0);
+        });
+
+        T.test('rimesso con insertAt torna com\'era, con gli stessi ID', function (assert) {
+            var source = H.program([H.declare('x', 'Integer'), H.when('x > 0', [H.output('1')], [H.output('2')]), H.output('x')]);
+            var before = OnoFlow.Format.exportFprg(source);
+            var test = source.functions[0].body[1];
+            var ids = [test.id, test.then[0].id, test['else'][0].id];
+            var removed = Editor.removeAt(source, test.id);
+            assert.notEqual(OnoFlow.Format.exportFprg(source), before);
+            Editor.insertAt(source, removed.slot, removed.block);
+            assert.equal(OnoFlow.Format.exportFprg(source), before);
+            var back = source.functions[0].body[1];
+            assert.deepEqual([back.id, back.then[0].id, back['else'][0].id], ids);
+        });
+
+        T.test('si cancella solo in Main, e solo un blocco', function (assert) {
+            var other = H.fn('Doppio', 'Integer', 'r', [['n', 'Integer']], [H.assign('r', 'n * 2')]);
+            var program = H.program([H.output('1')], [other]);
+            assert.throws(function () { Editor.removeAt(program, other.body[0].id); }, RangeError);
+            assert.throws(function () { Editor.removeAt(program, program.functions[0].id); }, RangeError, 'non una funzione');
+            assert.throws(function () { Editor.removeAt(program, 'n-nessuno'); }, RangeError);
+            assert.equal(other.body.length, 1);
+            assert.equal(program.functions[0].body.length, 1);
+        });
+    });
+
     T.suite('Editor › punti di inserimento e selezione nel disegno (DEC-063, FR-MOB-04)', function () {
         var measurer = Renderer.createMeasurer(document);
 

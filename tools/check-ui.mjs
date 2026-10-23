@@ -1,11 +1,12 @@
 /*
- * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–10).
+ * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–11).
  *
  * Dipendenze: playwright (solo in tools/, mai nell'applicazione).
  *
  * Uso, dalla cartella tools/:
  *     node check-ui.mjs                                  Chromium e Firefox
  *     node check-ui.mjs --engines firefox --screenshots /percorso/cartella
+ *     DEBUG=1 node check-ui.mjs                          messaggio completo delle verifiche interrotte
  *
  * Percorsi verificati, su computer (1440 × 900) e telefono (360 × 640, 375 × 667, QA-14):
  *   - apertura: foglio vuoto, nessun errore nella pagina, nessuno scorrimento orizzontale;
@@ -27,7 +28,9 @@
  *     l'esecuzione (FR-EDIT-01, FR-EDIT-03, FR-EDIT-07, FR-MOB-04, FR-MOB-05, DEC-063);
  *   - creazione da zero con la finestra di modifica: dichiarazione, input, output, poi
  *     esecuzione con un valore; errore mentre si scrive; barra dei simboli; finestra a tutto
- *     schermo sul telefono; secondo tocco per modificare (FR-EDIT-02, FR-MOB-07…09, B3).
+ *     schermo sul telefono; secondo tocco per modificare (FR-EDIT-02, FR-MOB-07…09, B3);
+ *   - cancellazione: "Elimina" e tasto Canc, un ciclo con tutto il contenuto, "Annulla" che
+ *     rimette il blocco con lo stesso ID, barra della selezione dentro lo schermo (FR-EDIT-04).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -438,6 +441,62 @@ async function checkBuildAndRun(page, checks, viewport) {
     }
 }
 
+/* Cancellazione di un blocco e di un ciclo con il contenuto, poi Annulla (FR-EDIT-04). */
+async function checkDelete(page, checks, viewport) {
+    const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
+    const mainBody = () => page.evaluate(() => {
+        const copy = JSON.parse(sessionStorage.getItem('onoflow.diagram'));
+        return window.OnoFlow.Format.importFprg(copy.text).program.functions[0].body.map((block) => block.kind).join(' ');
+    });
+    const idsInMain = () => page.evaluate(() => Array.from(document.querySelectorAll('#diagram .is-selectable')).map((node) => node.getAttribute('data-id')));
+    // Il programma del controllo di prima: dichiarazione, input, output.
+    checks.ok((await mainBody()) === 'declare input output', `prima della cancellazione: ${await mainBody()}`);
+    const inputId = (await idsInMain())[1];
+    await press(`#diagram [data-id="${inputId}"]`);
+    checks.ok(await page.isVisible('#delete-block'), 'blocco selezionato: c\'è "Elimina"');
+    const bar = await page.locator('#selection-bar').boundingBox();
+    checks.ok(bar.x >= 0 && bar.x + bar.width <= viewport.width + 1, 'la barra della selezione sta dentro lo schermo');
+    if (viewport.phone) {
+        const zoom = await page.locator('.zoom').boundingBox();
+        checks.ok(bar.y + bar.height <= zoom.y, 'sul telefono la barra sta sopra i comandi dello zoom');
+    }
+    await press('#delete-block');
+    checks.ok((await mainBody()) === 'declare output', `"Elimina" toglie il blocco: ${await mainBody()}`);
+    checks.ok(await page.isVisible('#modified'), 'dopo la cancellazione: "Non salvato"');
+    checks.ok(!(await page.isVisible('#selection-bar')), 'dopo la cancellazione non resta nulla selezionato');
+    const undo = page.locator('.notice-action:has-text("Annulla")');
+    checks.ok(await undo.isVisible(), 'l\'avviso offre Annulla');
+    checks.ok(await page.locator('#diagram-errors .diagram-error').count() === 0, 'nessun errore: n resta dichiarata');
+    await press('.notice-action:has-text("Annulla")');
+    checks.ok((await mainBody()) === 'declare input output', `Annulla rimette il blocco: ${await mainBody()}`);
+    checks.ok((await idsInMain())[1] === inputId, 'Annulla rimette lo stesso blocco, con lo stesso ID');
+    checks.ok(await page.evaluate((id) => document.querySelector('#diagram .is-selected')?.getAttribute('data-id') === id, inputId), 'il blocco rimesso è selezionato');
+
+    // Un ciclo dell'esempio, con tutto il contenuto.
+    await chooseExample(page);
+    await press('.notice-action:has-text("Non salvare")');
+    const before = await mainBody();
+    const blocksBefore = (await idsInMain()).length;
+    const loopId = await page.getAttribute('#diagram .dg-block--loop.is-selectable', 'data-id');
+    if (viewport.phone) {
+        // Il testo del ciclo: il gruppo del do comprende anche il ritorno, più alto dello schermo.
+        await press(`#diagram [data-id="${loopId}"] text`);
+        await press('#delete-block');
+    } else {
+        // Tastiera: Canc sul blocco a fuoco.
+        await page.focus(`#diagram [data-id="${loopId}"]`);
+        await page.keyboard.press('Delete');
+        checks.ok(await page.evaluate(() => document.activeElement.hasAttribute('data-slot')), 'dopo Canc il focus resta sul punto dove c\'era il blocco');
+    }
+    const removed = blocksBefore - (await idsInMain()).length;
+    checks.ok(removed > 1 && !(await idsInMain()).includes(loopId), `il ciclo sparisce con il contenuto (${removed} blocchi)`);
+    checks.ok((await page.textContent('#notices')).includes(`con i ${removed - 1} blocchi che conteneva`),
+        `l'avviso conta i blocchi che conteneva: ${(await page.textContent('#notices')).trim()}`);
+    await press('.notice-action:has-text("Annulla")');
+    checks.ok((await mainBody()) === before && (await idsInMain()).length === blocksBefore, 'Annulla rimette il ciclo con tutto il contenuto');
+    checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale dopo la cancellazione');
+}
+
 async function checkViewport(browser, engineName, viewport, screenshotsDir) {
     const checks = new Checks(`${engineName} ${viewport.name}`);
     const context = await browser.newContext({
@@ -475,13 +534,14 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
         await checkNewFile(page, checks);
         await checkInsert(page, checks, viewport);
         await checkBuildAndRun(page, checks, viewport);
+        await checkDelete(page, checks, viewport);
         if (!viewport.phone) {
             await checkMenuKeyboard(page, checks);
             await checkLongRun(page, checks);
         }
         await checkUnsaved(page, checks); // per ultima: chiude la pagina
     } catch (error) {
-        checks.ok(false, `verifica interrotta: ${error.message.split('\n')[0]}`);
+        checks.ok(false, `verifica interrotta: ${process.env.DEBUG ? error.message : error.message.split('\n')[0]}`);
     } finally {
         checks.ok(pageErrors.length === 0, `errori nella pagina: ${pageErrors.join('; ')}`);
         await context.close();

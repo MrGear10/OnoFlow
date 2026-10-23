@@ -155,3 +155,18 @@ La finestra di modifica arriva al passo 10: per ora un blocco inserito resta vuo
 - [ ] Con un esempio importato, le funzioni diverse da Main non si modificano; un commento o una chiamata in Main hanno **Modifica** barrato.
 - [ ] **Telefono:** la finestra è a tutto schermo con il campo in alto; con la tastiera aperta la barra dei simboli sta subito sopra la tastiera e un tocco su un simbolo non la chiude; nessuna correzione automatica o maiuscola iniziale; il campo non fa ingrandire la pagina.
 - [ ] **iPhone:** scrivere una stringa con le virgolette della tastiera: nel campo diventano subito dritte `"`.
+
+---
+
+## Passo 11 — Cancellazione
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (364 test).
+- [ ] **Esempi → Somma, massimo e minimo**, clic su un input: nella barra in basso c'è **Elimina** con il cestino. Elimina: il blocco sparisce, le frecce si ricollegano, compare "Non salvato" e l'avviso «Blocco «Input …» eliminato.» con **Annulla**.
+- [ ] **Annulla**: il blocco torna al suo posto ed è selezionato.
+- [ ] Selezionare il primo ciclo ed eliminarlo: sparisce con tutto il contenuto; l'avviso dice quanti blocchi conteneva. Annulla lo rimette intero.
+- [ ] Tastiera: Tab fino a un blocco, **Canc** (o Backspace) lo elimina; il focus resta sul + dove c'era il blocco. Un secondo Canc non cancella altro.
+- [ ] Dopo una cancellazione, inserire o modificare un blocco: l'avviso con Annulla sparisce.
+- [ ] Si elimina anche un blocco con la finestra di modifica aperta: la finestra si chiude.
+- [ ] Durante l'esecuzione la barra della selezione non c'è e Canc non fa nulla.
+- [ ] Salvare dopo una cancellazione e riaprire il file: il blocco non c'è, il resto è identico.
+- [ ] **Telefono:** Elimina è un pulsante col solo cestino, nella stessa riga di Modifica e Inserisci dopo, sopra lo zoom; l'avviso ha Annulla e Chiudi sotto il testo.

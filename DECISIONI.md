@@ -445,3 +445,13 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 - **Modello:** nuovo `Model.setProperty`, con gli stessi controlli della creazione (tipo, verso, valori vero/falso).
 - **Esecuzione:** Esegui chiude la finestra (FR-EDIT-07).
 - **DEC-037:** le virgolette tipografiche nel codice e nei test sono scritte come `\uXXXX`.
+
+## DEC-067 — Cancellazione
+
+- **Passo:** 11 · **Decisa da:** sviluppo (l'autore può rivederla) · **Tocca:** FR-EDIT-04, FR-EDIT-05, FR-EDIT-06, FR-EDIT-07, B1, B3, D-02
+- **Come si cancella:** **Elimina** (icona del cestino) nella barra della selezione, oppure **Canc** o **Backspace** sul blocco a fuoco. Si cancella qualunque blocco di Main, anche un commento o una chiamata, che non si modificano (DEC-004). Durante l'esecuzione no (FR-EDIT-07): la barra è nascosta e il tasto non fa nulla.
+- **If e cicli:** si cancellano con tutto il contenuto, come chiede FR-EDIT-04, **senza conferma** (B1: niente finestre modali). La rete di sicurezza è l'avviso informativo «Blocco «…» eliminato, con i N blocchi che conteneva.» con **Annulla**, che rimette il blocco nello stesso punto, con lo stesso contenuto e gli stessi ID (vincolo della §10 per annulla/ripeti).
+- **Annulla prima del passo 12:** vale solo per l'ultima cancellazione e l'avviso sparisce alla modifica successiva (inserimento, campo, altra cancellazione, nuovo diagramma), perché il punto dove rimettere il blocco potrebbe non esistere più. Con annulla/ripeti (passo 12, D-02) diventerà un passo della storia come gli altri; il pulsante dell'avviso potrà restare come scorciatoia.
+- **Dopo la cancellazione** non resta selezionato nulla e il focus va sul punto di inserimento dove c'era il blocco: un secondo Canc non cancella il blocco vicino togliendo l'Annulla del primo.
+- **Modello:** `Editor.removeAt(program, id) → { block, slot }`; `Editor.insertAt(program, slot, block)` è l'operazione inversa. `Editor.countInside` conta i blocchi contenuti, a ogni livello.
+- **Telefono:** tre pulsanti con il testo non stanno in 360 px; sotto i 27,5rem Elimina resta con il solo cestino (il nome resta per i lettori di schermo), come Pausa e Ferma.

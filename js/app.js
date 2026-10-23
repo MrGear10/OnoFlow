@@ -109,6 +109,7 @@
         var selectionBar = byId('selection-bar');
         var insertAfterButton = byId('insert-after');
         var editButton = byId('edit-block');
+        var deleteButton = byId('delete-block');
         var consoleEmpty = byId('console-empty');
         var tabs = { diagram: byId('tab-diagram'), console: byId('tab-console') };
         var commands = {
@@ -130,6 +131,7 @@
             runningId: null,
             selectedId: null,       // blocco selezionato (B3)
             insertSlot: null,       // punto in cui il menu dei blocchi inserirà
+            undoBar: null,          // avviso "Annulla" dell'ultima cancellazione (passo 11)
             pendingReveal: null     // blocco da inquadrare quando si torna al diagramma (FR-MOB-03)
         };
         var measurer = DiagramRenderer.createMeasurer(document);
@@ -345,6 +347,7 @@
             state.diagram.setSelected(nodeId);
             selectionBar.hidden = !nodeId || isActive();
             editButton.disabled = !nodeId || !canOpenEditor(nodeId);
+            deleteButton.disabled = !nodeId;
         }
 
         function blockGroup(nodeId) {
@@ -364,6 +367,7 @@
 
         /* Modifica mentre si scrive: documento, errori e disegno subito; copia di sessione poco dopo. */
         function afterFieldChange() {
+            dropUndo();
             state.document.markChanged();
             state.outcome = null;
             state.runningId = null;
@@ -427,6 +431,7 @@
 
         /* Dopo ogni modifica: documento modificato, errori, disegno, copia di sessione (FR-EDIT-06). */
         function afterEdit(focusId) {
+            dropUndo();
             state.document.markChanged();
             state.outcome = null;
             state.runningId = null;
@@ -450,6 +455,68 @@
         function afterInsert(nodeId) {
             afterEdit(nodeId);
             openEditor(nodeId);
+        }
+
+        // --- Editor: cancellazione (passo 11, FR-EDIT-04) ------------------------------
+
+        /*
+         * Annulla di una cancellazione, finché arriva annulla/ripeti (passo 12): vale solo per
+         * l'ultima e sparisce alla modifica successiva, perché il punto potrebbe non esistere più.
+         */
+        function dropUndo() {
+            if (state.undoBar && state.undoBar.parentNode) {
+                state.undoBar.parentNode.removeChild(state.undoBar);
+            }
+            state.undoBar = null;
+        }
+
+        /* Il punto di inserimento rimasto dove c'era il blocco, per tenere lì il focus. */
+        function focusSlot(slot) {
+            var index = -1;
+            state.diagram.slots.forEach(function (candidate, i) {
+                if (candidate.ownerId === slot.ownerId && candidate.list === slot.list && candidate.index === slot.index) {
+                    index = i;
+                }
+            });
+            var point = index === -1 ? null : diagram.querySelector('[data-slot="' + index + '"]');
+            if (point) {
+                point.focus({ preventScroll: true });
+            }
+        }
+
+        /*
+         * Cancella un blocco con il suo contenuto, senza chiedere conferma (B1): l'avviso offre
+         * Annulla. Dopo la cancellazione non resta selezionato nulla, così un secondo Canc non
+         * cancella il blocco vicino togliendo l'Annulla del primo.
+         */
+        function deleteBlock(nodeId) {
+            if (isActive() || !nodeId || !Editor.canEdit(state.program, nodeId)) {
+                return;
+            }
+            if (blockEditor.isOpen()) {
+                blockEditor.close();
+            }
+            blockMenu.close({ restoreFocus: false });
+            var removed = Editor.removeAt(state.program, nodeId);
+            var block = removed.block;
+            var inside = Editor.countInside(block);
+            afterEdit(null);
+            focusSlot(removed.slot);
+            var text = BlockText.plainText(block, t, block.kind === 'do' ? 'tail' : 'head');
+            var message = inside === 0 ? t('ui.delete.done', { text: text })
+                : inside === 1 ? t('ui.delete.doneOne', { text: text })
+                : t('ui.delete.doneMany', { text: text, count: NumberFormat.formatInteger(inside, numberFormat) });
+            state.undoBar = notice('info', message, null, [{
+                label: t('ui.delete.undo'),
+                run: function () {
+                    state.undoBar = null;
+                    if (isActive()) {
+                        return;
+                    }
+                    Editor.insertAt(state.program, removed.slot, block);
+                    afterEdit(block.id);
+                }
+            }]);
         }
 
         /* Tocco o clic sul foglio: un punto di inserimento, un blocco, oppure niente (toglie la selezione). */
@@ -494,6 +561,9 @@
                 activate(event, target);
             } else if (event.key === 'Escape' && state.selectedId) {
                 select(null);
+            } else if ((event.key === 'Delete' || event.key === 'Backspace') && target && !target.hasAttribute('data-slot')) {
+                event.preventDefault();
+                deleteBlock(target.getAttribute('data-id'));
             }
         });
 
@@ -509,6 +579,10 @@
             if (state.selectedId) {
                 openEditor(state.selectedId);
             }
+        });
+
+        deleteButton.addEventListener('click', function () {
+            deleteBlock(state.selectedId);
         });
 
         insertAfterButton.addEventListener('click', function () {
@@ -559,6 +633,7 @@
             state.insertSlot = null;
             blockMenu.close({ restoreFocus: false });
             blockEditor.close();
+            dropUndo();
             selectionBar.hidden = true;
             state.marked = { errors: [], runtime: false };
             drawDiagram();

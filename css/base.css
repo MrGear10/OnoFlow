@@ -1661,7 +1661,8 @@ button.diagram-error-entry:active {
 /* Telefoni stretti: Pausa e Ferma restano visibili, con la sola icona. */
 @media (max-width: 27.5rem) {
     #pause .button-label,
-    #stop .button-label {
+    #stop .button-label,
+    .selection-delete .button-label {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -1673,6 +1674,17 @@ button.diagram-error-entry:active {
     #pause,
     #stop {
         padding: 0;
+    }
+
+    /* Tre pulsanti con il testo non stanno in 360 px: Elimina resta con il solo cestino. */
+    .selection-bar .button {
+        padding: 0 var(--space-2);
+    }
+
+    .selection-bar .selection-delete {
+        width: var(--touch);
+        padding: 0;
+        justify-content: center;
     }
 
     /* Con la sola icona il barrato orizzontale si confonde con il disegno: qui è in diagonale. */

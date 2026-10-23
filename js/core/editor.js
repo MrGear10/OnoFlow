@@ -1,8 +1,9 @@
 /*
- * OnoFlow — operazioni dell'editor sul modello (passo 9: inserimento).
+ * OnoFlow — operazioni dell'editor sul modello (passo 9: inserimento; passo 11: cancellazione).
  *
  * Dipendenze: js/namespace.js, js/core/model.js.
- * Definisce: OnoFlow.Editor.{INSERTABLE_KINDS, createNewBlock, canEdit, slotAfter, insertAt}
+ * Definisce: OnoFlow.Editor.{INSERTABLE_KINDS, createNewBlock, canEdit, slotAfter, insertAt,
+ *            removeAt, countInside}
  *
  * L'editor modifica solo il modello; il disegno si rifà dopo (§10.3). Nella fase 1 si
  * modifica solo Main (DEC-004): le altre funzioni di un file importato si vedono e si
@@ -13,6 +14,7 @@
  * posizione. È la stessa forma dei punti calcolati da DiagramLayout.
  *
  *     insertAt(program, slot, block) → { block, slot }   (per annulla/ripeti, passo 12)
+ *     removeAt(program, blockId)     → { block, slot }   insertAt(program, slot, block) lo rimette
  */
 (function (OnoFlow) {
     'use strict';
@@ -84,11 +86,42 @@
         return { block: block, slot: { ownerId: slot.ownerId, list: slot.list, index: slot.index } };
     }
 
+    /*
+     * Cancella un blocco, e per if e cicli tutto il contenuto (FR-EDIT-04). Il blocco tolto
+     * resta intatto, con gli stessi ID: rimesso con insertAt torna com'era.
+     */
+    function removeAt(program, blockId) {
+        var found = Model.findById(program, blockId);
+        if (!found || found.node.kind === undefined) {
+            throw new RangeError('Editor: blocco inesistente ' + blockId);
+        }
+        if (!canEdit(program, blockId)) {
+            throw new RangeError('Editor: si modifica solo Main (DEC-004)');
+        }
+        var slot = slotAfter(program, blockId);
+        slot.index -= 1;
+        found.list.splice(found.index, 1);
+        return { block: found.node, slot: slot };
+    }
+
+    /* Quanti blocchi ci sono dentro un blocco, a ogni livello. */
+    function countInside(block) {
+        var count = 0;
+        Model.childListsOf(block).forEach(function (name) {
+            block[name].forEach(function (child) {
+                count += 1 + countInside(child);
+            });
+        });
+        return count;
+    }
+
     OnoFlow.Editor = {
         INSERTABLE_KINDS: INSERTABLE_KINDS,
         createNewBlock: createNewBlock,
         canEdit: canEdit,
         slotAfter: slotAfter,
-        insertAt: insertAt
+        insertAt: insertAt,
+        removeAt: removeAt,
+        countInside: countInside
     };
 })(window.OnoFlow);
