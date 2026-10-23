@@ -1,5 +1,5 @@
 /*
- * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–18).
+ * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–19).
  *
  * Dipendenze: playwright (solo in tools/, mai nell'applicazione).
  *
@@ -46,7 +46,9 @@
  *     e prima dell'esecuzione (FR-ERR-06, D-06);
  *   - commento e chiamata dal menu, modificati, disegnati e salvati (FR-EDIT-10);
  *   - funzioni: nuova, firma con parametro e valore, corpo, chiamata da Main ed esecuzione,
- *     rinomina con le chiamate e Annulla, cancellazione e Annulla, file salvato (FR-EDIT-11).
+ *     rinomina con le chiamate e Annulla, cancellazione e Annulla, file salvato (FR-EDIT-11);
+ *   - spostamento: Sposta, + spenti attorno al blocco, un + nel ramo Vero, Annulla, Non spostare,
+ *     Esc (FR-EDIT-12, D-03).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -978,6 +980,7 @@ async function checkFunctions(page, checks, viewport) {
     // Rinominare: le chiamate seguono, in un solo passo di Annulla.
     await press(`#diagram [data-id="${fnId}"] text`);
     checks.ok(!(await page.isDisabled('#edit-block')), 'l\'Inizio di una funzione si seleziona e si modifica');
+    checks.ok(await page.isDisabled('#move-block'), 'una funzione non si sposta: Sposta disabilitato');
     await press('#edit-block');
     await fill('[id$="-name"]', 'Triplo');
     await press('.edit-done');
@@ -1001,6 +1004,55 @@ async function checkFunctions(page, checks, viewport) {
     checks.ok(saved.text.includes('<function name="Doppio" type="Integer" variable="r">') &&
         saved.text.includes('<parameter name="n" type="Integer" array="False"/>'), 'nel file la funzione con il parametro (§7.4)');
     checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale con le funzioni');
+}
+
+/* Spostamento dei blocchi: Sposta, poi un + (FR-EDIT-12, D-03, passo 19). */
+async function checkMove(page, checks, viewport) {
+    const press = pressInSheet(page, viewport);
+    const shape = () => page.evaluate(() => {
+        const main = window.OnoFlow.Format.importFprg(JSON.parse(sessionStorage.getItem('onoflow.diagram')).text).program.functions[0];
+        const text = (block) => block.kind + (block.fields.expression ? '(' + block.fields.expression.text + ')' : '');
+        return main.body.map((block) => text(block) + (block.kind === 'if' ? '[' + block.then.map(text).join(',') + ']' : '')).join(' ');
+    });
+    await chooseExample(page, 'pari-dispari');
+    await leaveUnsaved(page, press);
+    if (viewport.phone && !(await page.isVisible('#panel-diagram'))) {
+        await page.click('#tab-diagram');
+    }
+    const before = await shape();
+    const outputId = await blockWithText(page, 'Output"Scriviunnumerointero"');
+    const ifId = await page.evaluate(() => document.querySelector('#diagram .dg-block--if.is-selectable').getAttribute('data-id'));
+    await press(`#diagram [data-id="${outputId}"] text`);
+    checks.ok(await page.isVisible('#move-block'), 'nella barra della selezione c\'è Sposta');
+    const bar = await page.locator('#selection-bar').boundingBox();
+    checks.ok(bar.x >= 0 && bar.x + bar.width <= viewport.width + 1, 'con quattro pulsanti la barra sta nello schermo');
+    await press('#move-block');
+    checks.ok((await page.textContent('#notices')).includes('scegliere il + dove metterlo'), 'l\'avviso dice di scegliere il +');
+    checks.ok(!(await page.isVisible('#selection-bar')), 'durante lo spostamento la barra della selezione sparisce');
+    checks.ok((await page.locator('#diagram .dg-slot.is-disabled').count()) === 2, 'i due + attorno al blocco sono spenti');
+    checks.ok(await page.evaluate((id) => document.querySelector(`#diagram [data-id="${id}"]`).classList.contains('is-moving'), outputId), 'il blocco è tratteggiato');
+    await press(`#diagram [data-owner="${ifId}"][data-list="then"][data-index="0"]`);
+    const moved = await shape();
+    checks.ok(moved === 'declare input if(n mod 2 == 0)[output("Scrivi un numero intero"),output(n & " è pari")]', `spostato nel ramo Vero: ${moved}`);
+    checks.ok(!(await page.textContent('#notices')).includes('scegliere il +'), 'a spostamento fatto l\'avviso sparisce');
+    checks.ok(await page.isVisible('#modified'), 'dopo lo spostamento: "Non salvato"');
+    await press(viewport.width >= 1024 ? '#undo' : '#undo-sheet');
+    checks.ok((await shape()) === before, 'Annulla lo rimette dov\'era');
+
+    // Rinunciare: Non spostare, ed Esc da tastiera.
+    if (!(await page.evaluate((id) => document.querySelector(`#diagram [data-id="${id}"]`).classList.contains('is-selected'), outputId))) {
+        await press(`#diagram [data-id="${outputId}"] text`);
+    }
+    await press('#move-block');
+    await press('.notice-action:has-text("Non spostare")');
+    checks.ok((await page.locator('#diagram .is-moving').count()) === 0 && (await shape()) === before, 'Non spostare rinuncia');
+    if (!viewport.phone) {
+        await press('#move-block');
+        checks.ok(await page.evaluate(() => document.activeElement.classList.contains('dg-slot') && !document.activeElement.classList.contains('is-disabled')),
+            'da tastiera il focus va sul primo + possibile');
+        await page.keyboard.press('Escape');
+        checks.ok((await page.locator('#diagram .is-moving').count()) === 0, 'Esc rinuncia');
+    }
 }
 
 /* Passo-passo sull'esempio Pari o dispari (FR-RUN-05, DEC-073). */
@@ -1164,6 +1216,7 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
         await checkStaticAnalysis(page, checks, viewport);
         await checkCallComment(page, checks, viewport);
         await checkFunctions(page, checks, viewport);
+        await checkMove(page, checks, viewport);
         if (!viewport.phone) {
             await checkFocusReveal(page, checks);
             await checkMenuKeyboard(page, checks);

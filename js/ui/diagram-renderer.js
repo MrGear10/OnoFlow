@@ -22,7 +22,7 @@
  *     render(container, program, { t, measurer, editable(functionId), describeSlot(slot) })
  *         svuota container, disegna e restituisce
  *         { element, size: { width, height }, slots, setRunning(id | null), setErrors(errori),
- *           setSelected(id | null), hitTest(punto, raggio), slotBox(indice),
+ *           setSelected(id | null), setMoving(id | null, ammesso(punto)), hitTest(punto, raggio), slotBox(indice),
  *           nodeBox(id) → { x, y, width, height } | null, hasNode(id) }
  * punto e rettangoli sono in pixel al 100% rispetto all'angolo dell'SVG; hitTest restituisce
  * { slot: indice } o { block: id } o null.
@@ -283,6 +283,10 @@
             }
         });
 
+        var slotGroups = [];
+        var moving = null;
+        var disabledSlots = Object.create(null);
+
         // Punti di inserimento a metà delle frecce, solo nelle funzioni modificabili (DEC-063).
         var slots = result.slots.filter(function (slot) { return editable(slot.functionId); });
         var slotRadius = 0.45 * s;
@@ -303,6 +307,7 @@
                 d: 'M' + round(cx - arm) + ',' + round(cy) + 'h' + round(2 * arm) + 'M' + round(cx) + ',' + round(cy - arm) + 'v' + round(2 * arm)
             }, 'dg-slot-plus'));
             slotsLayer.appendChild(group);
+            slotGroups.push(group);
         });
 
         container.textContent = '';
@@ -423,6 +428,32 @@
         }
 
         /*
+         * Spostamento (passo 19): il blocco è tratteggiato; i punti dove non può andare si spengono,
+         * escono dal giro del Tab e non si colpiscono. allowed(slot) dice dove può andare.
+         */
+        function setMoving(nodeId, allowed) {
+            if (moving) {
+                moving.classList.remove('is-moving');
+            }
+            moving = nodeId && groupsById[nodeId] ? groupsById[nodeId] : null;
+            disabledSlots = Object.create(null);
+            if (moving) {
+                moving.classList.add('is-moving');
+            }
+            slots.forEach(function (slot, index) {
+                var off = Boolean(moving) && !allowed(slot);
+                disabledSlots[index] = off;
+                slotGroups[index].classList.toggle('is-disabled', off);
+                slotGroups[index].setAttribute('tabindex', off ? '-1' : '0');
+                if (off) {
+                    slotGroups[index].setAttribute('aria-disabled', 'true');
+                } else {
+                    slotGroups[index].removeAttribute('aria-disabled');
+                }
+            });
+        }
+
+        /*
          * Cosa c'è sotto un punto (pixel al 100% dall'angolo dell'SVG): prima un blocco
          * selezionabile, poi il punto di inserimento più vicino entro radius. Così l'area di
          * tocco dei punti resta di 44 px CSS anche quando lo zoom li rimpicciolisce (FR-MOB-04).
@@ -442,7 +473,7 @@
             var bestDistance = radius;
             slots.forEach(function (slot, index) {
                 var distance = Math.hypot(x - slot.x, y - (slot.y1 + slot.y2) / 2);
-                if (distance <= bestDistance) {
+                if (!disabledSlots[index] && distance <= bestDistance) {
                     best = index;
                     bestDistance = distance;
                 }
@@ -473,6 +504,7 @@
             setRunning: setRunning,
             setErrors: setErrors,
             setSelected: setSelected,
+            setMoving: setMoving,
             hitTest: hitTest,
             slotBox: slotBox,
             nodeBox: nodeBox,

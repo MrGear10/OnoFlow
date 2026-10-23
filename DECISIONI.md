@@ -565,3 +565,14 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 - **Disegno:** il titolo di ogni funzione mostra la firma, «Funzione Doppio(Integer n, Real v[]) → Integer r»; tra titolo e Inizio tre quadretti, per il cerchio di un errore sulla funzione.
 - **Annulla/ripeti:** nuovi passi `addFunction`, `removeFunction`, `editFunction` (firma prima e dopo, chiamate rinominate).
 - **Formato:** quello presunto della §7.4 (`<parameters><parameter name type array/></parameters>`, `variable` di `<function>`), già usato in lettura e scrittura dalla fase 1; resta l'avviso finché Q-07 non è verificata con un file di Flowgorithm.
+
+## DEC-079 — Spostamento dei blocchi
+
+- **Passo:** 19 · **Decisa da:** sviluppo, dentro D-03 (DEC-073) · **Tocca:** FR-EDIT-12, FR-EDIT-05, FR-MOB-04, NFR-ACC-01, B1, DEC-062
+- **Come:** **Sposta** (icona delle quattro frecce) nella barra della selezione. Il blocco resta al suo posto, tratteggiato e tenue; un avviso dice «Spostamento di «…»: scegliere il + dove metterlo.» con **Non spostare** (non «Annulla», che è il nome di annulla/ripeti, DEC-062). Un tocco su un + porta lì il blocco con tutto il contenuto, anche in un ramo, in un ciclo o in un'altra funzione.
+- **Dove no:** dentro sé stesso o un suo figlio, e nei due + subito prima e dopo, dove resterebbe dov'è. Quei + si spengono: quasi trasparenti, fuori dal giro del Tab, non si colpiscono col tocco neanche se sono i più vicini.
+- **Rinunciare:** Non spostare, Chiudi dell'avviso, Esc, un tocco su un blocco o sul foglio vuoto. Ogni modifica, un'esecuzione o un altro diagramma rinunciano.
+- **Tastiera:** con Sposta il focus va sul primo + possibile; Tab scorre solo quelli; Invio sposta.
+- **Funzioni:** non si spostano (Sposta è disabilitato sull'Inizio di una funzione); si sposta un blocco.
+- **Annulla/ripeti:** un solo passo `move` con il punto di partenza e quello d'arrivo (calcolato dopo aver tolto il blocco, quando il + sta più avanti nello stesso elenco). Gli ID non cambiano.
+- **Telefono:** con quattro pulsanti la barra non starebbe in 360 px: sotto i 27,5rem Modifica, Sposta ed Elimina hanno la sola icona (il nome resta per i lettori di schermo e nel title), Inserisci dopo il testo.

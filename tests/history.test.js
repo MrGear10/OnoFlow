@@ -195,7 +195,7 @@
         });
 
         T.test('passi sconosciuti rifiutati', function (assert) {
-            assert.throws(function () { History.create().record({ kind: 'move' }); }, TypeError);
+            assert.throws(function () { History.create().record({ kind: 'teletrasporto' }); }, TypeError);
         });
     });
 

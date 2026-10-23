@@ -116,6 +116,7 @@
         var insertAfterButton = byId('insert-after');
         var editButton = byId('edit-block');
         var deleteButton = byId('delete-block');
+        var moveButton = byId('move-block');
         var consoleEmpty = byId('console-empty');
         var tabs = { diagram: byId('tab-diagram'), console: byId('tab-console') };
         var commands = {
@@ -143,6 +144,7 @@
             selectedId: null,       // blocco selezionato (B3)
             insertSlot: null,       // punto in cui il menu dei blocchi inserirà
             undoBar: null,          // avviso "Annulla" dell'ultima cancellazione (DEC-067)
+            moving: null,           // spostamento in corso: { blockId, bar } (passo 19, D-03)
             history: History.create(),
             editSession: null,      // finestra di modifica aperta: { blockId, before, revision } (DEC-068)
             pendingReveal: null     // blocco da inquadrare quando si torna al diagramma (FR-MOB-03)
@@ -216,8 +218,9 @@
         /*
          * Barra non bloccante sotto la barra superiore; kind: 'error', 'warning', 'info'.
          * actions: pulsanti [{ label, run }] prima di Chiudi; ognuno chiude la barra e poi agisce.
+         * onClose: chiamato se si chiude con Chiudi (lo spostamento rinuncia, passo 19).
          */
-        function notice(kind, message, items, actions) {
+        function notice(kind, message, items, actions, onClose) {
             var bar = document.createElement('div');
             bar.className = 'notice notice--' + kind;
             bar.setAttribute('role', kind === 'error' ? 'alert' : 'status');
@@ -255,6 +258,9 @@
             close.textContent = t('ui.notice.close');
             close.addEventListener('click', function () {
                 bar.parentNode.removeChild(bar);
+                if (onClose) {
+                    onClose();
+                }
             });
             bar.appendChild(close);
             notices.appendChild(bar);
@@ -351,6 +357,9 @@
             state.diagram.setErrors(state.marked.errors);
             state.diagram.setRunning(state.runningId);
             state.diagram.setSelected(state.selectedId);
+            if (state.moving) {
+                showMoving();
+            }
         }
 
         // --- Editor: inserimento (passo 9, DEC-063) ---------------------------------
@@ -361,6 +370,9 @@
             selectionBar.hidden = !nodeId || isActive();
             editButton.disabled = !nodeId || !canOpenEditor(nodeId);
             deleteButton.disabled = !nodeId;
+            // Una funzione non si sposta: si sposta un blocco (FR-EDIT-12).
+            var selectedNode = nodeId ? Model.findById(state.program, nodeId) : null;
+            moveButton.disabled = !selectedNode || isFunction(selectedNode.node);
         }
 
         function blockGroup(nodeId) {
@@ -485,6 +497,7 @@
          */
         function refresh(focusId, options) {
             dropUndo();
+            cancelMove();
             hideVariables();
             state.outcome = null;
             state.runningId = null;
@@ -543,6 +556,68 @@
             } else if (!Editor.sameContent(session.before, after)) {
                 recordStep({ kind: 'edit', blockId: session.blockId, before: session.before, after: after }, session.revision);
             }
+        }
+
+        // --- Editor: spostamento (passo 19, FR-EDIT-12, D-03, DEC-079) ---------------------------
+
+        /* Il blocco tratteggiato e i + dove può andare. */
+        function showMoving() {
+            var blockId = state.moving.blockId;
+            state.diagram.setMoving(blockId, function (slot) { return Editor.canMoveTo(state.program, blockId, slot); });
+        }
+
+        /* Sposta: il blocco aspetta un tocco su un +; un tocco altrove, Esc o Non spostare rinunciano. */
+        function startMove(nodeId) {
+            var found = nodeId ? Model.findById(state.program, nodeId) : null;
+            if (isActive() || !found || isFunction(found.node)) {
+                return;
+            }
+            if (blockEditor.isOpen()) {
+                blockEditor.close();
+            }
+            blockMenu.close({ restoreFocus: false });
+            cancelMove();
+            dropUndo();
+            var text = BlockText.plainText(found.node, t, found.node.kind === 'do' ? 'tail' : 'head');
+            state.moving = { blockId: nodeId, bar: null };
+            state.moving.bar = notice('info', t('ui.move.prompt', { text: text }), null, [{
+                label: t('ui.move.cancel'),
+                run: function () { cancelMove(); }
+            }], function () { cancelMove(); });
+            selectionBar.hidden = true;
+            showMoving();
+            // Il primo + dove può andare, per chi usa la tastiera.
+            var first = diagram.querySelector('.dg-slot:not(.is-disabled)');
+            if (first) {
+                first.focus({ preventScroll: true });
+            }
+        }
+
+        function cancelMove() {
+            if (!state.moving) {
+                return;
+            }
+            var moving = state.moving;
+            state.moving = null;
+            if (moving.bar && moving.bar.parentNode) {
+                moving.bar.parentNode.removeChild(moving.bar);
+            }
+            if (state.diagram) {
+                state.diagram.setMoving(null);
+                select(state.selectedId);
+            }
+        }
+
+        function finishMove(slot) {
+            var blockId = state.moving.blockId;
+            cancelMove();
+            var before = state.document.revision();
+            var moved = Editor.moveBlock(state.program, blockId, slot);
+            if (!moved) {
+                return;
+            }
+            afterEdit(blockId);
+            recordStep({ kind: 'move', blockId: blockId, from: moved.from, to: moved.to }, before);
         }
 
         // --- Editor: funzioni (passo 18, FR-EDIT-11, DEC-078) ------------------------------
@@ -733,6 +808,15 @@
                 var point = sheetView.pointAt(event);
                 hit = point ? state.diagram.hitTest(point, TOUCH_RADIUS_PX / sheetView.zoom()) : null;
             }
+            if (state.moving) {
+                // Durante uno spostamento un + lo conclude (quelli spenti il disegno non li dà); altro tocco rinuncia.
+                if (hit && hit.slot !== undefined) {
+                    finishMove(state.diagram.slots[hit.slot]);
+                } else {
+                    cancelMove();
+                }
+                return;
+            }
             if (hit && hit.slot !== undefined) {
                 openInsertMenu(state.diagram.slots[hit.slot], diagram.querySelector('[data-slot="' + hit.slot + '"]'));
             } else if (hit) {
@@ -759,6 +843,8 @@
             if (target && (event.key === 'Enter' || event.key === ' ')) {
                 event.preventDefault();
                 activate(event, target);
+            } else if (event.key === 'Escape' && state.moving) {
+                cancelMove();
             } else if (event.key === 'Escape' && state.selectedId) {
                 select(null);
             } else if ((event.key === 'Delete' || event.key === 'Backspace') && target && !target.hasAttribute('data-slot')) {
@@ -799,6 +885,10 @@
             if (state.selectedId) {
                 openEditor(state.selectedId);
             }
+        });
+
+        moveButton.addEventListener('click', function () {
+            startMove(state.selectedId);
         });
 
         deleteButton.addEventListener('click', function () {
@@ -857,6 +947,7 @@
             blockMenu.close({ restoreFocus: false });
             blockEditor.close();
             dropUndo();
+            state.moving = null; // il diagramma di prima non c'è più
             hideVariables();
             selectionBar.hidden = true;
             state.marked = { errors: [], runtime: false };
@@ -1066,6 +1157,7 @@
             select(null);
             consoleView.clear();
             consoleEmpty.hidden = true;
+            cancelMove();
             hideVariables();
             showStaticErrors();
             state.outcome = null;

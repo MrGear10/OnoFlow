@@ -6,7 +6,7 @@
  * Definisce: OnoFlow.Editor.{INSERTABLE_KINDS, RETURN_TYPES, createNewBlock, canEdit, slotAfter,
  *            insertAt, removeAt, countInside, contentOf, setContent, sameContent,
  *            newFunction, insertFunction, removeFunction, signatureOf, setSignature,
- *            sameSignature, renameCalls, applyTexts}
+ *            sameSignature, renameCalls, applyTexts, canMoveTo, moveBlock}
  *
  * L'editor modifica solo il modello; il disegno si rifà dopo (§10.3). Dal passo 18 si
  * modificano tutte le funzioni (FR-EDIT-11, DEC-078); nella fase 1 solo Main (DEC-004).
@@ -19,6 +19,7 @@
  *     removeAt(program, blockId)     → { block, slot }   insertAt(program, slot, block) lo rimette
  *     removeFunction(program, id)    → { fn, index }     insertFunction(program, index, fn) la rimette
  *     renameCalls(program, da, a)    → [{ blockId, field, before, after }]   applyTexts le rimette
+ *     moveBlock(program, id, punto)  → { block, from, to } | null (passo 19: null se resta dov'è)
  */
 (function (OnoFlow) {
     'use strict';
@@ -154,6 +155,55 @@
                 return a[part][key] === b[part][key];
             });
         });
+    }
+
+    // --- Spostamento (passo 19, FR-EDIT-12, D-03) -----------------------------------------
+
+    /* ID del blocco e di tutti i blocchi che contiene: lì dentro non si sposta. */
+    function idsInside(block) {
+        var ids = [block.id];
+        Model.childListsOf(block).forEach(function (name) {
+            block[name].forEach(function (child) {
+                ids = ids.concat(idsInside(child));
+            });
+        });
+        return ids;
+    }
+
+    /*
+     * Un blocco può andare in quel punto? No dentro sé stesso o un suo figlio; no nei due punti
+     * attorno a lui, dove resterebbe dov'è.
+     */
+    function canMoveTo(program, blockId, slot) {
+        var found = Model.findById(program, blockId);
+        if (!found || found.node.kind === undefined || !Model.findById(program, slot.ownerId)) {
+            return false;
+        }
+        if (idsInside(found.node).indexOf(slot.ownerId) !== -1) {
+            return false;
+        }
+        var here = slotAfter(program, blockId);
+        var sameList = here.ownerId === slot.ownerId && here.list === slot.list;
+        return !(sameList && (slot.index === here.index || slot.index === here.index - 1));
+    }
+
+    /*
+     * Sposta un blocco con il contenuto nel punto scelto (anche in un'altra funzione).
+     * from è il punto da cui è partito, to quello in cui sta adesso: per annulla/ripeti
+     * basta toglierlo e rimetterlo nell'uno o nell'altro. Gli ID non cambiano.
+     */
+    function moveBlock(program, blockId, slot) {
+        if (!canMoveTo(program, blockId, slot)) {
+            return null;
+        }
+        var removed = removeAt(program, blockId);
+        var to = { ownerId: slot.ownerId, list: slot.list, index: slot.index };
+        // Togliendo il blocco, i punti dopo di lui nello stesso elenco scalano di uno.
+        if (removed.slot.ownerId === to.ownerId && removed.slot.list === to.list && to.index > removed.slot.index) {
+            to.index -= 1;
+        }
+        insertAt(program, to, removed.block);
+        return { block: removed.block, from: removed.slot, to: to };
     }
 
     // --- Funzioni (passo 18, FR-EDIT-11) ------------------------------------------------
@@ -296,6 +346,8 @@
         setSignature: setSignature,
         sameSignature: sameSignature,
         renameCalls: renameCalls,
-        applyTexts: applyTexts
+        applyTexts: applyTexts,
+        canMoveTo: canMoveTo,
+        moveBlock: moveBlock
     };
 })(window.OnoFlow);

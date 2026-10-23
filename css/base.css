@@ -786,6 +786,20 @@ button.diagram-error-entry:active {
 /* --- Editor: punti di inserimento e selezione (DEC-063) ---------------------------- */
 
 /* Punto di inserimento: cerchio con il +, a metà della freccia. Premuto pieno, focus più marcato. */
+/* Spostamento (passo 19): il blocco in viaggio è tratteggiato e tenue; i + vietati quasi spariscono. */
+.dg-block.is-moving {
+    opacity: 0.55;
+}
+
+.dg-block.is-moving > :not(text) {
+    stroke-dasharray: 6 4;
+}
+
+.dg-slot.is-disabled {
+    opacity: 0.2;
+    pointer-events: none;
+}
+
 .dg-slot {
     cursor: pointer;
     outline: none;
@@ -1963,7 +1977,9 @@ button.diagram-error-entry:active {
 
     #pause .button-label,
     #stop .button-label,
-    .selection-delete .button-label {
+    .selection-delete .button-label,
+    .selection-edit .button-label,
+    .selection-move .button-label {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -1977,12 +1993,14 @@ button.diagram-error-entry:active {
         padding: 0;
     }
 
-    /* Tre pulsanti con il testo non stanno in 360 px: Elimina resta con il solo cestino. */
+    /* Quattro pulsanti con il testo non stanno in 360 px: Modifica, Sposta ed Elimina restano con l'icona. */
     .selection-bar .button {
         padding: 0 var(--space-2);
     }
 
-    .selection-bar .selection-delete {
+    .selection-bar .selection-delete,
+    .selection-bar .selection-edit,
+    .selection-bar .selection-move {
         width: var(--touch);
         padding: 0;
         justify-content: center;

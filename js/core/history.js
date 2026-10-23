@@ -10,6 +10,7 @@
  *     { kind: 'edit', blockId, before, after }   contenuto prima e dopo (Editor.contentOf)
  *     { kind: 'addFunction', fn, index }         passo 18: annullare = togliere la funzione
  *     { kind: 'removeFunction', fn, index }      annullare = rimetterla nello stesso posto
+ *     { kind: 'move', blockId, from, to }        passo 19: annullare = rimetterlo in from
  *     { kind: 'editFunction', functionId, before, after, calls }
  *                                                firma prima e dopo (Editor.signatureOf) e le
  *                                                chiamate rinominate (Editor.renameCalls)
@@ -60,6 +61,11 @@
             }
             return;
         }
+        if (step.kind === 'move') {
+            var moved = Editor.removeAt(program, step.blockId).block;
+            Editor.insertAt(program, backwards ? step.from : step.to, moved);
+            return;
+        }
         if (step.kind === 'editFunction') {
             Editor.setSignature(functionOf(program, step.functionId), backwards ? step.before : step.after);
             Editor.applyTexts(program, step.calls || [], backwards);
@@ -82,7 +88,7 @@
 
         return {
             record: function (step) {
-                if (['insert', 'remove', 'edit', 'addFunction', 'removeFunction', 'editFunction'].indexOf(step.kind) === -1) {
+                if (['insert', 'remove', 'edit', 'move', 'addFunction', 'removeFunction', 'editFunction'].indexOf(step.kind) === -1) {
                     throw new TypeError('History: passo sconosciuto ' + step.kind);
                 }
                 done.push(step);

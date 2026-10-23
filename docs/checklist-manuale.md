@@ -277,3 +277,16 @@ La finestra di modifica arriva al passo 10: per ora un blocco inserito resta vuo
 - [ ] L'Inizio di Main non si seleziona.
 - [ ] **Salva**: nel file `<function name="Doppio" type="Integer" variable="r">` con `<parameter name="n" type="Integer" array="False"/>`. **Flowgorithm (Q-07):** il file si apre e la funzione è uguale.
 - [ ] **Telefono:** la finestra della funzione è a tutto schermo; ogni parametro ha il nome su una riga e tipo, Array e Togli sotto.
+
+---
+
+## Passo 19 — Spostamento dei blocchi
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (452 test).
+- [ ] **Esempi → Pari o dispari**, selezionare `Output "Scrivi un numero intero"`: nella barra c'è **Sposta** (quattro frecce). Sposta: il blocco diventa tratteggiato e tenue, i due + attorno a lui quasi spariscono, l'avviso dice di scegliere il +.
+- [ ] Toccare il + del ramo Vero dell'`if`: il blocco va lì; "Non salvato". **Annulla**: torna dov'era.
+- [ ] Spostare un ciclo con il suo contenuto dentro un altro ramo, poi in un'altra funzione: arriva intero. Dentro sé stesso non si può: i suoi + sono spenti.
+- [ ] Rinunciare: **Non spostare**, **Chiudi**, **Esc**, un tocco su un blocco o sul foglio vuoto.
+- [ ] Tastiera: Sposta, poi Tab scorre solo i + possibili, Invio sposta.
+- [ ] Sull'Inizio di una funzione Sposta è disabilitato.
+- [ ] **Telefono:** la barra della selezione ha Modifica, Sposta ed Elimina con la sola icona e Inserisci dopo con il testo, tutto dentro lo schermo; durante lo spostamento la barra sparisce.

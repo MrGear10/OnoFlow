@@ -365,6 +365,8 @@ A metà di ogni freccia di Main, un cerchietto su carta (raggio 0,45 quadretti) 
 ### Selezione del blocco (B3)
 Contorno d'inchiostro di 2.5px, a 0,3 quadretti dal blocco, angoli di 0,25 quadretti: si distingue dal cerchio rosso dell'errore per colore e forma. La barra della selezione ha **Modifica** (icona della matita), **Inserisci dopo** (icona del cerchio con il +) ed **Elimina** (icona del cestino; sui telefoni stretti senza testo): sul computer in basso a sinistra del foglio, sul telefono sopra i comandi dello zoom. Dopo una cancellazione l'avviso informativo sotto la barra superiore offre **Annulla** (DEC-067). Su un foglio sotto i 44rem la barra della selezione sta sopra lo zoom anche sul computer.
 
+**Spostamento** (DEC-079): il blocco in viaggio ha i contorni tratteggiati e opacità 0,55; i + dove non può andare scendono a 0,2. Sposta ha l'icona delle quattro frecce. Sotto i 27,5rem la barra della selezione ha tre pulsanti con la sola icona (Modifica, Sposta, Elimina) e Inserisci dopo con il testo.
+
 **Funzioni** (DEC-078): il titolo di ogni funzione mostra la firma («Funzione Doppio(Integer n) → Integer r»), tre quadretti sopra Inizio. L'Inizio di una funzione diversa da Main si seleziona come un blocco. La finestra «Funzione» ha le righe dei parametri in griglia (nome, tipo, Array, Togli; sul telefono il nome su una riga sua) e Aggiungi parametro.
 
 **Menu dei blocchi con dieci voci** (DEC-077): Chiamata e Commento in fondo; sul telefono due colonne da cinque righe. Il commento si modifica in un'area di testo alta due righe.
