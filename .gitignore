@@ -1,2 +1,5 @@
 tools/node_modules/
-.impeccable/review/
+.impeccable/
+# Strumenti di lavoro locali, non pubblicati (DEC-071)
+CLAUDE.md
+PROGRESS.md

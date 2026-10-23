@@ -299,7 +299,7 @@
             'ui.footer.hosting': 'Il sito è ospitato su GitHub Pages, un servizio di GitHub, Inc., con sede negli Stati Uniti, fuori dall\'Unione Europea. GitHub registra l\'indirizzo IP dei visitatori per motivi di sicurezza; OnoFlow non invia altri dati.',
             'ui.footer.hostingLink': 'Informativa sulla privacy di GitHub',
             'ui.footer.local': 'Copia locale: la pagina è aperta dal disco, quindi nessun dato raggiunge GitHub.',
-            'ui.footer.ai': 'Sviluppato con l\'assistenza di Claude (Anthropic).',
+            'ui.footer.ai': 'Progettato da MrGear10 e sviluppato con l\'assistenza di Claude (Anthropic).',
             'ui.footer.short.independent': 'Progetto indipendente, non affiliato a Flowgorithm',
             'ui.footer.short.hosting': 'Ospitato su GitHub Pages (USA, fuori dall\'UE), che registra l\'IP dei visitatori; OnoFlow non invia altri dati',
             'ui.footer.short.privacyLink': 'Privacy di GitHub',

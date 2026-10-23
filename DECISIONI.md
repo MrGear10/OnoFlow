@@ -313,7 +313,8 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 
 - **Passo:** 5b · **Decisa da:** autore, sulla pagina di decisione della skill impeccable · **Tocca:** §11.2
 - **Decisione:** quaderno a quadretti e lavagna, sobri, con la grammatica degli stati della segnaletica stradale: ogni stato ha un segno con un solo significato. Penna rossa solo per gli errori, evidenziatore giallo solo per il blocco in esecuzione, inchiostro blu per i blocchi, console come ardesia con il gesso. Linee a un pixel, niente gradienti, ombre o rilievi; quadretti tenui e contenuto al massimo contrasto. Da evitare: aria da giocattolo e metafora spinta fino al costume.
-- **Dove:** `PRODUCT.md` (verità di prodotto) e `.impeccable/surfaces/index-html.md` (contratto della direzione per la superficie dell'app). `DESIGN.md` si scrive alla fine del passo 6, dal costruito, dopo la revisione finale.
+- **Aggiornata da DEC-071:** `.impeccable/` non è più nel repository pubblico, quindi `.nojekyll` si usa.
+- **Dove:** `PRODUCT.md` (verità di prodotto) e `.impeccable/surfaces/index-html.md` (contratto della direzione per la superficie dell'app, solo in locale). `DESIGN.md` si scrive alla fine del passo 6, dal costruito, dopo la revisione finale.
 - **Vincolo di pubblicazione:** il contratto della direzione non deve essere servito con l'app. GitHub Pages, con Jekyll attivo come da impostazione predefinita, non pubblica le cartelle che iniziano con il punto: per questo **non si aggiunge un file `.nojekyll`** al repository. Da ricontrollare prima della pubblicazione.
 
 ## DEC-052 — Schema testuale del diagramma fino al renderer
@@ -486,3 +487,14 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 - **Solo operatori prudenti (Q-02):** `mod`, `==`, `>`, `&`; niente `%`, `!=`, `&&`, `||`, `!`, finché non si verifica che Flowgorithm li accetti.
 - **QA-06:** `tests/examples.test.js` controlla per ogni esempio apertura senza avvisi né errori, round-trip, titolo nel catalogo, e l'output con input noti.
 - **Riga in fondo al foglio (DEC-065):** non scorre più di lato con un disegno largo (`position: sticky`) e, su un foglio stretto, ha sotto lo spazio per le due file di comandi (selezione e zoom), così non finisce sotto la barra della selezione.
+
+## DEC-071 — Preparazione alla pubblicazione
+
+- **Data:** 23 ottobre 2026 · **Decisa da:** autore (firma, documenti, email); sviluppo (il resto) · **Tocca:** FR-INFO-02, NFR-PRIV-05…07, NFR-DIST-01, FR-MOB-13, DEC-051
+- **Firma:** «MrGear10». Il pannello Informazioni dice «Progettato da MrGear10 e sviluppato con l'assistenza di Claude (Anthropic).» (FR-INFO-02); la licenza MIT è intestata a MrGear10.
+- **README.md:** cosa fa l'app, uso online e offline (ZIP, `file://`), indipendenza da Flowgorithm, privacy (nessun dato salvato tranne la copia di sessione, hosting su GitHub Pages fuori dall'UE con l'IP registrato, dati personali dentro i `.fprg` che OnoFlow non aggiunge né toglie: NFR-PRIV-06, NFR-PRIV-07, NFR-PRIV-08), uso dell'IA, test e verifiche, documenti, licenza.
+- **NFR-PRIV-07 ricontrollato il 23 ottobre 2026:** la documentazione di GitHub Pages dice ancora che l'IP di ogni visitatore "is logged and stored for security purposes", con o senza account; l'informativa generale di GitHub (in vigore dal 27 aprile 2026) è all'indirizzo usato dall'app.
+- **Documenti pubblici:** specifica, `DECISIONI.md`, `DESIGN.md`, `PRODUCT.md`, `docs/checklist-manuale.md`. **Solo in locale** (in `.gitignore`): `CLAUDE.md`, `PROGRESS.md`, `.impeccable/`. Prima della pubblicazione la storia si riscrive anche per toglierli dai commit vecchi.
+- **`.nojekyll`:** senza `.impeccable/` non c'è più nulla da nascondere; GitHub Pages serve i file come sono, senza Jekyll.
+- **Email dei commit:** prima della pubblicazione la storia si riscrive con l'indirizzo noreply di GitHub dell'autore, perché l'email personale non diventi pubblica.
+- **FR-MOB-13:** le verifiche ruotano il telefono a metà dell'esecuzione (in attesa di un valore): l'esecuzione e il diagramma restano.

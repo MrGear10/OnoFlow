@@ -38,7 +38,8 @@
  *     di modifica, eseguita con gli input di QA-04, salvata e riaperta (FR-FILE-10);
  *   - QA-12: l'Appendice A modificata (un'espressione, un blocco aggiunto, uno cancellato), salvata:
  *     solo quelle righe cambiano, gli attributi restano; poi riaperta (FR-FILE-09);
- *   - il focus su un blocco o un punto fuori vista lo porta in vista, anche in Firefox (DEC-069).
+ *   - il focus su un blocco o un punto fuori vista lo porta in vista, anche in Firefox (DEC-069);
+ *   - telefono ruotato a metà dell'esecuzione: l'esecuzione e il diagramma restano (FR-MOB-13).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -104,7 +105,17 @@ async function runQa04(page, checks, viewport) {
         checks.ok(await page.isVisible('#panel-console') && !(await page.isVisible('#panel-diagram')),
             'all\'avvio la console è in primo piano e il diagramma è nascosto');
     }
-    for (const value of QA04_INPUTS) {
+    for (const [index, value] of QA04_INPUTS.entries()) {
+        if (viewport.phone && index === 2) {
+            // Rotazione a metà dell'esecuzione: diagramma ed esecuzione restano (FR-MOB-13).
+            await page.setViewportSize({ width: viewport.height, height: viewport.width });
+            await page.waitForTimeout(200);
+            checks.ok((await page.textContent('#status')).trim() === 'In attesa di un valore', 'in orizzontale l\'esecuzione aspetta ancora il valore');
+            checks.ok(await noHorizontalScroll(page), 'in orizzontale nessuno scorrimento orizzontale');
+            await page.setViewportSize({ width: viewport.width, height: viewport.height });
+            await page.waitForTimeout(200);
+            checks.ok((await page.locator('#diagram .dg-block').count()) > 20, 'tornati in verticale il diagramma c\'è ancora');
+        }
         const field = page.locator('.console-field');
         await field.waitFor();
         const box = await field.boundingBox();
