@@ -174,6 +174,8 @@
             'block.name.while': 'While',
             'block.name.do': 'Do',
             'block.name.for': 'For',
+            'block.name.call': 'Chiamata',
+            'block.name.comment': 'Commento',
 
             // Interfaccia (§11.1). Tono impersonale, lo stesso nome per la stessa azione (DEC-050).
             'ui.subtitle': 'Editor web di diagrammi di flusso, compatibile con i file .fprg',
@@ -249,6 +251,10 @@
             'ui.edit.direction.inc': 'Crescente (to)',
             'ui.edit.direction.dec': 'Decrescente (down to)',
             'ui.edit.step': 'Passo',
+            'ui.edit.call': 'Chiamata',
+            'ui.edit.comment': 'Commento',
+            'ui.edit.hint.call.expression': 'es. Stampa(n)',
+            'ui.edit.hint.comment.text': 'es. Calcola la media dei voti',
             'ui.edit.hint.declare.names': 'es. n, somma',
             'ui.edit.hint.declare.size': 'es. 10',
             'ui.edit.hint.assign.variable': 'es. somma',

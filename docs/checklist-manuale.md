@@ -251,3 +251,14 @@ La finestra di modifica arriva al passo 10: per ora un blocco inserito resta vuo
 - [ ] Un errore in un ramo che non si esegue mai (`if false` → `x = "a"` con `x` Integer) blocca comunque l'esecuzione: «Non eseguito: ci sono errori».
 - [ ] Nessun falso allarme: tutti gli esempi del menu si eseguono; `Integer i` con `i = 2 ^ 3` va bene.
 - [ ] Una funzione di un file importato con un errore di tipo nel corpo: l'errore è segnato sul blocco dentro la funzione.
+
+---
+
+## Passo 17 — Chiamata e commento nell'editor
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (432 test).
+- [ ] **Nuovo**, + : il menu ha dieci voci, con **Chiamata** e **Commento** in fondo; sul telefono stanno tutte senza scorrere.
+- [ ] **Commento** `Somma dei "voti"`: nel diagramma «// Somma dei "voti"». Con le virgolette della tastiera dell'iPhone, nel campo diventano dritte.
+- [ ] **Chiamata** `Saluta()`: sotto il campo «Non esiste una funzione chiamata «Saluta»». Con `ToString(1)` l'errore sparisce.
+- [ ] **Salva** e apri il file con un editor di testo: `<comment text="Somma dei &quot;voti&quot;"/>` e `<call expression="ToString(1)"/>`. **Flowgorithm (Q-07):** il file si apre e mostra il commento e la chiamata.
+- [ ] Un commento o una chiamata selezionati hanno **Modifica** attivo; doppio clic e secondo tocco li aprono.

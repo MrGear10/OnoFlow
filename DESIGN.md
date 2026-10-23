@@ -365,6 +365,8 @@ A metà di ogni freccia di Main, un cerchietto su carta (raggio 0,45 quadretti) 
 ### Selezione del blocco (B3)
 Contorno d'inchiostro di 2.5px, a 0,3 quadretti dal blocco, angoli di 0,25 quadretti: si distingue dal cerchio rosso dell'errore per colore e forma. La barra della selezione ha **Modifica** (icona della matita), **Inserisci dopo** (icona del cerchio con il +) ed **Elimina** (icona del cestino; sui telefoni stretti senza testo): sul computer in basso a sinistra del foglio, sul telefono sopra i comandi dello zoom. Dopo una cancellazione l'avviso informativo sotto la barra superiore offre **Annulla** (DEC-067). Su un foglio sotto i 44rem la barra della selezione sta sopra lo zoom anche sul computer.
 
+**Menu dei blocchi con dieci voci** (DEC-077): Chiamata e Commento in fondo; sul telefono due colonne da cinque righe. Il commento si modifica in un'area di testo alta due righe.
+
 **Passo** (DEC-074): pulsante come Pausa e Ferma, con l'icona del triangolo e della barra, nella barra accanto a Esegui da 28rem in su; sul telefono, durante l'esecuzione, in basso a sinistra del foglio al posto di Annulla e Ripeti. Nel passo-passo lo stato dice «Passo a passo», con il segno della pausa.
 
 **Pannello delle variabili** (DEC-075): sulla lavagna della console, in cima; titolo piccolo «Variabili di Main», righe nome (grassetto) · tipo (piccolo, attenuato) · valore. Valore cambiato nell'ultimo passo sottolineato col gesso, mai in giallo; valore completo dei Real sotto in piccolo. Sul telefono una striscia scura arrotondata sopra i comandi del foglio, con il riassunto in una riga e la freccia per allargarla.

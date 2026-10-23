@@ -543,3 +543,12 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 - **Mentre si scrive:** se un campo non ha errori di sintassi, sotto compare l'errore dell'analisi statica di quel campo (opzione `fieldIssue` della finestra di modifica), così `b = True` si vede subito anche a tutto schermo sul telefono. Un campo vuoto mai lasciato resta senza errore anche quando si scrive in un altro (regola di DEC-066).
 - **I controlli durante l'esecuzione restano**, per i casi che dipendono dai valori; i loro test usano l'opzione `typeCheck: false` dell'interprete, che salta l'analisi dei tipi (solo nei test).
 - **Funzioni predefinite:** ognuna dichiara il tipo del risultato (`result`, oppure `'same'` per `Abs`).
+
+## DEC-077 — Chiamata e commento nell'editor
+
+- **Passo:** 17 · **Decisa da:** sviluppo · **Tocca:** FR-EDIT-10, FR-MOB-09, FR-MOB-16, §7.4, Q-06, Q-07, DEC-004
+- **Menu dei blocchi:** dieci voci, con **Chiamata** e **Commento** in fondo, nell'ordine di Flowgorithm; sul telefono due colonne da cinque righe.
+- **Chiamata:** un campo «Chiamata» (`es. Stampa(n)`), con gli errori di sintassi e dell'analisi statica mentre si scrive (funzione inesistente, argomenti; DEC-076). Il valore di una funzione con ritorno si scarta (§6.8).
+- **Commento:** un'area di testo «Commento» (`es. Calcola la media dei voti`). Non è un'espressione: nessuna analisi, nessun errore. Un'area e non un campo a una riga, perché un campo a una riga toglierebbe senza dirlo gli a capo di un commento importato; Invio passa avanti come negli altri campi, quindi in OnoFlow non si aggiungono a capo nuovi (prudenza: Q-06 non è verificata). Virgolette tipografiche raddrizzate (FR-MOB-16) e niente correzione automatica (FR-MOB-09), perché un commento cita spesso i nomi delle variabili.
+- **Formato:** `<call expression="…"/>` e `<comment text="…"/>`, come la §7.4 presume; gli escape di FMT-W-04 (`&#10;` per l'a capo). All'apertura di un file resta l'avviso `WARN_LOAD_UNVERIFIED_FORMAT` finché Q-07 non è verificata con un secondo file campione.
+- **Fase 1 superata (DEC-004):** chiamate e commenti di Main ora si modificano (Modifica non è più barrato).

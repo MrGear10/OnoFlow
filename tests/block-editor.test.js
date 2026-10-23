@@ -279,4 +279,61 @@
             });
         });
     });
+    T.suite('Finestra di modifica › chiamata e commento (passo 17, FR-EDIT-10)', function () {
+        T.test('commento: testo libero, virgolette dritte, a capo di un file conservati', function (assert) {
+            var block = OnoFlow.Editor.createNewBlock('comment');
+            withEditor(block, function (e) {
+                assert.deepEqual(labels(e.panel), [t('ui.edit.comment')]);
+                var area = e.field('text');
+                assert.equal(area.tagName, 'TEXTAREA');
+                type(area, 'Calcola \u201cla media\u201d');
+                assert.equal(block.text, 'Calcola "la media"');
+                assert.equal(area.value, 'Calcola "la media"', 'anche nel campo');
+            });
+            var imported = H.comment('riga uno\nriga due');
+            withEditor(imported, function (e) {
+                assert.equal(e.field('text').value, 'riga uno\nriga due');
+            });
+        });
+
+        T.test('commento: Invio chiude, come dall\'ultimo campo', function (assert) {
+            withEditor(OnoFlow.Editor.createNewBlock('comment'), function (e) {
+                e.field('text').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+                assert.equal(e.closed(), 1);
+            });
+        });
+
+        T.test('chiamata: un campo con l\'errore di sintassi mentre si scrive', function (assert) {
+            var block = OnoFlow.Editor.createNewBlock('call');
+            withEditor(block, function (e) {
+                assert.deepEqual(labels(e.panel), [t('ui.edit.call')]);
+                var input = e.field('expression');
+                input.focus();
+                type(input, 'Saluta(');
+                assert.isFalse(document.getElementById(input.id + '-error').hidden);
+                type(input, 'Saluta()');
+                assert.equal(block.fields.expression.text, 'Saluta()');
+                assert.isTrue(document.getElementById(input.id + '-error').hidden);
+            });
+        });
+
+        T.test('salvati e riaperti restano uguali, anche con caratteri speciali', function (assert) {
+            var saluta = H.fn('Saluta', 'None', '', [['n', 'Integer']], [H.output('n')]);
+            var program = H.program([], [saluta]);
+            var main = program.functions[0];
+            var note = OnoFlow.Editor.createNewBlock('comment');
+            OnoFlow.Model.setProperty(note, 'text', 'Prova <1> & "due"\nfine');
+            var call = OnoFlow.Editor.createNewBlock('call');
+            OnoFlow.Model.setFieldText(call, 'expression', 'Saluta(3)');
+            OnoFlow.Editor.insertAt(program, { ownerId: main.id, list: 'body', index: 0 }, note);
+            OnoFlow.Editor.insertAt(program, { ownerId: main.id, list: 'body', index: 1 }, call);
+            var text = OnoFlow.Format.exportFprg(program);
+            assert.isTrue(text.indexOf('<comment text="Prova &lt;1&gt; &amp; &quot;due&quot;&#10;fine"/>') !== -1, 'escape (FMT-W-04)');
+            assert.isTrue(text.indexOf('<call expression="Saluta(3)"/>') !== -1);
+            var back = OnoFlow.Format.importFprg(text).program.functions[0].body;
+            assert.equal(back[0].text, 'Prova <1> & "due"\nfine');
+            assert.equal(back[1].fields.expression.text, 'Saluta(3)');
+            assert.deepEqual(OnoFlow.StaticCheck.check(OnoFlow.Format.importFprg(text).program), []);
+        });
+    });
 })();

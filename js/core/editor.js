@@ -24,8 +24,8 @@
         throw new Error('editor.js richiede model.js, da caricare prima');
     }
 
-    // I blocchi del menu (FR-EDIT-01, §7.3), nell'ordine in cui si mostrano.
-    var INSERTABLE_KINDS = ['declare', 'assign', 'input', 'output', 'if', 'while', 'do', 'for'];
+    // I blocchi del menu (FR-EDIT-01, §7.3; call e comment dal passo 17, FR-EDIT-10), nell'ordine in cui si mostrano.
+    var INSERTABLE_KINDS = ['declare', 'assign', 'input', 'output', 'if', 'while', 'do', 'for', 'call', 'comment'];
 
     /* Blocco nuovo (D-09, DEC-063): campi vuoti; il suggerimento sta solo nella finestra di modifica. */
     function createNewBlock(kind) {

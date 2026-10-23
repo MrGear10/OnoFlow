@@ -20,8 +20,8 @@
     }
 
     T.suite('Editor › blocchi nuovi (D-09, FR-EDIT-01)', function () {
-        T.test('il menu offre gli otto blocchi della §7.3', function (assert) {
-            assert.deepEqual(Editor.INSERTABLE_KINDS, ['declare', 'assign', 'input', 'output', 'if', 'while', 'do', 'for']);
+        T.test('il menu offre i dieci blocchi della §7.3 (call e comment dal passo 17)', function (assert) {
+            assert.deepEqual(Editor.INSERTABLE_KINDS, ['declare', 'assign', 'input', 'output', 'if', 'while', 'do', 'for', 'call', 'comment']);
         });
 
         T.test('un blocco nuovo parte vuoto (DEC-063)', function (assert) {
@@ -38,9 +38,10 @@
             assert.isTrue(Editor.createNewBlock('output').newline);
         });
 
-        T.test('chiamate e commenti non si inseriscono nella fase 1', function (assert) {
-            assert.throws(function () { Editor.createNewBlock('call'); }, TypeError);
-            assert.throws(function () { Editor.createNewBlock('comment'); }, TypeError);
+        T.test('chiamata e commento nuovi partono vuoti; gli altri tipi no (FR-EDIT-10)', function (assert) {
+            assert.equal(Editor.createNewBlock('call').fields.expression.text, '');
+            assert.equal(Editor.createNewBlock('comment').text, '');
+            assert.throws(function () { Editor.createNewBlock('function'); }, TypeError);
         });
 
         T.test('un blocco vuoto è un errore che impedisce l\'esecuzione (FR-EDIT-03)', function (assert) {
@@ -254,11 +255,11 @@
             return { left: 10, right: 30, top: 10, bottom: 30, width: 20, height: 20 };
         }
 
-        T.test('otto voci con forma e nome, nell\'ordine dell\'editor', function (assert) {
+        T.test('dieci voci con forma e nome, nell\'ordine dell\'editor', function (assert) {
             var m = menu();
             try {
                 var items = m.host.querySelectorAll('[role="menuitem"]');
-                assert.equal(items.length, 8);
+                assert.equal(items.length, 10);
                 assert.equal(items[4].getAttribute('data-kind'), 'if');
                 assert.equal(items[4].textContent, t('block.name.if'));
                 assert.isTrue(items[0].querySelector('svg.block-icon .dg-block--declare') !== null, 'forma e tinta del tipo');
@@ -294,7 +295,7 @@
                 assert.equal(document.activeElement.getAttribute('data-kind'), 'assign');
                 key('ArrowUp');
                 key('ArrowUp');
-                assert.equal(document.activeElement.getAttribute('data-kind'), 'for', 'dalla prima si torna all\'ultima');
+                assert.equal(document.activeElement.getAttribute('data-kind'), 'comment', 'dalla prima si torna all\'ultima');
                 key('Escape');
                 assert.isFalse(m.menu.isOpen());
                 assert.equal(document.activeElement, origin);

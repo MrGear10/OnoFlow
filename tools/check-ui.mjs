@@ -1,5 +1,5 @@
 /*
- * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–16).
+ * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–17).
  *
  * Dipendenze: playwright (solo in tools/, mai nell'applicazione).
  *
@@ -43,7 +43,8 @@
  *   - passo-passo: Passo (barra, foglio sul telefono, menu, F10) si ferma prima di ogni blocco,
  *     che è quello evidenziato; input a metà passo; Riprendi e Ferma (FR-RUN-05);
  *   - analisi statica: «b = True» segnalato sotto il campo mentre si scrive, con il suggerimento,
- *     e prima dell'esecuzione (FR-ERR-06, D-06).
+ *     e prima dell'esecuzione (FR-ERR-06, D-06);
+ *   - commento e chiamata dal menu, modificati, disegnati e salvati (FR-EDIT-10).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -878,6 +879,37 @@ async function checkStaticAnalysis(page, checks, viewport) {
     checks.ok((await page.locator('#diagram-errors .diagram-error').count()) === 0, 'nessun errore nel diagramma');
 }
 
+/* Commento e chiamata inseriti e modificati con l'editor (FR-EDIT-10, passo 17). */
+async function checkCallComment(page, checks, viewport) {
+    const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
+    await page.click('#menu-button');
+    await page.click('#cmd-new');
+    await leaveUnsaved(page, press);
+    await press('#diagram [data-slot="0"]');
+    checks.ok((await page.locator('.block-menu-item').count()) === 10, 'il menu dei blocchi ha anche Chiamata e Commento');
+    const menu = await page.locator('.block-menu').boundingBox();
+    checks.ok(menu.y >= 0 && menu.y + menu.height <= viewport.height + 1, 'con dieci voci il menu sta nello schermo');
+    await press('.block-menu [data-kind="comment"]');
+    await page.locator('.block-editor textarea').fill('Somma dei "voti"');
+    await press('.edit-done');
+    checks.ok((await page.textContent('#diagram')).includes('// Somma dei "voti"'), 'il commento è disegnato con il suo testo');
+    await press('#insert-after');
+    await press('.block-menu [data-kind="call"]');
+    await page.locator('.block-editor [id$="-expression"]').fill('Saluta()');
+    const error = page.locator('.block-editor [id$="-expression-error"]');
+    checks.ok(await error.isVisible() && (await error.textContent()).includes('Saluta'), `una funzione che non esiste: ${(await error.textContent()).trim()}`);
+    await page.locator('.block-editor [id$="-expression"]').fill('ToString(1)');
+    checks.ok(await error.isHidden(), 'con una funzione esistente l\'errore sparisce');
+    await press('.edit-done');
+    const saved = await saveFromMenu(page);
+    checks.ok(saved.text.includes('<comment text="Somma dei &quot;voti&quot;"/>') && saved.text.includes('<call expression="ToString(1)"/>'),
+        'nel file salvato commento e chiamata (§7.4)');
+    // Si riaprono con Modifica, non più barrato.
+    const commentId = await page.evaluate(() => document.querySelector('#diagram .dg-block--comment.is-selectable, #diagram .is-selectable').getAttribute('data-id'));
+    await press(`#diagram [data-id="${commentId}"] text`);
+    checks.ok(!(await page.isDisabled('#edit-block')), 'un commento si modifica: Modifica attivo');
+}
+
 /* Passo-passo sull'esempio Pari o dispari (FR-RUN-05, DEC-073). */
 async function checkStep(page, checks, viewport) {
     const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
@@ -1037,6 +1069,7 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
         await checkQa12(page, checks, viewport);
         await checkStep(page, checks, viewport);
         await checkStaticAnalysis(page, checks, viewport);
+        await checkCallComment(page, checks, viewport);
         if (!viewport.phone) {
             await checkFocusReveal(page, checks);
             await checkMenuKeyboard(page, checks);

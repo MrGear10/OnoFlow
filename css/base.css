@@ -1148,6 +1148,14 @@ button.diagram-error-entry:active {
     outline-offset: -3px;
 }
 
+/* Il testo di un commento: un'area che cresce in verticale (passo 17). */
+.edit-comment {
+    min-height: calc(2 * var(--touch));
+    resize: vertical;
+    font-family: var(--font-ui);
+    line-height: 1.4;
+}
+
 /* --- Barra della selezione (B3) ----------------------------------------------------- */
 
 .selection-bar {

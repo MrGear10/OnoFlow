@@ -63,7 +63,10 @@
             { name: 'end', control: 'text', label: 'to' },
             { name: 'direction', control: 'direction', label: 'direction' },
             { name: 'step', control: 'text', label: 'step' }
-        ]
+        ],
+        // Passo 17 (FR-EDIT-10): il commento è un testo libero, non un'espressione.
+        call: [{ name: 'expression', control: 'text', label: 'call' }],
+        comment: [{ name: 'text', control: 'comment', label: 'comment' }]
     };
 
     /*
@@ -247,6 +250,48 @@
             return row;
         }
 
+        /*
+         * Testo di un commento (proprietà text, non analizzata). Un'area di testo, perché gli a
+         * capo di un file importato si conservino; Invio passa avanti come negli altri campi.
+         */
+        function commentRow(spec, id) {
+            var root = element('div', 'edit-row');
+            var label = element('label', 'edit-label', t('ui.edit.' + spec.label));
+            label.htmlFor = id;
+            var input = element('textarea', 'edit-input edit-comment');
+            input.id = id;
+            input.rows = 2;
+            input.value = block.text;
+            input.placeholder = t('ui.edit.hint.comment.text');
+            // Come gli altri campi (FR-MOB-09): un commento cita spesso i nomi delle variabili.
+            input.setAttribute('autocomplete', 'off');
+            input.setAttribute('autocorrect', 'off');
+            input.setAttribute('autocapitalize', 'off');
+            input.setAttribute('spellcheck', 'false');
+            input.setAttribute('enterkeyhint', 'done');
+            root.appendChild(label);
+            root.appendChild(input);
+            var row = { spec: spec, root: root, input: input };
+            input.addEventListener('focus', function () { lastText = input; });
+            input.addEventListener('input', function () {
+                var straight = straightenQuotes(input.value);
+                if (straight !== input.value) {
+                    var caret = input.selectionStart;
+                    input.value = straight;
+                    input.setSelectionRange(caret, caret);
+                }
+                Model.setProperty(block, 'text', input.value);
+                notifyChange();
+            });
+            input.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    focusNext(row);
+                }
+            });
+            return row;
+        }
+
         function choiceRow(spec, id, values, labelKeys) {
             var root = element('div', 'edit-row');
             var label = element('label', 'edit-label', t('ui.edit.' + spec.label));
@@ -312,6 +357,8 @@
                     row = textRow(spec, id);
                 } else if (spec.control === 'type') {
                     row = choiceRow(spec, id, Model.TYPES, null);
+                } else if (spec.control === 'comment') {
+                    row = commentRow(spec, id);
                 } else if (spec.control === 'direction') {
                     row = choiceRow(spec, id, Model.DIRECTIONS, ['ui.edit.direction.inc', 'ui.edit.direction.dec']);
                 } else {
