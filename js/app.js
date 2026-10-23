@@ -644,6 +644,26 @@
             }
         });
 
+        /*
+         * Il focus su un blocco o su un punto (Tab) deve portarlo in vista. Firefox non fa scorrere
+         * il foglio per un <g> dell'SVG, e a volte lo sposta altrove: se l'elemento è del tutto
+         * fuori dal foglio, lo inquadra la pagina (NFR-ACC-01, DEC-069).
+         */
+        diagram.addEventListener('focusin', function (event) {
+            var target = event.target.closest ? event.target.closest('[data-slot], .is-selectable') : null;
+            if (!target || !state.diagram) {
+                return;
+            }
+            var box = target.getBoundingClientRect();
+            var frame = sheet.getBoundingClientRect();
+            var outside = box.bottom <= frame.top || box.top >= frame.bottom || box.right <= frame.left || box.left >= frame.right;
+            if (outside) {
+                sheetView.reveal(target.hasAttribute('data-slot')
+                    ? state.diagram.slotBox(Number(target.getAttribute('data-slot')))
+                    : state.diagram.nodeBox(target.getAttribute('data-id')));
+            }
+        });
+
         // Doppio clic sul blocco: modifica (FR-EDIT-02).
         sheet.addEventListener('dblclick', function (event) {
             var target = event.target.closest ? event.target.closest('.is-selectable') : null;

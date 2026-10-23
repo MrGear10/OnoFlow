@@ -283,7 +283,11 @@
         slots.forEach(function (slot, index) {
             var cx = slot.x;
             var cy = (slot.y1 + slot.y2) / 2;
-            var group = svgElement('g', { 'data-slot': index, tabindex: '0', role: 'button' }, 'dg-slot');
+            // Proprietario, elenco e posizione: dicono dove inserisce (anche alle verifiche automatiche).
+            var group = svgElement('g', {
+                'data-slot': index, 'data-owner': slot.ownerId, 'data-list': slot.list, 'data-index': slot.index,
+                tabindex: '0', role: 'button'
+            }, 'dg-slot');
             if (options.describeSlot) {
                 group.setAttribute('aria-label', options.describeSlot(slot));
             }

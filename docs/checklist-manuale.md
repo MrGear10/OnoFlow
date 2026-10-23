@@ -185,3 +185,15 @@ La finestra di modifica arriva al passo 10: per ora un blocco inserito resta vuo
 - [ ] Durante l'esecuzione Annulla e Ripeti sono barrati. Aprendo un altro diagramma la storia riparte vuota.
 - [ ] Finestra del browser stretta (circa 900 px): la barra della selezione sta sopra lo zoom, Annulla e Ripeti in basso a sinistra; il nome del file resta leggibile.
 - [ ] **Telefono:** Annulla e Ripeti in basso a sinistra del foglio, a sinistra dello zoom, si toccano al primo colpo.
+
+---
+
+## Passo 13 — Salvataggio di file creati e modificati
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (377 test).
+- [ ] **QA-11, sul computer e sul telefono:** **Nuovo**, poi costruire con l'editor il programma dell'Appendice A (vedi **Esempi → Somma, massimo e minimo** su un'altra scheda come modello): nessun errore nell'elenco sopra il foglio. **Esegui** con 5, s, 3, n, 4, 9: le ultime tre righe sono quelle di QA-04.
+- [ ] Nome `esercizio`, **Salva**; il file scaricato, aperto con un editor di testo, ha il corpo identico all'esempio, gli attributi `name` = `esercizio`, `authors` e `about` vuoti, `saved`; niente `created` né `edited`. **Apri…** quel file: si apre senza avvisi con lo stesso diagramma.
+- [ ] **QA-12:** **Esempi → Somma, massimo e minimo**; nel `for` cambiare "A" in `dim - 1`; dopo `numeri[i] = n` inserire un output `"Fine dei numeri"`; eliminare `Integer risultato`. **Salva** e confrontare il file con l'esempio (per esempio con `diff`): cambiano solo la riga del `for`, la riga aggiunta, quella tolta e `saved`; `authors`, `created`, `edited` sono uguali.
+- [ ] Il file modificato si riapre senza avvisi e mostra le tre modifiche.
+- [ ] **Firefox, tastiera:** con un esempio aperto e il foglio in cima, premere Tab fino a un blocco in fondo: il foglio scorre e il blocco si vede.
+- [ ] **Flowgorithm (Q-04):** i due file salvati (`esercizio.fprg` e quello modificato) si aprono in Flowgorithm.

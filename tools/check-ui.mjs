@@ -1,5 +1,5 @@
 /*
- * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–12).
+ * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–13).
  *
  * Dipendenze: playwright (solo in tools/, mai nell'applicazione).
  *
@@ -33,7 +33,12 @@
  *     rimette il blocco con lo stesso ID, barra della selezione dentro lo schermo (FR-EDIT-04);
  *   - annulla/ripeti: inserimento e modifica come passi, fino al diagramma iniziale con
  *     "Non salvato" spento, ripeti fino alla fine; pulsanti nella barra sul computer e sul
- *     foglio sul telefono; Ctrl + Z e Ctrl + Y, non dentro i campi (FR-EDIT-05, QA-13, FR-MOB-10).
+ *     foglio sul telefono; Ctrl + Z e Ctrl + Y, non dentro i campi (FR-EDIT-05, QA-13, FR-MOB-10);
+ *   - QA-11: l'Appendice A costruita blocco per blocco con i punti, "Inserisci dopo" e la finestra
+ *     di modifica, eseguita con gli input di QA-04, salvata e riaperta (FR-FILE-10);
+ *   - QA-12: l'Appendice A modificata (un'espressione, un blocco aggiunto, uno cancellato), salvata:
+ *     solo quelle righe cambiano, gli attributi restano; poi riaperta (FR-FILE-09);
+ *   - il focus su un blocco o un punto fuori vista lo porta in vista, anche in Firefox (DEC-069).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -592,6 +597,233 @@ async function checkHistory(page, checks, viewport) {
     checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale con Annulla e Ripeti');
 }
 
+/* Download del Salva del menu: nome e testo. */
+async function saveFromMenu(page) {
+    const downloadPromise = page.waitForEvent('download');
+    await page.click('#menu-button');
+    await page.click('#cmd-save');
+    const download = await downloadPromise;
+    return { name: download.suggestedFilename(), text: await readFile(await download.path(), 'utf8') };
+}
+
+async function leaveUnsaved(page, press) {
+    if (await page.isVisible('.notice-action:has-text("Non salvare")')) {
+        await press('.notice-action:has-text("Non salvare")');
+    }
+}
+
+/* Struttura di Main senza ID (tipo, contenuto, figli), dalla copia di sessione o da un testo. */
+function mainShape(page, text) {
+    return page.evaluate((source) => {
+        const { Format, Editor, Model } = window.OnoFlow;
+        const shape = (list) => list.map((block) => {
+            const item = { kind: block.kind, content: Editor.contentOf(block) };
+            Model.childListsOf(block).forEach((name) => { item[name] = shape(block[name]); });
+            return item;
+        });
+        const fprg = source || JSON.parse(sessionStorage.getItem('onoflow.diagram')).text;
+        return JSON.stringify(shape(Format.importFprg(fprg).program.functions[0].body));
+    }, text || null);
+}
+
+function bodyLines(text) {
+    const lines = text.split('\n');
+    return lines.slice(lines.indexOf('        <body>'), lines.indexOf('        </body>') + 1).join('\n');
+}
+
+/* ID del blocco disegnato il cui testo, senza spazi, è quello dato. */
+function blockWithText(page, text) {
+    return page.evaluate((wanted) => {
+        const node = Array.from(document.querySelectorAll('#diagram .is-selectable'))
+            .find((group) => group.textContent.replace(/\s+/g, '') === wanted);
+        return node ? node.getAttribute('data-id') : null;
+    }, text);
+}
+
+/*
+ * Tocco o clic su un elemento del disegno come farebbe una persona: prima il foglio scorre fino a
+ * lui, poi si tocca il suo centro. Lo scorrimento automatico di Playwright in Firefox non porta in
+ * vista un <g> dell'SVG (lo stesso difetto del focus, DEC-069).
+ */
+function pressInSheet(page, viewport) {
+    return async (selector) => {
+        if (!selector.startsWith('#diagram')) {
+            return viewport.phone ? page.tap(selector) : page.click(selector);
+        }
+        const point = await page.evaluate((target) => {
+            const sheet = document.getElementById('sheet');
+            const node = document.querySelector(target);
+            let box = node.getBoundingClientRect();
+            const frame = sheet.getBoundingClientRect();
+            sheet.scrollTop += box.top + box.height / 2 - (frame.top + frame.height / 2);
+            sheet.scrollLeft += box.left + box.width / 2 - (frame.left + frame.width / 2);
+            box = node.getBoundingClientRect();
+            const x = box.left + box.width / 2;
+            const y = box.top + box.height / 2;
+            const hit = document.elementFromPoint(x, y);
+            return { x, y, hit: Boolean(hit && node.contains(hit)) };
+        }, selector);
+        if (!point.hit) {
+            throw new Error(`${selector}: al centro c'è un altro elemento`);
+        }
+        return viewport.phone ? page.touchscreen.tap(point.x, point.y) : page.mouse.click(point.x, point.y);
+    };
+}
+
+/* QA-11: l'Appendice A da zero, solo con l'editor, al tocco sul telefono. */
+async function checkQa11(page, checks, viewport, shot) {
+    const press = pressInSheet(page, viewport);
+    const appendix = await page.evaluate(() => window.OnoFlow.Examples.byId('somma-massimo-minimo').text);
+    const recipe = JSON.parse(await mainShape(page, appendix));
+    const fields = await page.evaluate(() => window.OnoFlow.BlockEditor.FIELDS);
+    const childLists = { 'if': ['then', 'else'], 'while': ['body'], 'do': ['body'], 'for': ['body'] };
+    await page.click('#menu-button');
+    await page.click('#cmd-new');
+    await leaveUnsaved(page, press);
+    const mainId = await page.getAttribute('#diagram [data-slot="0"]', 'data-owner');
+    let selected = null;
+    let count = 0;
+
+    async function fill(item) {
+        for (const spec of fields[item.kind]) {
+            if (spec.onlyIf && !item.content.properties[spec.onlyIf]) {
+                continue; // campo nascosto, come la dimensione di una variabile semplice
+            }
+            const control = page.locator(`.block-editor [id$="-${spec.name}"]`);
+            if (spec.control === 'text') {
+                await control.fill(item.content.fields[spec.name]);
+            } else if (spec.control === 'check') {
+                await control.setChecked(item.content.properties[spec.name]);
+            } else {
+                await control.selectOption(item.content.properties[spec.name]);
+            }
+        }
+        await press('.edit-done');
+    }
+
+    /*
+     * Ogni blocco come lo farebbe una persona: il primo di un elenco dal suo punto con il +,
+     * gli altri con "Inserisci dopo" sul blocco precedente (selezionandolo se serve).
+     */
+    async function build(ownerId, list, items) {
+        let previous = null;
+        for (const item of items) {
+            if (previous === null) {
+                await press(`#diagram [data-owner="${ownerId}"][data-list="${list}"][data-index="0"]`);
+            } else {
+                if (selected !== previous) {
+                    await press(`#diagram [data-id="${previous}"] text`);
+                }
+                await press('#insert-after');
+            }
+            await press(`.block-menu [data-kind="${item.kind}"]`);
+            await fill(item);
+            const id = await page.getAttribute('#diagram .is-selected', 'data-id');
+            selected = id;
+            count++;
+            for (const name of childLists[item.kind] || []) {
+                await build(id, name, item[name]);
+            }
+            previous = id;
+        }
+    }
+    await build(mainId, 'body', recipe);
+
+    const total = (items) => items.reduce((sum, item) => sum + 1 + (childLists[item.kind] || []).reduce((inner, name) => inner + total(item[name]), 0), 0);
+    checks.ok(count === total(recipe), `QA-11: ${count} blocchi inseriti con l'editor, uno per uno`);
+    checks.ok((await mainShape(page)) === JSON.stringify(recipe), 'QA-11: il diagramma costruito è l\'Appendice A');
+    checks.ok((await page.locator('#diagram-errors .diagram-error').count()) === 0, 'QA-11: nessun errore');
+    if (shot) {
+        await shot('qa11-costruito');
+    }
+    await runQa04(page, checks, viewport);
+    if (viewport.phone) {
+        await page.click('#tab-diagram');
+    }
+    await page.fill('#file-name', 'esercizio');
+    await page.locator('#file-name').blur();
+    const saved = await saveFromMenu(page);
+    checks.ok(saved.name === 'esercizio.fprg', `QA-11: salvato come ${saved.name}`);
+    checks.ok(bodyLines(saved.text) === bodyLines(appendix), 'QA-11: nel file il corpo è scritto come nell\'Appendice A');
+    checks.ok(saved.text.includes('<attribute name="name" value="esercizio"/>') && !saved.text.includes('"created"'),
+        'QA-11: attributi di un file nuovo (DEC-061)');
+    await page.setInputFiles('#file-input', { name: saved.name, mimeType: 'text/plain', buffer: Buffer.from(saved.text) });
+    await page.waitForFunction(() => document.getElementById('file-name').value === 'esercizio.fprg');
+    checks.ok((await page.locator('.notice--warning, .notice--error').count()) === 0, 'QA-11: il file si riapre senza avvisi');
+    checks.ok((await mainShape(page)) === JSON.stringify(recipe), 'QA-11: riaperto, lo stesso modello (FR-FILE-10)');
+}
+
+/* QA-12: l'Appendice A modificata e salvata; nel file cambiano solo le righe toccate. */
+async function checkQa12(page, checks, viewport) {
+    const press = pressInSheet(page, viewport);
+    await chooseExample(page);
+    await leaveUnsaved(page, press);
+    if (viewport.phone && !(await page.isVisible('#panel-diagram'))) {
+        await page.click('#tab-diagram');
+    }
+    const original = await page.evaluate(() => window.OnoFlow.Examples.byId('somma-massimo-minimo').text);
+    // Un'espressione: la fine del for.
+    const forId = await blockWithText(page, 'fori=0todim-1');
+    await press(`#diagram [data-id="${forId}"] text`);
+    await press('#edit-block');
+    await page.locator('.block-editor [id$="-end"]').fill('dim - 1');
+    await press('.edit-done');
+    // Un blocco aggiunto dopo numeri[i] = n.
+    const assignId = await blockWithText(page, 'numeri[i]=n');
+    await press(`#diagram [data-id="${assignId}"] text`);
+    await press('#insert-after');
+    await press('.block-menu [data-kind="output"]');
+    await page.locator('.block-editor [id$="-expression"]').fill('"Fine dei numeri"');
+    await press('.edit-done');
+    // Un blocco cancellato.
+    const declareId = await blockWithText(page, 'Integerrisultato');
+    await press(`#diagram [data-id="${declareId}"] text`);
+    await press('#delete-block');
+    const saved = await saveFromMenu(page);
+
+    const expected = original.split('\n');
+    const at = (line) => expected.indexOf(line);
+    expected[at('            <for variable="i" start="0" end="dim -1" direction="inc" step="1">')] =
+        '            <for variable="i" start="0" end="dim - 1" direction="inc" step="1">';
+    expected.splice(at('                <assign variable="numeri[i]" expression="n"/>') + 1, 0,
+        '                <output expression="&quot;Fine dei numeri&quot;" newline="True"/>');
+    expected.splice(at('            <declare name="risultato" type="Integer" array="False" size=""/>'), 1);
+    const withoutSaved = (text) => text.replace(/<attribute name="saved" value="[^"]*"\/>/, '');
+    const got = withoutSaved(saved.text).split('\n');
+    const want = withoutSaved(expected.join('\n')).split('\n');
+    const firstDifference = got.findIndex((line, index) => line !== want[index]);
+    checks.ok(got.length === want.length && firstDifference === -1,
+        `QA-12: cambiano solo le righe toccate, gli attributi restano${firstDifference === -1 ? '' : ` (riga ${firstDifference + 1}: ${got[firstDifference]})`}`);
+    checks.ok(saved.name === 'somma-massimo-minimo.fprg' && /<attribute name="saved" value="\d{4}-\d\d-\d\d \d\d:\d\d:\d\d "\/>/.test(saved.text),
+        'QA-12: stesso nome, "saved" aggiornato');
+    checks.ok(!(await page.isVisible('#modified')), 'dopo il salvataggio niente "Non salvato"');
+    const before = await mainShape(page);
+    await page.setInputFiles('#file-input', { name: saved.name, mimeType: 'text/plain', buffer: Buffer.from(saved.text) });
+    await page.waitForFunction(() => !document.querySelector('#diagram .is-selected'));
+    checks.ok((await page.locator('.notice--warning, .notice--error').count()) === 0, 'QA-12: il file si riapre senza avvisi');
+    checks.ok((await mainShape(page)) === before, 'QA-12: riaperto, lo stesso diagramma (FR-FILE-10)');
+}
+
+/* Il focus da tastiera su un blocco o un punto lontano lo porta in vista, anche in Firefox (DEC-069). */
+async function checkFocusReveal(page, checks) {
+    await chooseExample(page);
+    await leaveUnsaved(page, (selector) => page.click(selector));
+    for (const selector of ['#diagram [data-slot]', '#diagram .is-selectable']) {
+        const inView = await page.evaluate(async (kind) => {
+            const sheet = document.getElementById('sheet');
+            const nodes = document.querySelectorAll(kind);
+            const target = nodes[nodes.length - 2];
+            sheet.scrollTop = 0;
+            target.focus();
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            const box = target.getBoundingClientRect();
+            const frame = sheet.getBoundingClientRect();
+            return box.top >= frame.top && box.bottom <= frame.bottom;
+        }, selector);
+        checks.ok(inView, `focus su ${selector === '#diagram [data-slot]' ? 'un punto' : 'un blocco'} in fondo al diagramma: è in vista`);
+    }
+}
+
 async function checkViewport(browser, engineName, viewport, screenshotsDir) {
     const checks = new Checks(`${engineName} ${viewport.name}`);
     const context = await browser.newContext({
@@ -631,7 +863,13 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
         await checkBuildAndRun(page, checks, viewport);
         await checkDelete(page, checks, viewport);
         await checkHistory(page, checks, viewport);
+        const shot = screenshotsDir
+            ? (name) => page.screenshot({ path: path.join(screenshotsDir, `${engineName}-${viewport.name}-${name}.png`) })
+            : null;
+        await checkQa11(page, checks, viewport, shot);
+        await checkQa12(page, checks, viewport);
         if (!viewport.phone) {
+            await checkFocusReveal(page, checks);
             await checkMenuKeyboard(page, checks);
             await checkLongRun(page, checks);
         }
