@@ -23,6 +23,14 @@
                 </div>
                 <p class="status" id="status" role="status" hidden></p>
             </div>
+            <div class="history-controls history-controls--bar" role="group" data-i18n-label="ui.history.label">
+                <button class="button history-button" id="undo" type="button" data-i18n-label="ui.undo" data-i18n-title="ui.undo.title" disabled>
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8h8.5a4 4 0 0 1 0 8H9"/></svg>
+                </button>
+                <button class="button history-button" id="redo" type="button" data-i18n-label="ui.redo" data-i18n-title="ui.redo.title" disabled>
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M13 4.5L16.5 8 13 11.5"/><path d="M16.5 8H8a4 4 0 0 0 0 8h3"/></svg>
+                </button>
+            </div>
             <div class="run-controls">
                 <button class="button button--primary" id="run" type="button">
                     <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5v11l9-5.5z"/></svg>
@@ -101,6 +109,14 @@
                     <span class="button-label" data-i18n="ui.selection.delete"></span>
                 </button>
             </div>
+            <div class="history-controls history-controls--sheet" role="group" data-i18n-label="ui.history.label">
+                <button class="button history-button" id="undo-sheet" type="button" data-i18n-label="ui.undo" data-i18n-title="ui.undo.title" disabled>
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8h8.5a4 4 0 0 1 0 8H9"/></svg>
+                </button>
+                <button class="button history-button" id="redo-sheet" type="button" data-i18n-label="ui.redo" data-i18n-title="ui.redo.title" disabled>
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M13 4.5L16.5 8 13 11.5"/><path d="M16.5 8H8a4 4 0 0 0 0 8h3"/></svg>
+                </button>
+            </div>
             <div class="zoom" role="group" data-i18n-label="ui.zoom.label">
                 <button class="button zoom-button" id="zoom-out" type="button" data-i18n-label="ui.zoom.out" data-i18n-title="ui.zoom.out">
                     <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10"/></svg>
@@ -152,6 +168,7 @@
 <script src="js/core/scheduler.js"></script>
 <script src="js/core/diagram-document.js"></script>
 <script src="js/core/editor.js"></script>
+<script src="js/core/history.js"></script>
 <script src="js/examples/examples.js"></script>
 <script src="js/ui/block-text.js"></script>
 <script src="js/ui/diagram-layout.js"></script>

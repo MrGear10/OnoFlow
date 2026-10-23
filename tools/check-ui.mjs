@@ -1,5 +1,5 @@
 /*
- * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–11).
+ * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–12).
  *
  * Dipendenze: playwright (solo in tools/, mai nell'applicazione).
  *
@@ -8,7 +8,7 @@
  *     node check-ui.mjs --engines firefox --screenshots /percorso/cartella
  *     DEBUG=1 node check-ui.mjs                          messaggio completo delle verifiche interrotte
  *
- * Percorsi verificati, su computer (1440 × 900) e telefono (360 × 640, 375 × 667, QA-14):
+ * Percorsi verificati, su computer (1440 × 900, 900 × 700) e telefono (360 × 640, 375 × 667, QA-14):
  *   - apertura: foglio vuoto, nessun errore nella pagina, nessuno scorrimento orizzontale;
  *   - esempio dal menu, esecuzione con gli input in linea, output di QA-04;
  *   - sul telefono la console viene in primo piano all'avvio (FR-MOB-02);
@@ -30,7 +30,10 @@
  *     esecuzione con un valore; errore mentre si scrive; barra dei simboli; finestra a tutto
  *     schermo sul telefono; secondo tocco per modificare (FR-EDIT-02, FR-MOB-07…09, B3);
  *   - cancellazione: "Elimina" e tasto Canc, un ciclo con tutto il contenuto, "Annulla" che
- *     rimette il blocco con lo stesso ID, barra della selezione dentro lo schermo (FR-EDIT-04).
+ *     rimette il blocco con lo stesso ID, barra della selezione dentro lo schermo (FR-EDIT-04);
+ *   - annulla/ripeti: inserimento e modifica come passi, fino al diagramma iniziale con
+ *     "Non salvato" spento, ripeti fino alla fine; pulsanti nella barra sul computer e sul
+ *     foglio sul telefono; Ctrl + Z e Ctrl + Y, non dentro i campi (FR-EDIT-05, QA-13, FR-MOB-10).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -49,6 +52,7 @@ const QA04_LAST_LINES = [
 ];
 const VIEWPORTS = [
     { name: 'computer', width: 1440, height: 900, phone: false },
+    { name: 'computer-stretto', width: 900, height: 700, phone: false },
     { name: 'telefono-360', width: 360, height: 640, phone: true },
     { name: 'telefono-375', width: 375, height: 667, phone: true }
 ];
@@ -456,10 +460,8 @@ async function checkDelete(page, checks, viewport) {
     checks.ok(await page.isVisible('#delete-block'), 'blocco selezionato: c\'è "Elimina"');
     const bar = await page.locator('#selection-bar').boundingBox();
     checks.ok(bar.x >= 0 && bar.x + bar.width <= viewport.width + 1, 'la barra della selezione sta dentro lo schermo');
-    if (viewport.phone) {
-        const zoom = await page.locator('.zoom').boundingBox();
-        checks.ok(bar.y + bar.height <= zoom.y, 'sul telefono la barra sta sopra i comandi dello zoom');
-    }
+    const zoom = await page.locator('.zoom').boundingBox();
+    checks.ok(bar.y + bar.height <= zoom.y || bar.x + bar.width <= zoom.x, 'la barra della selezione non copre i comandi dello zoom');
     await press('#delete-block');
     checks.ok((await mainBody()) === 'declare output', `"Elimina" toglie il blocco: ${await mainBody()}`);
     checks.ok(await page.isVisible('#modified'), 'dopo la cancellazione: "Non salvato"');
@@ -495,6 +497,99 @@ async function checkDelete(page, checks, viewport) {
     await press('.notice-action:has-text("Annulla")');
     checks.ok((await mainBody()) === before && (await idsInMain()).length === blocksBefore, 'Annulla rimette il ciclo con tutto il contenuto');
     checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale dopo la cancellazione');
+}
+
+/* Annulla e Ripeti dai pulsanti e dalla tastiera (FR-EDIT-05, QA-13, DEC-068). */
+async function checkHistory(page, checks, viewport) {
+    const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
+    // Nella barra da 64rem in su, altrimenti sul foglio.
+    const inBar = viewport.width >= 1024;
+    const undo = inBar ? '#undo' : '#undo-sheet';
+    const redo = inBar ? '#redo' : '#redo-sheet';
+    const outputs = () => page.evaluate(() => {
+        const copy = JSON.parse(sessionStorage.getItem('onoflow.diagram'));
+        return window.OnoFlow.Format.importFprg(copy.text).program.functions[0].body.map((block) => block.fields.expression.text).join(' | ');
+    });
+    await page.click('#menu-button');
+    await page.click('#cmd-new');
+    if (await page.isVisible('.notice-action:has-text("Non salvare")')) {
+        await press('.notice-action:has-text("Non salvare")');
+    }
+    checks.ok(await page.isVisible(undo) && await page.isDisabled(undo) && await page.isDisabled(redo),
+        `diagramma nuovo: ${undo} visibile e disabilitato, come Ripeti`);
+    checks.ok(await page.isHidden(inBar ? '#undo-sheet' : '#undo'), 'una sola coppia di pulsanti visibile');
+    if (!inBar) {
+        const history = await page.locator('.history-controls--sheet').boundingBox();
+        const zoom = await page.locator('.zoom').boundingBox();
+        checks.ok(history.x >= 0 && history.x + history.width <= zoom.x, 'sul foglio Annulla e Ripeti stanno a sinistra dello zoom');
+    }
+    // Due passi: un output inserito e riempito (un solo passo), poi cambiato.
+    await press('#diagram [data-slot="0"]');
+    await press('[data-kind="output"]');
+    await page.locator('.edit-input').first().fill('1');
+    await press('.edit-done');
+    checks.ok(!(await page.isDisabled(undo)), 'dopo l\'inserimento Annulla è attivo');
+    await press('#edit-block');
+    await page.locator('.edit-input').first().fill('2');
+    await page.locator('.edit-input').first().fill('23');
+    await press('.edit-done');
+    checks.ok((await outputs()) === '23', `dopo la modifica: ${await outputs()}`);
+
+    await press(undo);
+    checks.ok((await outputs()) === '1', `Annulla: tutta la modifica in un passo (${await outputs()})`);
+    checks.ok(await page.isVisible('#modified'), 'ancora "Non salvato"');
+    await press(undo);
+    checks.ok((await outputs()) === '', `Annulla: il blocco inserito sparisce, già riempito (${await outputs()})`);
+    checks.ok(!(await page.isVisible('#modified')), 'tornati al diagramma iniziale: "Non salvato" si spegne (QA-13)');
+    checks.ok(await page.isDisabled(undo) && !(await page.isDisabled(redo)), 'niente più da annullare, Ripeti attivo');
+    await press(redo);
+    await press(redo);
+    checks.ok((await outputs()) === '23', `Ripeti due volte: di nuovo la fine (${await outputs()})`);
+    checks.ok(await page.isVisible('#modified') && await page.isDisabled(redo), 'di nuovo "Non salvato", niente da ripetere');
+
+    // Dal menu.
+    await page.click('#menu-button');
+    await page.click('#cmd-undo');
+    checks.ok((await outputs()) === '1', 'Menu → Annulla');
+    await page.click('#menu-button');
+    await page.click('#cmd-redo');
+    checks.ok((await outputs()) === '23', 'Menu → Ripeti');
+
+    if (!viewport.phone) {
+        await page.focus('#sheet');
+        await page.keyboard.press('Control+z');
+        checks.ok((await outputs()) === '1', 'Ctrl + Z sul foglio annulla');
+        await page.keyboard.press('Control+y');
+        checks.ok((await outputs()) === '23', 'Ctrl + Y ripete');
+        await page.keyboard.press('Control+Shift+z');
+        checks.ok(await page.isDisabled(redo), 'Ctrl + Maiusc + Z: niente da ripetere, nulla cambia');
+        // Dentro un campo Ctrl + Z resta quello del browser.
+        await page.click('#edit-block');
+        await page.locator('.edit-input').first().press('End');
+        await page.keyboard.type('4');
+        await page.keyboard.press('Control+z');
+        checks.ok(await page.isVisible('.block-editor'), 'Ctrl + Z in un campo non chiude la finestra');
+        await page.click('.edit-done');
+        const last = await outputs();
+        checks.ok(last === '23' || last === '234', `Ctrl + Z in un campo non annulla il diagramma (${last})`);
+        // Con la finestra aperta si passa a un altro blocco: ognuno è un passo a sé.
+        await page.click('#insert-after');
+        await page.click('[data-kind="output"]');
+        await page.locator('.edit-input').first().fill('5');
+        await page.click('.edit-done');
+        const ids = await page.evaluate(() => Array.from(document.querySelectorAll('#diagram .is-selectable')).map((node) => node.getAttribute('data-id')));
+        await page.dblclick(`#diagram [data-id="${ids[0]}"] text`);
+        await page.locator('.edit-input').first().fill('7');
+        await page.click(`#diagram [data-id="${ids[1]}"] text`);
+        await page.locator('.edit-input').first().fill('8');
+        await page.click('.edit-done');
+        checks.ok((await outputs()) === '7 | 8', `due blocchi nella stessa apertura: ${await outputs()}`);
+        await page.click(undo);
+        checks.ok((await outputs()) === '7 | 5', `Annulla: solo il secondo blocco (${await outputs()})`);
+        await page.click(undo);
+        checks.ok((await outputs()) === `${last} | 5`, `Annulla: poi il primo (${await outputs()})`);
+    }
+    checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale con Annulla e Ripeti');
 }
 
 async function checkViewport(browser, engineName, viewport, screenshotsDir) {
@@ -535,6 +630,7 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
         await checkInsert(page, checks, viewport);
         await checkBuildAndRun(page, checks, viewport);
         await checkDelete(page, checks, viewport);
+        await checkHistory(page, checks, viewport);
         if (!viewport.phone) {
             await checkMenuKeyboard(page, checks);
             await checkLongRun(page, checks);

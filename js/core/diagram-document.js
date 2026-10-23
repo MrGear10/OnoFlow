@@ -5,9 +5,10 @@
  * Definisce: OnoFlow.DiagramDocument.{create, newFileAttributes, baseName}
  *
  * Tiene insieme il programma, il formato del file, il testo da cui è stato aperto e due
- * contatori: le modifiche fatte e quelle già salvate. "Modificato" vuol dire che sono diversi
- * (FR-FILE-08, FR-FILE-11). L'editor (passi 9–12) chiamerà markChanged a ogni modifica;
- * annulla/ripeti (passo 12, D-02) potrà riportare il contatore a un valore già salvato.
+ * numeri: la versione di adesso e quella salvata. "Modificato" vuol dire che sono diverse
+ * (FR-FILE-08, FR-FILE-11). L'editor chiama markChanged a ogni modifica, che dà al programma
+ * una versione mai usata prima; annulla/ripeti (passo 12, DEC-068) rimette con setRevision la
+ * versione di prima, così annullando fino al salvataggio "modificato" si spegne (QA-13).
  *
  * Origine:
  *   'new'  diagramma creato in OnoFlow: a ogni salvataggio gli attributi sono quelli di
@@ -16,7 +17,7 @@
  *          (FMT-W-06), solo saved si aggiorna.
  *
  *     create({ program, format, sourceText, fileName, origin, saved }) → documento
- *     documento.isModified(), markChanged(), setFileName(nome),
+ *     documento.isModified(), markChanged(), revision(), setRevision(n), setFileName(nome),
  *     documento.save(nome, ora) → testo del file salvato,
  *     documento.sessionCopy(ora) → { text, fileName, saved, origin } (NFR-PRIV-08)
  */
@@ -51,6 +52,7 @@
         // Un documento ripristinato con modifiche non salvate parte già "modificato".
         var revision = values.saved === false ? 1 : 0;
         var savedRevision = 0;
+        var lastRevision = revision;
 
         var document = {
             program: program,
@@ -63,7 +65,17 @@
             },
 
             markChanged: function () {
-                revision += 1;
+                lastRevision += 1;
+                revision = lastRevision;
+            },
+
+            revision: function () {
+                return revision;
+            },
+
+            /* Versione già vista (annulla/ripeti): non se ne crea una nuova. */
+            setRevision: function (value) {
+                revision = value;
             },
 
             setFileName: function (name) {

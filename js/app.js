@@ -17,7 +17,8 @@
  *     chiusura della pagina (FR-FILE-08);
  *   - editor: punti di inserimento sulle frecce, selezione di un blocco con "Modifica" e
  *     "Inserisci dopo", menu dei blocchi, finestra di modifica (js/ui/block-menu.js,
- *     js/ui/block-editor.js, js/core/editor.js; FR-EDIT-01…03, FR-EDIT-08, DEC-063, DEC-066).
+ *     js/ui/block-editor.js, js/core/editor.js; FR-EDIT-01…03, FR-EDIT-08, DEC-063, DEC-066),
+ *     cancellazione (FR-EDIT-04, DEC-067), annulla/ripeti (js/core/history.js; FR-EDIT-05, DEC-068).
  * Ogni testo viene dal catalogo (NFR-I18N-01) e ogni dato del file entra come testo (NFR-SEC-01).
  */
 (function (OnoFlow) {
@@ -40,6 +41,7 @@
     var Editor = OnoFlow.Editor;
     var BlockMenu = OnoFlow.BlockMenu;
     var BlockEditor = OnoFlow.BlockEditor;
+    var History = OnoFlow.History;
 
     var DEFAULT_EXTENSION = '.fprg';
     var MAX_FILE_BYTES = 5 * 1024 * 1024; // NFR-PERF-02
@@ -119,6 +121,11 @@
             undo: byId('cmd-undo'),
             redo: byId('cmd-redo')
         };
+        // Annulla e Ripeti con un tocco (FR-MOB-10): nella barra da 64rem in su, altrimenti sul foglio.
+        var historyButtons = {
+            undo: [byId('undo'), byId('undo-sheet')],
+            redo: [byId('redo'), byId('redo-sheet')]
+        };
 
         var state = {
             document: null,         // il diagramma aperto (DiagramDocument)
@@ -131,7 +138,9 @@
             runningId: null,
             selectedId: null,       // blocco selezionato (B3)
             insertSlot: null,       // punto in cui il menu dei blocchi inserirà
-            undoBar: null,          // avviso "Annulla" dell'ultima cancellazione (passo 11)
+            undoBar: null,          // avviso "Annulla" dell'ultima cancellazione (DEC-067)
+            history: History.create(),
+            editSession: null,      // finestra di modifica aperta: { blockId, before, revision } (DEC-068)
             pendingReveal: null     // blocco da inquadrare quando si torna al diagramma (FR-MOB-03)
         };
         var measurer = DiagramRenderer.createMeasurer(document);
@@ -390,6 +399,7 @@
             formatError: formatError,
             onChange: afterFieldChange,
             onClose: function () {
+                commitEdit();
                 app.classList.remove('is-editing');
                 window.clearTimeout(sessionTimer);
                 storeSessionCopy();
@@ -405,9 +415,12 @@
                 return;
             }
             blockMenu.close({ restoreFocus: false });
+            commitEdit(); // un altro blocco mentre la finestra è aperta: il primo è un passo a sé
             select(nodeId);
             app.classList.add('is-editing');
-            blockEditor.open(Model.findById(state.program, nodeId).node);
+            var block = Model.findById(state.program, nodeId).node;
+            state.editSession = { blockId: nodeId, before: Editor.contentOf(block), revision: state.document.revision() };
+            blockEditor.open(block);
             revealNode(nodeId, { quiet: true });
         }
 
@@ -418,9 +431,14 @@
                     return;
                 }
                 var block = Editor.createNewBlock(kind);
-                Editor.insertAt(state.program, state.insertSlot, block);
+                var slot = state.insertSlot;
+                var before = state.document.revision();
+                Editor.insertAt(state.program, slot, block);
                 state.insertSlot = null;
-                afterInsert(block.id);
+                afterEdit(block.id);
+                // Il primo riempimento nella finestra fa parte dello stesso passo (DEC-068).
+                recordStep({ kind: 'insert', block: block, slot: slot, fresh: true }, before);
+                openEditor(block.id);
             }
         });
 
@@ -431,8 +449,16 @@
 
         /* Dopo ogni modifica: documento modificato, errori, disegno, copia di sessione (FR-EDIT-06). */
         function afterEdit(focusId) {
-            dropUndo();
             state.document.markChanged();
+            refresh(focusId, { focus: true });
+        }
+
+        /*
+         * Disegno e stato dopo un cambiamento del programma (modifica, annulla, ripeti).
+         * options.focus: il focus va sul blocco; altrimenti resta dov'è (Annulla premuto più volte).
+         */
+        function refresh(focusId, options) {
+            dropUndo();
             state.outcome = null;
             state.runningId = null;
             state.staticErrors = StaticCheck.check(state.program);
@@ -442,7 +468,7 @@
             showStaticErrors();
             select(focusId);
             var group = diagram.querySelector('[data-id="' + focusId + '"]');
-            if (group) {
+            if (group && options.focus) {
                 group.focus({ preventScroll: true });
             }
             revealNode(focusId, { quiet: true });
@@ -451,19 +477,72 @@
             storeSessionCopy();
         }
 
-        /* Un blocco appena inserito apre subito la finestra di modifica (FR-EDIT-03). */
-        function afterInsert(nodeId) {
-            afterEdit(nodeId);
-            openEditor(nodeId);
+        // --- Editor: annulla/ripeti (passo 12, FR-EDIT-05, DEC-068) ------------------------
+
+        /* Registra una modifica già fatta; before è la versione del documento di prima. */
+        function recordStep(step, before) {
+            step.revisions = { before: before, after: state.document.revision() };
+            state.history.record(step);
+            updateControls();
+        }
+
+        /*
+         * Chiude il passo della finestra di modifica: tutto quello che è cambiato in una stessa
+         * apertura è un solo passo (DEC-066). Se il blocco è appena stato inserito, il passo è
+         * quello dell'inserimento: annullando sparisce il blocco, già riempito.
+         */
+        function commitEdit() {
+            var session = state.editSession;
+            state.editSession = null;
+            if (!session) {
+                return;
+            }
+            var found = Model.findById(state.program, session.blockId);
+            var last = state.history.last();
+            var fresh = last && last.kind === 'insert' && last.fresh && last.block.id === session.blockId;
+            if (last && last.kind === 'insert') {
+                last.fresh = false;
+            }
+            if (!found) {
+                return;
+            }
+            var after = Editor.contentOf(found.node);
+            if (fresh) {
+                last.revisions.after = state.document.revision();
+            } else if (!Editor.sameContent(session.before, after)) {
+                recordStep({ kind: 'edit', blockId: session.blockId, before: session.before, after: after }, session.revision);
+            }
+        }
+
+        /* Annulla (backwards) o Ripeti. Il blocco toccato resta selezionato e inquadrato. */
+        function travel(backwards) {
+            if (isActive()) {
+                return;
+            }
+            blockMenu.close({ restoreFocus: false });
+            if (blockEditor.isOpen()) {
+                blockEditor.close(); // chiude anche il passo della finestra
+            }
+            var step = backwards ? state.history.undo(state.program) : state.history.redo(state.program);
+            if (!step) {
+                return;
+            }
+            state.document.setRevision(backwards ? step.revisions.before : step.revisions.after);
+            var gone = step.kind === 'insert' ? backwards : step.kind === 'remove' ? !backwards : false;
+            var focusInside = diagram.contains(document.activeElement) || document.activeElement === document.body;
+            refresh(gone ? null : step.blockId || step.block.id, { focus: focusInside });
+            if (gone && focusInside) {
+                focusSlot(step.slot);
+            }
         }
 
         // --- Editor: cancellazione (passo 11, FR-EDIT-04) ------------------------------
 
         /*
-         * Annulla di una cancellazione, finché arriva annulla/ripeti (passo 12): vale solo per
-         * l'ultima e sparisce alla modifica successiva, perché il punto potrebbe non esistere più.
+         * Annulla nell'avviso di una cancellazione: una scorciatoia di Annulla (DEC-068), che vale
+         * finché la cancellazione è l'ultimo passo; sparisce alla modifica successiva.
          */
-        function dropUndo() {
+        function dropUndo() { // DEC-067
             if (state.undoBar && state.undoBar.parentNode) {
                 state.undoBar.parentNode.removeChild(state.undoBar);
             }
@@ -497,10 +576,12 @@
                 blockEditor.close();
             }
             blockMenu.close({ restoreFocus: false });
+            var before = state.document.revision();
             var removed = Editor.removeAt(state.program, nodeId);
             var block = removed.block;
             var inside = Editor.countInside(block);
             afterEdit(null);
+            recordStep({ kind: 'remove', block: block, slot: removed.slot }, before);
             focusSlot(removed.slot);
             var text = BlockText.plainText(block, t, block.kind === 'do' ? 'tail' : 'head');
             var message = inside === 0 ? t('ui.delete.done', { text: text })
@@ -510,11 +591,7 @@
                 label: t('ui.delete.undo'),
                 run: function () {
                     state.undoBar = null;
-                    if (isActive()) {
-                        return;
-                    }
-                    Editor.insertAt(state.program, removed.slot, block);
-                    afterEdit(block.id);
+                    travel(true); // l'avviso sparisce a ogni modifica: l'ultimo passo è questa cancellazione
                 }
             }]);
         }
@@ -617,6 +694,9 @@
 
         /* Mostra un programma; options: { saved, origin: 'new' | 'file' }. */
         function useProgram(program, format, sourceText, fileName, options) {
+            // Un altro diagramma: la storia di quello di prima non vale più (DEC-068).
+            state.editSession = null;
+            state.history = History.create();
             state.document = DiagramDocument.create({
                 program: program,
                 format: format,
@@ -761,6 +841,13 @@
             pauseButton.setAttribute('aria-pressed', current === 'paused' ? 'true' : 'false');
             commands['new'].disabled = active;
             commands.open.disabled = active;
+            // Niente annulla/ripeti durante l'esecuzione (FR-EDIT-07).
+            var canUndo = !active && Boolean(state.history) && state.history.canUndo();
+            var canRedo = !active && Boolean(state.history) && state.history.canRedo();
+            commands.undo.disabled = !canUndo;
+            commands.redo.disabled = !canRedo;
+            historyButtons.undo.forEach(function (button) { button.disabled = !canUndo; });
+            historyButtons.redo.forEach(function (button) { button.disabled = !canRedo; });
             Array.prototype.forEach.call(menu.querySelectorAll('[data-example]'), function (item) {
                 item.disabled = active;
             });
@@ -978,9 +1065,37 @@
             closeMenu();
             save();
         });
-        // Annulla e Ripeti arrivano con l'editor (passo 12): per ora restano disabilitati.
-        commands.undo.disabled = true;
-        commands.redo.disabled = true;
+        commands.undo.addEventListener('click', function () {
+            closeMenu();
+            travel(true);
+        });
+        commands.redo.addEventListener('click', function () {
+            closeMenu();
+            travel(false);
+        });
+        historyButtons.undo.forEach(function (button) {
+            button.addEventListener('click', function () { travel(true); });
+        });
+        historyButtons.redo.forEach(function (button) {
+            button.addEventListener('click', function () { travel(false); });
+        });
+
+        /* Ctrl/Cmd + Z, Ctrl/Cmd + Maiusc + Z, Ctrl + Y; nei campi di testo resta l'annulla del browser. */
+        document.addEventListener('keydown', function (event) {
+            if (!(event.ctrlKey || event.metaKey) || event.altKey) {
+                return;
+            }
+            var key = event.key.toLowerCase();
+            if (key !== 'z' && key !== 'y') {
+                return;
+            }
+            var target = event.target;
+            if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) {
+                return;
+            }
+            event.preventDefault();
+            travel(key === 'z' && !event.shiftKey);
+        });
 
         fileInput.addEventListener('change', function () {
             if (fileInput.files && fileInput.files[0]) {

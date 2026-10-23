@@ -1164,10 +1164,68 @@ button.diagram-error-entry:active {
     display: none;
 }
 
+/* --- Annulla e Ripeti (FR-EDIT-05, FR-MOB-10) --------------------------------------- */
+
+.history-controls {
+    display: flex;
+    gap: var(--space-1);
+}
+
+.history-controls--bar {
+    margin-left: auto;
+}
+
+.history-controls--bar + .run-controls {
+    margin-left: var(--space-2);
+}
+
+.history-button {
+    width: var(--touch);
+    padding: 0;
+    justify-content: center;
+}
+
+/* Con la sola icona il barrato orizzontale si confonde con la freccia: qui è in diagonale. */
+.history-button:disabled::after {
+    left: 22%;
+    right: 22%;
+    transform: rotate(-40deg);
+    height: 1.5px;
+}
+
+/* Su telefoni e finestre strette Annulla e Ripeti stanno sul foglio, in basso a sinistra. */
+.history-controls--sheet {
+    display: none;
+    position: absolute;
+    left: calc(var(--space-3) + env(safe-area-inset-left, 0px));
+    bottom: var(--space-3);
+    background: var(--paper);
+    border-radius: var(--radius);
+}
+
+/* Sotto i 64rem nella barra mancherebbe spazio per il nome del file (B2). */
+@media (max-width: 63.99rem) {
+    .history-controls--bar {
+        display: none;
+    }
+
+    .history-controls--sheet {
+        display: flex;
+    }
+}
+
 /* --- Comandi dello zoom (FR-MOB-06) ----------------------------------------------- */
 
 .pane--diagram {
     position: relative;
+    container-type: inline-size;
+}
+
+/* Foglio stretto (finestra piccola sul computer): la barra della selezione sale sopra lo zoom. */
+@container (max-width: 44rem) {
+    .selection-bar {
+        bottom: calc(var(--touch) + 2 * var(--space-3));
+    }
 }
 
 .zoom {

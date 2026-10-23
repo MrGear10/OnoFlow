@@ -194,6 +194,11 @@
         return value;
     }
 
+    /* Nomi delle proprietà semplici di un tipo di blocco (tipo, array, newline, direction, text). */
+    function propertyNamesOf(kind) {
+        return Object.keys(definitionOf(kind).properties);
+    }
+
     function childListsOf(block) {
         return definitionOf(block.kind).children;
     }
@@ -289,6 +294,7 @@
         setFieldText: setFieldText,
         setProperty: setProperty,
         childListsOf: childListsOf,
+        propertyNamesOf: propertyNamesOf,
         activeFieldNames: activeFieldNames,
         walk: walk,
         findById: findById,

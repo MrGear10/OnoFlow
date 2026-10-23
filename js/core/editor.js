@@ -3,7 +3,7 @@
  *
  * Dipendenze: js/namespace.js, js/core/model.js.
  * Definisce: OnoFlow.Editor.{INSERTABLE_KINDS, createNewBlock, canEdit, slotAfter, insertAt,
- *            removeAt, countInside}
+ *            removeAt, countInside, contentOf, setContent, sameContent}
  *
  * L'editor modifica solo il modello; il disegno si rifà dopo (§10.3). Nella fase 1 si
  * modifica solo Main (DEC-004): le altre funzioni di un file importato si vedono e si
@@ -115,6 +115,41 @@
         return count;
     }
 
+    /*
+     * Contenuto di un blocco: testi dei campi e proprietà, senza figli né ID. È quello che
+     * cambia la finestra di modifica; annulla/ripeti lo rimette com'era (passo 12).
+     */
+    function contentOf(block) {
+        var content = { fields: {}, properties: {} };
+        Object.keys(block.fields).forEach(function (name) {
+            content.fields[name] = block.fields[name].text;
+        });
+        Model.propertyNamesOf(block.kind).forEach(function (name) {
+            content.properties[name] = block[name];
+        });
+        return content;
+    }
+
+    function setContent(block, content) {
+        Object.keys(content.fields).forEach(function (name) {
+            if (block.fields[name].text !== content.fields[name]) {
+                Model.setFieldText(block, name, content.fields[name]);
+            }
+        });
+        Object.keys(content.properties).forEach(function (name) {
+            Model.setProperty(block, name, content.properties[name]);
+        });
+    }
+
+    function sameContent(a, b) {
+        return ['fields', 'properties'].every(function (part) {
+            var keys = Object.keys(a[part]);
+            return keys.length === Object.keys(b[part]).length && keys.every(function (key) {
+                return a[part][key] === b[part][key];
+            });
+        });
+    }
+
     OnoFlow.Editor = {
         INSERTABLE_KINDS: INSERTABLE_KINDS,
         createNewBlock: createNewBlock,
@@ -122,6 +157,9 @@
         slotAfter: slotAfter,
         insertAt: insertAt,
         removeAt: removeAt,
-        countInside: countInside
+        countInside: countInside,
+        contentOf: contentOf,
+        setContent: setContent,
+        sameContent: sameContent
     };
 })(window.OnoFlow);

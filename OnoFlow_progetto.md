@@ -827,7 +827,7 @@ La prima versione si pubblica solo quando creazione da zero e modifica funzionan
 | # | Decisione | Quando |
 |---|---|---|
 | D-01 | Attributi di un file creato in OnoFlow — **decisa (DEC-061):** `name`, `authors` vuoto, `about` vuoto, `saved`; niente `created`/`edited` | Prima del passo 8 |
-| D-02 | Meccanismo di annulla/ripeti (comandi reversibili o copie del modello) e limite della storia | Prima del passo 12 |
+| D-02 | Meccanismo di annulla/ripeti (comandi reversibili o copie del modello) e limite della storia — **decisa (DEC-068):** operazioni reversibili; una apertura della finestra di modifica = un passo, unito all'inserimento se il blocco è nuovo; 100 passi; storia vuota a ogni diagramma aperto | Prima del passo 12 |
 | D-03 | Forma dello spostamento dei blocchi (trascinamento o taglia/incolla) | Fase 2 |
 | D-04 | Interazione dell'editor al tocco — **decisa (DEC-063):** entrambi; punti con il + sempre visibili sulle frecce (nascosti durante l'esecuzione) e "Inserisci dopo" sul blocco selezionato | Prima del passo 9 |
 | D-05 | "Valore completo" nel pannello delle variabili (es. `0.30000000000000004`) e con quale separatore | Fase 2 |

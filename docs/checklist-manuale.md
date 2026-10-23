@@ -170,3 +170,18 @@ La finestra di modifica arriva al passo 10: per ora un blocco inserito resta vuo
 - [ ] Durante l'esecuzione la barra della selezione non c'è e Canc non fa nulla.
 - [ ] Salvare dopo una cancellazione e riaprire il file: il blocco non c'è, il resto è identico.
 - [ ] **Telefono:** Elimina è un pulsante col solo cestino, nella stessa riga di Modifica e Inserisci dopo, sopra lo zoom; l'avviso ha Annulla e Chiudi sotto il testo.
+
+---
+
+## Passo 12 — Annulla e ripeti
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (374 test).
+- [ ] **Nuovo**: le due frecce di Annulla e Ripeti (nella barra prima di Esegui; con la finestra stretta, in basso a sinistra del foglio) sono barrate.
+- [ ] Inserire un **Output**, scrivere `1`, **Fatto**. Modificarlo in `23`, **Fatto**. **Annulla**: torna `1` (tutta la modifica è un passo). **Annulla**: il blocco sparisce e "Non salvato" si spegne. **Ripeti** due volte: torna `23` con "Non salvato".
+- [ ] **Ctrl + Z** e **Ctrl + Y** (anche **Ctrl + Maiusc + Z**) fanno lo stesso; dentro un campo della finestra di modifica Ctrl + Z annulla solo il testo del campo.
+- [ ] Menu → Annulla e Ripeti funzionano e sono disabilitati quando non c'è nulla da fare.
+- [ ] Cancellare un ciclo, poi **Annulla** (dalla barra o dall'avviso): torna con tutto il contenuto.
+- [ ] Un esempio: fare qualche modifica, salvare, farne un'altra; Annulla spegne "Non salvato", un altro Annulla lo riaccende.
+- [ ] Durante l'esecuzione Annulla e Ripeti sono barrati. Aprendo un altro diagramma la storia riparte vuota.
+- [ ] Finestra del browser stretta (circa 900 px): la barra della selezione sta sopra lo zoom, Annulla e Ripeti in basso a sinistra; il nome del file resta leggibile.
+- [ ] **Telefono:** Annulla e Ripeti in basso a sinistra del foglio, a sinistra dello zoom, si toccano al primo colpo.
