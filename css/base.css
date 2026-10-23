@@ -1240,8 +1240,21 @@ button.diagram-error-entry:active {
     margin-left: auto;
 }
 
-.history-controls--bar + .run-controls {
+.history-controls--bar + .theme-button,
+.theme-button + .run-controls {
     margin-left: var(--space-2);
+}
+
+/* Tema chiaro o scuro (DEC-080): l'icona dice dove si va, il sole verso il chiaro. */
+.theme-button {
+    width: var(--touch);
+    padding: 0;
+    justify-content: center;
+}
+
+.theme-button[data-target="light"] .theme-icon--moon,
+.theme-button[data-target="dark"] .theme-icon--sun {
+    display: none;
 }
 
 .history-button {
@@ -1430,8 +1443,9 @@ button.diagram-error-entry:active {
 
 /* Sotto i 64rem nella barra mancherebbe spazio per il nome del file (B2). */
 @media (max-width: 63.99rem) {
-    .history-controls--bar {
-        display: none;
+    .history-controls--bar,
+    .theme-button {
+        display: none; /* il tema resta nel menu */
     }
 
     .history-controls--sheet {

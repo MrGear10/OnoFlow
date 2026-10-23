@@ -45,6 +45,7 @@
     var BlockEditor = OnoFlow.BlockEditor;
     var History = OnoFlow.History;
     var VariablesView = OnoFlow.VariablesView;
+    var Theme = OnoFlow.Theme;
 
     var DEFAULT_EXTENSION = '.fprg';
     var MAX_FILE_BYTES = 5 * 1024 * 1024; // NFR-PERF-02
@@ -88,6 +89,26 @@
         var language = Localization.init(window.location.search, window.navigator.languages);
         document.documentElement.lang = language;
         translatePage(document);
+
+        // Tema: quello del sistema, oppure scelto dal menu o con ?tema= (DEC-080).
+        var theme = Theme.create(document.documentElement, window.matchMedia('(prefers-color-scheme: dark)'),
+            document.querySelectorAll('meta[name="theme-color"]'));
+        var themeButton = byId('theme-toggle');
+        var themeItem = byId('cmd-theme');
+        function showTheme(current) {
+            var target = current === 'dark' ? 'light' : 'dark';
+            var label = t(target === 'light' ? 'ui.theme.toLight' : 'ui.theme.toDark');
+            themeItem.textContent = label;
+            themeButton.setAttribute('data-target', target);
+            themeButton.setAttribute('aria-label', label);
+            themeButton.title = label;
+        }
+        theme.onChange(showTheme);
+        if (Theme.fromQuery(window.location.search)) {
+            theme.set(Theme.fromQuery(window.location.search));
+        }
+        showTheme(theme.effective());
+        themeButton.addEventListener('click', function () { theme.toggle(); });
 
         var numberFormat = Localization.numberFormat();
         var session = SessionCopy.create(SessionCopy.defaultStorage());
@@ -1396,6 +1417,10 @@
         commands.save.addEventListener('click', function () {
             closeMenu();
             save();
+        });
+        themeItem.addEventListener('click', function () {
+            closeMenu();
+            theme.toggle();
         });
         byId('cmd-new-function').addEventListener('click', function () {
             closeMenu();

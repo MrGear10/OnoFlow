@@ -350,6 +350,8 @@
             'ui.footer.short.local': 'Copia locale: nessun dato inviato',
             'ui.menu.about': 'Progetto',
             'ui.info.open': 'Informazioni',
+            'ui.theme.toLight': 'Tema chiaro',
+            'ui.theme.toDark': 'Tema scuro',
             'ui.info.title': 'Informazioni',
             'ui.info.session': 'Per ripristinare il diagramma se la pagina si ricarica, il browser ne conserva una copia solo in questa scheda; la cancella quando la scheda si chiude. Non vengono salvate preferenze né cronologia.',
             'ui.info.license': 'Codice libero, con licenza MIT.'

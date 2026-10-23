@@ -576,3 +576,12 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 - **Funzioni:** non si spostano (Sposta è disabilitato sull'Inizio di una funzione); si sposta un blocco.
 - **Annulla/ripeti:** un solo passo `move` con il punto di partenza e quello d'arrivo (calcolato dopo aver tolto il blocco, quando il + sta più avanti nello stesso elenco). Gli ID non cambiano.
 - **Telefono:** con quattro pulsanti la barra non starebbe in 360 px: sotto i 27,5rem Modifica, Sposta ed Elimina hanno la sola icona (il nome resta per i lettori di schermo e nel title), Inserisci dopo il testo.
+
+## DEC-080 — Tema chiaro o scuro scelto a mano
+
+- **Data:** 24 ottobre 2026 · **Decisa da:** autore (la richiesta), sviluppo (la forma) · **Tocca:** NFR-ACC-02, NFR-ACC-04, NFR-PRIV-01, NFR-PRIV-04, DEC-051, DEC-065
+- **Richiesta:** un comando per passare dal tema scuro a quello chiaro. Entrambi esistevano già e seguivano l'impostazione del sistema: con il sistema scuro il chiaro non si vedeva mai.
+- **Comando:** sugli schermi da 64rem in su un pulsante con la sola icona nella barra, accanto ad Annulla e Ripeti: il sole porta al chiaro, la luna allo scuro; il nome dice dove porta («Tema chiaro», «Tema scuro»). In ogni schermo, anche sul telefono, la stessa voce nel menu, nella sezione Progetto. Cambia anche il colore della barra del browser (meta theme-color).
+- **Come:** `data-theme="light" | "dark"` sull'elemento html (`js/ui/theme.js`); `css/tokens.css` ha il tema scuro per il sistema scuro senza scelta e per la scelta «scuro» con qualunque sistema. Senza scelta resta il tema del sistema, e lo segue se cambia.
+- **Non si ricorda** (NFR-PRIV-01, NFR-PRIV-04: nessuna preferenza salvata, come per la lingua). Per fissarlo, per esempio sul computer dell'aula collegato al proiettore: `index.html?tema=chiaro` o `?tema=scuro` nei preferiti.
+- **La console resta una lavagna** anche nel tema chiaro (DEC-051).

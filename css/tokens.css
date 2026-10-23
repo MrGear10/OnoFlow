@@ -7,7 +7,7 @@
  *   evidenziatore    solo il blocco in esecuzione;
  *   gesso giallo     solo i valori digitati nella console.
  * Linee a un pixel, niente gradienti, ombre o rilievi. Solo font di sistema (NFR-PRIV-02).
- * Tema chiaro e scuro secondo il sistema (NFR-ACC-02).
+ * Tema chiaro e scuro secondo il sistema (NFR-ACC-02), oppure scelto dal menu (data-theme sull'html, DEC-080).
  */
 :root {
     color-scheme: light dark;
@@ -82,8 +82,9 @@
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Tema scuro: quello del sistema, salvo una scelta dal menu (data-theme, DEC-080). */
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
         /* Foglio scuro: carta blu notte, inchiostro chiaro; i segni restano gli stessi. */
         --paper: #12161e;
         --paper-grid: #1f2633;
@@ -123,6 +124,53 @@
         --chalk-pen: #ff9d93;
         --chalk-field: #213a33;
     }
+}
+
+/* Scelto a mano dal menu, vale anche con il sistema chiaro. */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    /* Foglio scuro: carta blu notte, inchiostro chiaro; i segni restano gli stessi. */
+    --paper: #12161e;
+    --paper-grid: #1f2633;
+    --paper-margin: #6a2f35;
+    --ink: #a8bfff;
+    --ink-soft: #8394c4;
+    --text: #eef1f6;
+    --text-muted: #a3abb9;
+
+    --chrome: #1a1f29;
+    --chrome-line: #353d4c;
+    --line: #2c3442;
+    --on-ink: #10131a;
+
+    --pen: #ff7b73;
+    --pen-soft: #3a1b1d;
+    --highlighter: #f5e15a;
+    --on-highlighter: #12161e;
+    --warning: #f1c46b;
+    --warning-soft: #33290f;
+    --info-soft: #1d2638;
+
+    --block-declare: #292b46;
+    --block-assign: #192f46;
+    --block-input: #07362f;
+    --block-output: #20341b;
+    --block-if: #352641;
+    --block-loop: #03343c;
+    --block-call: #282f35;
+
+    /* Lavagna più scura del foglio, separata da una linea */
+    --slate: #172a24;
+    --slate-line: #335046;
+    --chalk: #e9ece4;
+    --chalk-muted: #a9b9ae;
+    --chalk-yellow: #f3d75f;
+    --chalk-pen: #ff9d93;
+    --chalk-field: #213a33;
+}
+
+:root[data-theme="light"] {
+    color-scheme: light;
 }
 
 /* Schermi grandi, come il proiettore: diagramma e console più grandi. */

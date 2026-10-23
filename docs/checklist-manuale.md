@@ -290,3 +290,13 @@ La finestra di modifica arriva al passo 10: per ora un blocco inserito resta vuo
 - [ ] Tastiera: Sposta, poi Tab scorre solo i + possibili, Invio sposta.
 - [ ] Sull'Inizio di una funzione Sposta è disabilitato.
 - [ ] **Telefono:** la barra della selezione ha Modifica, Sposta ed Elimina con la sola icona e Inserisci dopo con il testo, tutto dentro lo schermo; durante lo spostamento la barra sparisce.
+
+---
+
+## Tema chiaro o scuro
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (455 test).
+- [ ] Sul computer, nella barra, il pulsante con la luna (o il sole): un clic passa all'altro tema; l'icona e il nome si invertono. Lo stesso con **Menu → Tema chiaro / Tema scuro**, anche sul telefono.
+- [ ] Con il sistema in modalità scura, **Tema chiaro** rende chiaro il foglio; la console resta scura.
+- [ ] Ricaricando la pagina si torna al tema del sistema (la scelta non si ricorda); con `index.html?tema=chiaro` (o `?tema=scuro`) il tema è quello.
+- [ ] Al proiettore, nel tema chiaro: blocchi, frecce e testi leggibili dal fondo dell'aula.

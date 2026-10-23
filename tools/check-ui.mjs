@@ -48,7 +48,8 @@
  *   - funzioni: nuova, firma con parametro e valore, corpo, chiamata da Main ed esecuzione,
  *     rinomina con le chiamate e Annulla, cancellazione e Annulla, file salvato (FR-EDIT-11);
  *   - spostamento: Sposta, + spenti attorno al blocco, un + nel ramo Vero, Annulla, Non spostare,
- *     Esc (FR-EDIT-12, D-03).
+ *     Esc (FR-EDIT-12, D-03);
+ *   - tema chiaro o scuro: pulsante nella barra o voce del menu, ?tema=, contro il sistema (DEC-080).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -1055,6 +1056,40 @@ async function checkMove(page, checks, viewport) {
     }
 }
 
+/* Tema chiaro o scuro scelto a mano (DEC-080): pulsante, menu, ?tema=, contro il sistema. */
+async function checkTheme(page, checks, viewport, browser) {
+    const paper = () => page.evaluate(() => getComputedStyle(document.getElementById('sheet')).backgroundColor);
+    const lightPaper = await paper(); // il contesto delle verifiche ha il sistema chiaro
+    if (viewport.width >= 1024) {
+        checks.ok(await page.isVisible('#theme-toggle'), 'nella barra il pulsante del tema');
+        checks.ok((await page.getAttribute('#theme-toggle', 'aria-label')) === 'Tema scuro', 'dice dove porta: Tema scuro');
+        await page.click('#theme-toggle');
+    } else {
+        checks.ok(!(await page.isVisible('#theme-toggle')), 'su uno schermo stretto il tema sta nel menu');
+        await page.click('#menu-button');
+        checks.ok((await page.textContent('#cmd-theme')).trim() === 'Tema scuro', 'nel menu: Tema scuro');
+        await page.click('#cmd-theme');
+    }
+    checks.ok((await page.getAttribute('html', 'data-theme')) === 'dark' && (await paper()) !== lightPaper, `tema scuro: il foglio cambia colore (${await paper()})`);
+    checks.ok((await page.getAttribute('meta[name="theme-color"]', 'content')) === '#1a1f29', 'anche la barra del browser');
+    await page.click('#menu-button');
+    checks.ok((await page.textContent('#cmd-theme')).trim() === 'Tema chiaro', 'poi il menu propone il tema chiaro');
+    await page.click('#cmd-theme');
+    checks.ok((await paper()) === lightPaper, 'di nuovo chiaro');
+
+    // ?tema= nell'indirizzo, anche contro il sistema scuro.
+    const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height }, colorScheme: 'dark' });
+    const other = await context.newPage();
+    await other.goto(URL);
+    await other.waitForSelector('#diagram .dg-block--terminal');
+    const systemDark = await other.evaluate(() => getComputedStyle(document.getElementById('sheet')).backgroundColor);
+    await other.goto(URL + '?tema=chiaro');
+    await other.waitForSelector('#diagram .dg-block--terminal');
+    const forcedLight = await other.evaluate(() => getComputedStyle(document.getElementById('sheet')).backgroundColor);
+    checks.ok(systemDark !== lightPaper && forcedLight === lightPaper, `?tema=chiaro vince sul sistema scuro (${systemDark} → ${forcedLight})`);
+    await context.close();
+}
+
 /* Passo-passo sull'esempio Pari o dispari (FR-RUN-05, DEC-073). */
 async function checkStep(page, checks, viewport) {
     const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
@@ -1217,6 +1252,7 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
         await checkCallComment(page, checks, viewport);
         await checkFunctions(page, checks, viewport);
         await checkMove(page, checks, viewport);
+        await checkTheme(page, checks, viewport, browser);
         if (!viewport.phone) {
             await checkFocusReveal(page, checks);
             await checkMenuKeyboard(page, checks);

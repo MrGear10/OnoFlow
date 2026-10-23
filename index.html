@@ -31,6 +31,10 @@
                     <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M13 4.5L16.5 8 13 11.5"/><path d="M16.5 8H8a4 4 0 0 0 0 8h3"/></svg>
                 </button>
             </div>
+            <button class="button theme-button" id="theme-toggle" type="button">
+                <svg class="icon theme-icon theme-icon--sun" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.5"/><path d="M10 2v2.5M10 15.5V18M2 10h2.5M15.5 10H18M4.3 4.3l1.8 1.8M13.9 13.9l1.8 1.8M4.3 15.7l1.8-1.8M13.9 6.1l1.8-1.8"/></svg>
+                <svg class="icon theme-icon theme-icon--moon" viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 12.5A6.5 6.5 0 0 1 7.5 4.5a6.5 6.5 0 1 0 8 8z"/></svg>
+            </button>
             <div class="run-controls">
                 <button class="button button--primary" id="run" type="button">
                     <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5v11l9-5.5z"/></svg>
@@ -68,6 +72,7 @@
                     <button class="menu-item" id="cmd-undo" type="button" role="menuitem" data-i18n="ui.undo" disabled></button>
                     <button class="menu-item" id="cmd-redo" type="button" role="menuitem" data-i18n="ui.redo" disabled></button>
                     <p class="menu-heading" data-i18n="ui.menu.about"></p>
+                    <button class="menu-item" id="cmd-theme" type="button" role="menuitem"></button>
                     <button class="menu-item" id="cmd-info" type="button" role="menuitem" data-i18n="ui.info.open"></button>
                 </div>
             </div>
@@ -208,6 +213,7 @@
 <script src="js/ui/console-view.js"></script>
 <script src="js/ui/variables-view.js"></script>
 <script src="js/ui/session-copy.js"></script>
+<script src="js/ui/theme.js"></script>
 <script src="js/app.js"></script>
 <script>
     window.OnoFlow.App.start();
