@@ -89,6 +89,7 @@
 
             // Esecuzione (§8.1, livello 3; §8.4).
             'ERR_UNDECLARED_VARIABLE': 'La variabile «{name}» non è stata dichiarata: serve un blocco di dichiarazione prima di usarla.',
+            'ERR_UNDECLARED_VARIABLE.case': 'La variabile «{name}» non è stata dichiarata. Forse si intendeva «{suggestion}»: maiuscole e minuscole contano.',
             'ERR_UNINITIALIZED_VARIABLE': 'La variabile «{name}» non ha ancora un valore: va assegnato un valore prima di usarla.',
             'ERR_UNINITIALIZED_VARIABLE.element': 'L\'elemento {name}[{index}] non ha ancora un valore: va assegnato un valore prima di usarlo.',
             'ERR_ARRAY_WITHOUT_INDEX': '«{name}» è un array: va indicato quale elemento, per esempio {name}[0].',
@@ -111,6 +112,7 @@
             'ERR_INTEGER_OVERFLOW': 'Il risultato è fuori dall\'intervallo degli Integer, che va da -2147483648 a 2147483647.',
             'ERR_REAL_NOT_FINITE': 'Il risultato non è un numero valido: è troppo grande, oppure l\'operazione non si può fare (per esempio la radice di un numero negativo).',
             'ERR_UNKNOWN_FUNCTION': 'Non esiste una funzione chiamata «{name}».',
+            'ERR_UNKNOWN_FUNCTION.case': 'Non esiste una funzione chiamata «{name}». Forse si intendeva «{suggestion}»: maiuscole e minuscole contano.',
             'ERR_ARGUMENT_COUNT': '{name} vuole {expected} argomenti, invece ne ha {given}.',
             'ERR_ARGUMENT_TYPE': 'L\'argomento {position} di {name} deve essere un {expected}, invece è un {given}.',
             'ERR_ARGUMENT_TYPE.number': 'L\'argomento {position} di {name} deve essere un numero, invece è un {given}.',

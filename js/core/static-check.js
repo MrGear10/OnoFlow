@@ -1,10 +1,11 @@
 /*
  * OnoFlow — controlli prima dell'esecuzione (errori statici, §8.1 livello 2).
  *
- * Dipendenze: js/namespace.js, js/core/expression-*.js, js/core/model.js, js/core/builtins.js.
+ * Dipendenze: js/namespace.js, js/core/expression-*.js, js/core/model.js, js/core/builtins.js,
+ *             js/core/type-check.js.
  * Definisce: OnoFlow.StaticCheck.check
  *
- * check(program) restituisce tutti gli errori che impediscono l'esecuzione, nell'ordine
+ * check(program, { types }) restituisce tutti gli errori che impediscono l'esecuzione, nell'ordine
  * dei blocchi (FR-RUN-02, DEC-027): per ogni funzione prima i suoi errori (nome, firma),
  * poi quelli dei blocchi, campo per campo. Ogni errore ha nodeId (blocco o funzione).
  *
@@ -15,8 +16,10 @@
  *   - due declare diversi con lo stesso nome nella stessa funzione, anche un nome
  *     ripetuto nello stesso declare o un parametro ridichiarato (§6.5);
  *   - blocchi call che non contengono una chiamata.
- * Variabili non dichiarate, tipi e argomenti sono controlli della fase 2 (FR-ERR-06):
- * per ora si scoprono durante l'esecuzione.
+ * Controlli della fase 2 (FR-ERR-06, passo 16, js/core/type-check.js): variabili non
+ * dichiarate, funzioni inesistenti, numero e tipo degli argomenti, tipi di assegnazioni,
+ * condizioni, operatori, indici, for e valore di ritorno; per ogni blocco dopo i suoi errori
+ * di sintassi.
  */
 (function (OnoFlow) {
     'use strict';
@@ -24,8 +27,9 @@
     var Model = OnoFlow.Model;
     var Expressions = OnoFlow.Expressions;
     var Builtins = OnoFlow.Builtins;
-    if (!Model || !Builtins) {
-        throw new Error('static-check.js richiede model.js e builtins.js, da caricare prima');
+    var TypeCheck = OnoFlow.TypeCheck;
+    if (!Model || !Builtins || !TypeCheck) {
+        throw new Error('static-check.js richiede model.js, builtins.js e type-check.js, da caricare prima');
     }
 
     function error(code, params, nodeId, extra) {
@@ -74,12 +78,16 @@
         return errors;
     }
 
-    function check(program) {
+    /* options.types === false: solo i controlli della fase 1 (per i test dell'interprete). */
+    function check(program, options) {
         var errors = [];
         var seenFunctions = {};
+        var withTypes = !(options && options.types === false);
+        var types = withTypes ? TypeCheck.create(program) : { functionErrors: function () { return []; }, blockErrors: function () { return []; } };
 
         program.functions.forEach(function (programFunction) {
             errors = errors.concat(functionErrors(programFunction, seenFunctions));
+            errors = errors.concat(types.functionErrors(programFunction));
 
             // Nomi già usati in questa funzione: parametri e dichiarazioni.
             var declared = {};
@@ -113,6 +121,7 @@
                     block.fields.expression.ast.kind !== 'call') {
                     errors.push(error('ERR_CALL_BLOCK_NOT_CALL', {}, block.id, { field: 'expression' }));
                 }
+                errors = errors.concat(types.blockErrors(block, programFunction));
             });
         });
         return errors;

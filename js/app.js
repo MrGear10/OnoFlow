@@ -403,6 +403,16 @@
             t: t,
             formatError: formatError,
             onChange: afterFieldChange,
+            // Errori dell'analisi statica di un campo, già calcolati da afterFieldChange (passo 16).
+            fieldIssue: function (block, fieldName) {
+                var found = null;
+                state.staticErrors.forEach(function (error) {
+                    if (!found && error.nodeId === block.id && error.field === fieldName) {
+                        found = error;
+                    }
+                });
+                return found;
+            },
             onClose: function () {
                 commitEdit();
                 app.classList.remove('is-editing');

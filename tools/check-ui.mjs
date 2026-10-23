@@ -1,5 +1,5 @@
 /*
- * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–14).
+ * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–16).
  *
  * Dipendenze: playwright (solo in tools/, mai nell'applicazione).
  *
@@ -41,7 +41,9 @@
  *   - il focus su un blocco o un punto fuori vista lo porta in vista, anche in Firefox (DEC-069);
  *   - telefono ruotato a metà dell'esecuzione: l'esecuzione e il diagramma restano (FR-MOB-13);
  *   - passo-passo: Passo (barra, foglio sul telefono, menu, F10) si ferma prima di ogni blocco,
- *     che è quello evidenziato; input a metà passo; Riprendi e Ferma (FR-RUN-05).
+ *     che è quello evidenziato; input a metà passo; Riprendi e Ferma (FR-RUN-05);
+ *   - analisi statica: «b = True» segnalato sotto il campo mentre si scrive, con il suggerimento,
+ *     e prima dell'esecuzione (FR-ERR-06, D-06).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -837,6 +839,45 @@ async function checkFocusReveal(page, checks) {
     }
 }
 
+/* Analisi statica nella finestra di modifica e prima dell'esecuzione (FR-ERR-06, D-06). */
+async function checkStaticAnalysis(page, checks, viewport) {
+    const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
+    await page.click('#menu-button');
+    await page.click('#cmd-new');
+    await leaveUnsaved(page, press);
+    await press('#diagram [data-slot="0"]');
+    await press('.block-menu [data-kind="declare"]');
+    await page.locator('.block-editor [id$="-names"]').fill('b');
+    await page.locator('.block-editor [id$="-type"]').selectOption('Boolean');
+    await press('.edit-done');
+    await press('#insert-after');
+    await press('.block-menu [data-kind="assign"]');
+    await page.locator('.block-editor [id$="-variable"]').fill('b');
+    await page.locator('.block-editor [id$="-expression"]').fill('True');
+    const error = page.locator('.block-editor [id$="-expression-error"]');
+    checks.ok(await error.isVisible() && (await error.textContent()).includes('Forse si intendeva «true»'),
+        `mentre si scrive: ${(await error.textContent()).trim()}`);
+    checks.ok(await page.locator('.block-editor [id$="-variable-error"]').isHidden(), 'l\'errore sta solo sotto il suo campo');
+    await press('.edit-done');
+    checks.ok((await page.textContent('#diagram-errors')).includes('«true»'), 'l\'errore è anche nell\'elenco sopra il foglio');
+    await page.click('#run');
+    await page.waitForFunction(() => document.getElementById('status').textContent.trim() !== 'In esecuzione');
+    checks.ok((await page.textContent('#status')).trim() === 'Non eseguito: ci sono errori', `non si esegue: ${(await page.textContent('#status')).trim()}`);
+    if (viewport.phone) {
+        await page.click('#tab-diagram');
+    }
+    const assignId = await page.evaluate(() => {
+        const groups = document.querySelectorAll('#diagram .is-selectable');
+        return groups[groups.length - 1].getAttribute('data-id');
+    });
+    await press(`#diagram [data-id="${assignId}"] text`);
+    await press('#edit-block');
+    await page.locator('.block-editor [id$="-expression"]').fill('true');
+    checks.ok(await error.isHidden(), 'corretto in true: l\'errore sparisce');
+    await press('.edit-done');
+    checks.ok((await page.locator('#diagram-errors .diagram-error').count()) === 0, 'nessun errore nel diagramma');
+}
+
 /* Passo-passo sull'esempio Pari o dispari (FR-RUN-05, DEC-073). */
 async function checkStep(page, checks, viewport) {
     const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
@@ -995,6 +1036,7 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
         await checkQa11(page, checks, viewport, shot);
         await checkQa12(page, checks, viewport);
         await checkStep(page, checks, viewport);
+        await checkStaticAnalysis(page, checks, viewport);
         if (!viewport.phone) {
             await checkFocusReveal(page, checks);
             await checkMenuKeyboard(page, checks);

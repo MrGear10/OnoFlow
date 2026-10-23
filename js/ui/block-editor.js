@@ -13,8 +13,10 @@
  * tasto e il diagramma si aggiorna; l'errore di sintassi compare sotto il campo con il
  * messaggio della §8.4 e l'onda nel punto esatto. "Fatto" (o Esc) chiude il pannello.
  * Un campo vuoto non si segnala mentre lo si sta scrivendo, ma solo quando si lascia.
+ * Senza errori di sintassi, sotto il campo compare l'errore dell'analisi statica di quel campo
+ * (fieldIssue, passo 16): «b = True» si vede subito, anche a tutto schermo sul telefono.
  *
- *     create(host, { t, formatError, onChange(block), onClose() }) →
+ *     create(host, { t, formatError, onChange(block), onClose(), fieldIssue(block, campo) }) →
  *         { open(block, { returnFocus }), close(), isOpen(), blockId(), element }
  * Ogni testo del blocco entra come testo, mai come HTML (NFR-SEC-01).
  */
@@ -144,16 +146,26 @@
         var lastText = null;
         var rows = [];
 
+        /* Dopo ogni modifica: l'app rianalizza, poi si aggiornano gli errori di tutti i campi. */
         function notifyChange() {
             if (options.onChange) {
                 options.onChange(block);
             }
+            rows.forEach(function (row) {
+                if (row.spec.control === 'text') {
+                    // Un campo vuoto mai lasciato resta senza errore, come quello in cui si scrive.
+                    showFieldError(row, !row.left || row.input === document.activeElement);
+                }
+            });
         }
 
         /* Errore di un campo: messaggio della §8.4 e il testo con l'onda nel punto esatto. */
         function showFieldError(row, focused) {
             var field = block.fields[row.spec.name];
             var error = field.error;
+            if (!error && options.fieldIssue) {
+                error = options.fieldIssue(block, row.spec.name);
+            }
             if (error && error.code === 'ERR_SYNTAX_EMPTY_EXPRESSION' && focused) {
                 error = null; // un campo vuoto si segnala quando lo si lascia, non mentre lo si scrive
             }
@@ -207,7 +219,7 @@
             root.appendChild(label);
             root.appendChild(input);
             root.appendChild(error);
-            var row = { spec: spec, root: root, input: input, error: error };
+            var row = { spec: spec, root: root, input: input, error: error, left: false };
             input.addEventListener('focus', function () { lastText = input; });
             input.addEventListener('input', function () {
                 var straight = straightenQuotes(input.value);
@@ -217,12 +229,12 @@
                     input.setSelectionRange(caret, caret);
                 }
                 Model.setFieldText(block, spec.name, input.value);
-                showFieldError(row, true);
-                notifyChange();
+                notifyChange(); // aggiorna anche l'errore di questo campo
             });
             input.addEventListener('blur', function () {
                 // Anche chiudendo la finestra il campo perde il focus: allora non c'è più nulla da segnare.
                 if (block && rows.indexOf(row) !== -1) {
+                    row.left = true;
                     showFieldError(row, false);
                 }
             });

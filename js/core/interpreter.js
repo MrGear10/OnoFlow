@@ -19,6 +19,7 @@
  *     { status: 'invalid', errors }            errori statici: non si esegue (FR-RUN-02)
  *
  * Opzioni: numberFormat (dal catalogo), random (funzione come Math.random, DEC-011),
+ * typeCheck: false (solo nei test: senza l'analisi statica dei tipi, passo 16),
  * invalidInput: 'retry' (si richiede il valore) oppure 'error' (l'esecuzione si ferma).
  * Per fermare l'esecuzione dall'esterno: generatore.throw(new Values.RuntimeFailure('ERR_STOPPED')):
  * l'errore riceve il blocco e le variabili del punto in cui si trovava.
@@ -764,7 +765,9 @@
     }
 
     function execute(program, options) {
-        var errors = StaticCheck.check(program);
+        // typeCheck: false salta l'analisi dei tipi (FR-ERR-06): solo per i test dei controlli
+        // fatti durante l'esecuzione, che restano per i casi che dipendono dai valori.
+        var errors = StaticCheck.check(program, { types: !(options && options.typeCheck === false) });
         if (errors.length > 0) {
             return invalid(errors);
         }

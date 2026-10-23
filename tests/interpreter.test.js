@@ -15,8 +15,14 @@
     // Ogni errore di runtime prodotto nei test: alla fine si controllano i messaggi (QA-07).
     var RUNTIME_ERRORS = [];
 
+    /*
+     * Questi test provano i controlli fatti durante l'esecuzione: l'analisi statica dei tipi
+     * (passo 16) li troverebbe prima, quindi qui è spenta. La provano tests/type-check.test.js.
+     */
     function run(program, inputs, options) {
-        var result = Interpreter.runSync(program, inputs || [], options);
+        var settings = { typeCheck: false };
+        Object.keys(options || {}).forEach(function (key) { settings[key] = options[key]; });
+        var result = Interpreter.runSync(program, inputs || [], settings);
         if (result.error) {
             RUNTIME_ERRORS.push(result.error);
         }

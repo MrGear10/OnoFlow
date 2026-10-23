@@ -74,7 +74,7 @@
             var a = H.assign('x', '2,5');
             var b = H.declare('y, y', 'Integer');
             var c = H.output('a AND b');
-            var errors = StaticCheck.check(H.program([a, H.loop('true', [b]), c]));
+            var errors = StaticCheck.check(H.program([H.declare('x', 'Integer'), a, H.loop('true', [b]), c]));
             assert.deepEqual(errors.map(function (e) { return e.nodeId; }), [a.id, b.id, c.id]);
             assert.equal(errors[0].field, 'expression');
         });

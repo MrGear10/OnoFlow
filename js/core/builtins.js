@@ -12,6 +12,8 @@
  *         'string'  solo String
  *         'simple'  qualunque valore semplice
  *         'array'   il nome di un array, senza indice (§6.6)
+ *     result: tipo del risultato, oppure 'same' (lo stesso dell'argomento): serve all'analisi
+ *         statica (FR-ERR-06, passo 16)
  *     call(args, context): restituisce il valore; context = { numberFormat, random }.
  * Il controllo di numero e tipo degli argomenti lo fa l'interprete prima di chiamare.
  * Elenco e firme vanno ancora verificati con Flowgorithm (Q-09). Pow non esiste: si usa ^.
@@ -37,6 +39,7 @@
     function realFunction(compute) {
         return {
             params: ['real'],
+            result: 'Real',
             call: function (args) {
                 return Values.real(compute(args[0].value));
             }
@@ -47,6 +50,7 @@
     function conversion(name, type) {
         return {
             params: ['string'],
+            result: type,
             call: function (args, context) {
                 var result = NumberFormat.parseInput(args[0].value, type, context.numberFormat);
                 if (!result.ok) {
@@ -62,6 +66,7 @@
     var DEFINITIONS = {
         Abs: {
             params: ['number'],
+            result: 'same',
             call: function (args) {
                 var value = args[0];
                 // Abs(-2147483648) non sta negli Integer: Values.integer lo segnala.
@@ -79,6 +84,7 @@
         Log10: realFunction(Math.log10),
         Int: {
             params: ['number'],
+            result: 'Integer',
             call: function (args) {
                 // Troncamento verso zero: Int(-2.7) → -2.
                 return Values.integer(Math.trunc(args[0].value));
@@ -86,18 +92,21 @@
         },
         Sgn: {
             params: ['number'],
+            result: 'Integer',
             call: function (args) {
                 return Values.integer(Math.sign(args[0].value));
             }
         },
         Len: {
             params: ['string'],
+            result: 'Integer',
             call: function (args) {
                 return Values.integer(args[0].value.length);
             }
         },
         Char: {
             params: ['string', 'integer'],
+            result: 'String',
             call: function (args) {
                 var text = args[0].value;
                 var position = args[1].value;
@@ -109,12 +118,14 @@
         },
         Size: {
             params: ['array'],
+            result: 'Integer',
             call: function (args) {
                 return Values.integer(args[0].elements.length);
             }
         },
         Random: {
             params: ['integer'],
+            result: 'Integer',
             call: function (args, context) {
                 var limit = args[0].value;
                 if (limit <= 0) {
@@ -125,6 +136,7 @@
         },
         ToChar: {
             params: ['integer'],
+            result: 'String',
             call: function (args) {
                 var code = args[0].value;
                 if (code < 0 || code > 0x10FFFF || (code >= 0xD800 && code <= 0xDFFF)) {
@@ -135,6 +147,7 @@
         },
         ToCode: {
             params: ['string'],
+            result: 'Integer',
             call: function (args) {
                 if (args[0].value === '') {
                     argumentError('ToCode', 'empty', {});
@@ -144,6 +157,7 @@
         },
         ToFixed: {
             params: ['real', 'integer'],
+            result: 'String',
             call: function (args, context) {
                 var digits = args[1].value;
                 if (digits < 0 || digits > NumberFormat.MAX_FIXED_DECIMALS) {
@@ -156,6 +170,7 @@
         ToReal: conversion('ToReal', 'Real'),
         ToString: {
             params: ['simple'],
+            result: 'String',
             call: function (args, context) {
                 return Values.string(Values.toText(args[0], context.numberFormat));
             }

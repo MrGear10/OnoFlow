@@ -141,7 +141,7 @@
         T.test('if e cicli si cancellano con tutto il contenuto', function (assert) {
             var inner = H.loop('i < 3', [H.assign('i', 'i + 1'), H.output('i')]);
             var test = H.when('x', [inner], [H.output('0')]);
-            var program = H.program([test, H.output('fine')]);
+            var program = H.program([test, H.output('"fine"')]);
             assert.equal(Editor.countInside(test), 4);
             assert.equal(Editor.countInside(inner), 2);
             assert.equal(Editor.countInside(test['else'][0]), 0);

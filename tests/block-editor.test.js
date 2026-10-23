@@ -232,4 +232,51 @@
             assert.equal(block.type, 'Integer');
         });
     });
+    T.suite('Finestra di modifica › errori dell\'analisi statica (passo 16)', function () {
+        /* Una finestra che, come l'app, chiede gli errori del programma intero a ogni modifica. */
+        function withProgram(blocks, run) {
+            var program = H.program(blocks);
+            var host = document.createElement('div');
+            document.body.appendChild(host);
+            var errors = OnoFlow.StaticCheck.check(program);
+            var editor = BlockEditor.create(host, {
+                t: t, formatError: formatError,
+                onChange: function () { errors = OnoFlow.StaticCheck.check(program); },
+                fieldIssue: function (block, name) {
+                    return errors.filter(function (e) { return e.nodeId === block.id && e.field === name; })[0] || null;
+                }
+            });
+            var target = blocks[blocks.length - 1];
+            try {
+                editor.open(target);
+                run(function (name) { return editor.element.querySelector('[id$="-' + name + '"]'); }, editor);
+            } finally {
+                editor.close();
+                document.body.removeChild(host);
+            }
+        }
+
+        T.test('sotto il campo l\'errore dei tipi, con il suggerimento, mentre si scrive', function (assert) {
+            withProgram([H.declare('b', 'Boolean'), H.assign('b', 'true')], function (field) {
+                var input = field('expression');
+                input.focus();
+                type(input, 'True');
+                var error = document.getElementById(input.id + '-error');
+                assert.isFalse(error.hidden);
+                assert.isTrue(error.textContent.indexOf('«true»') !== -1, error.textContent);
+                assert.isTrue(error.querySelector('.pen-wave') !== null, 'con l\'onda');
+                type(input, 'true');
+                assert.isTrue(error.hidden, 'corretto: sparisce');
+            });
+        });
+
+        T.test('un campo vuoto mai lasciato non diventa rosso scrivendo in un altro', function (assert) {
+            withProgram([H.declare('x', 'Integer'), H.assign('', '')], function (field) {
+                var variable = field('variable');
+                variable.focus();
+                type(variable, 'x');
+                assert.isTrue(document.getElementById(field('expression').id + '-error').hidden);
+            });
+        });
+    });
 })();

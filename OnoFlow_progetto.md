@@ -557,7 +557,7 @@ Il significato del **numero finale** di `created` ed `edited` non è noto: forse
 ### 8.1 Livelli
 
 1. **Caricamento:** file non valido o non riconosciuto (§7.5).
-2. **Prima dell'esecuzione (statici):** sintassi delle espressioni, letterali fuori intervallo, dichiarazioni duplicate, nomi di funzione duplicati o riservati, firma di `Main`, blocchi `call` senza chiamata. Nell'editor gli errori di sintassi si mostrano anche **mentre si scrive** (FR-EDIT-02). Nella fase 2 si aggiungono variabili non dichiarate, funzioni inesistenti, numero e tipo degli argomenti, tipi delle assegnazioni.
+2. **Prima dell'esecuzione (statici):** sintassi delle espressioni, letterali fuori intervallo, dichiarazioni duplicate, nomi di funzione duplicati o riservati, firma di `Main`, blocchi `call` senza chiamata. Nell'editor gli errori di sintassi si mostrano anche **mentre si scrive** (FR-EDIT-02). Nella fase 2 si aggiungono variabili non dichiarate, funzioni inesistenti, numero e tipo degli argomenti, tipi delle assegnazioni (fatto al passo 16, DEC-076: anche condizioni, operatori, indici, `for` e valore di ritorno, con il suggerimento sulle maiuscole di D-06).
 3. **Runtime:** divisione per zero, indice fuori dai limiti, tipi incompatibili, input non convertibile, variabile non inizializzata, overflow, `Real` non finito, ricorsione troppo profonda, interruzione con Ferma.
 
 ### 8.2 Rappresentazione

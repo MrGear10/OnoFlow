@@ -240,3 +240,14 @@ La finestra di modifica arriva al passo 10: per ora un blocco inserito resta vuo
 - [ ] A programma finito i valori finali restano; una modifica al diagramma li fa sparire.
 - [ ] Con l'esecuzione continua (Esegui) il pannello segue i valori; in Pausa mostra quelli del blocco evidenziato.
 - [ ] **Telefono:** durante il passo-passo, sotto il diagramma una striscia scura «n = … · …»; un tocco la allarga con tutte le variabili, un altro la richiude. A programma finito la striscia sparisce e i valori sono nella scheda Console.
+
+---
+
+## Passo 16 — Analisi statica completa
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (428 test).
+- [ ] **Nuovo**: `Boolean b`, poi `b = True`. Mentre si scrive, sotto il campo: «La variabile «True» non è stata dichiarata. Forse si intendeva «true»…» con l'onda sotto `True`. Correggendo in `true` sparisce. Lo stesso sul telefono, a tutto schermo.
+- [ ] Prima di eseguire, nell'elenco sopra il foglio, con il cerchio rosso sul blocco: `Integer i` e `i = 7 / 2` (suggerimento di `Int`); `output x` senza dichiarare `x`; `output "a" + 1` (suggerimento di `&`); `if i` (la condizione deve essere Boolean); `output len("abc")` (forse `Len`).
+- [ ] Un errore in un ramo che non si esegue mai (`if false` → `x = "a"` con `x` Integer) blocca comunque l'esecuzione: «Non eseguito: ci sono errori».
+- [ ] Nessun falso allarme: tutti gli esempi del menu si eseguono; `Integer i` con `i = 2 ^ 3` va bene.
+- [ ] Una funzione di un file importato con un errore di tipo nel corpo: l'errore è segnato sul blocco dentro la funzione.
