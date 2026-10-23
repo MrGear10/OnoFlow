@@ -6,8 +6,10 @@
  * Definisce: OnoFlow.Interpreter.{execute, runSync, MAX_RECURSION, MAX_ARRAY_SIZE}
  *
  * execute(program, options) restituisce un generatore che cede eventi:
- *     { type: 'step', nodeId }                 prima di ogni blocco e a ogni verifica
- *                                              della condizione di un ciclo
+ *     { type: 'step', nodeId, frame }          prima di ogni blocco e a ogni verifica
+ *                                              della condizione di un ciclo; frame è la
+ *                                              chiamata in corso (frame.snapshot(),
+ *                                              frame.programFunction.name: FR-RUN-06)
  *     { type: 'output', text, newline }
  *     { type: 'input', valueType, nodeId, error }   il testo digitato torna con next(testo);
  *                                              error è l'errore del tentativo precedente
@@ -132,9 +134,9 @@
         this.currentNodeId = null;
     }
 
-    Execution.prototype.step = function (nodeId) {
+    Execution.prototype.step = function (nodeId, frame) {
         this.currentNodeId = nodeId;
-        return { type: 'step', nodeId: nodeId };
+        return { type: 'step', nodeId: nodeId, frame: frame };
     };
 
     Execution.prototype.executeBlocks = function* (blocks, frame) {
@@ -148,7 +150,7 @@
             return; // Un commento non si esegue e non consuma passi.
         }
         try {
-            yield this.step(block.id);
+            yield this.step(block.id, frame);
             switch (block.kind) {
                 case 'declare': yield this.executeDeclare(block, frame); break;
                 case 'assign': yield this.executeAssign(block, frame); break;
@@ -264,7 +266,7 @@
         var first = true;
         while (true) {
             if (!first) {
-                yield this.step(block.id);
+                yield this.step(block.id, frame);
             }
             first = false;
             if (!(yield this.condition(block, frame))) {
@@ -278,7 +280,7 @@
         // Do-while: prima il corpo, poi si ripete finché la condizione è vera (§6.7).
         while (true) {
             yield this.executeBlocks(block.body, frame);
-            yield this.step(block.id);
+            yield this.step(block.id, frame);
             if (!(yield this.condition(block, frame))) {
                 return;
             }
@@ -310,7 +312,7 @@
         var first = true;
         while (true) {
             if (!first) {
-                yield this.step(block.id);
+                yield this.step(block.id, frame);
             }
             first = false;
             var current = variable.value;

@@ -18,7 +18,9 @@
  *   - editor: punti di inserimento sulle frecce, selezione di un blocco con "Modifica" e
  *     "Inserisci dopo", menu dei blocchi, finestra di modifica (js/ui/block-menu.js,
  *     js/ui/block-editor.js, js/core/editor.js; FR-EDIT-01…03, FR-EDIT-08, DEC-063, DEC-066),
- *     cancellazione (FR-EDIT-04, DEC-067), annulla/ripeti (js/core/history.js; FR-EDIT-05, DEC-068).
+ *     cancellazione (FR-EDIT-04, DEC-067), annulla/ripeti (js/core/history.js; FR-EDIT-05, DEC-068);
+ *   - passo-passo (FR-RUN-05, DEC-074) e pannello delle variabili (js/ui/variables-view.js;
+ *     FR-RUN-06, DEC-075): in cima alla console, e sul telefono una striscia sotto il diagramma.
  * Ogni testo viene dal catalogo (NFR-I18N-01) e ogni dato del file entra come testo (NFR-SEC-01).
  */
 (function (OnoFlow) {
@@ -42,6 +44,7 @@
     var BlockMenu = OnoFlow.BlockMenu;
     var BlockEditor = OnoFlow.BlockEditor;
     var History = OnoFlow.History;
+    var VariablesView = OnoFlow.VariablesView;
 
     var DEFAULT_EXTENSION = '.fprg';
     var MAX_FILE_BYTES = 5 * 1024 * 1024; // NFR-PERF-02
@@ -378,6 +381,7 @@
         /* Modifica mentre si scrive: documento, errori e disegno subito; copia di sessione poco dopo. */
         function afterFieldChange() {
             dropUndo();
+            hideVariables();
             state.document.markChanged();
             state.outcome = null;
             state.runningId = null;
@@ -460,6 +464,7 @@
          */
         function refresh(focusId, options) {
             dropUndo();
+            hideVariables();
             state.outcome = null;
             state.runningId = null;
             state.staticErrors = StaticCheck.check(state.program);
@@ -735,6 +740,7 @@
             blockMenu.close({ restoreFocus: false });
             blockEditor.close();
             dropUndo();
+            hideVariables();
             selectionBar.hidden = true;
             state.marked = { errors: [], runtime: false };
             drawDiagram();
@@ -892,6 +898,7 @@
             state.outcome = outcome;
             consoleView.flush();
             setRunning(null);
+            showVariables(); // i valori finali restano fino alla prossima modifica o esecuzione
             if (outcome.status === 'done') {
                 consoleView.showDone();
                 badgeConsole('new');
@@ -941,6 +948,7 @@
             select(null);
             consoleView.clear();
             consoleEmpty.hidden = true;
+            hideVariables();
             showStaticErrors();
             state.outcome = null;
             state.pendingReveal = null;
@@ -956,6 +964,7 @@
                 onStep: function (nodeId) {
                     consoleView.flush();
                     setRunning(nodeId);
+                    showVariables();
                     if (state.scheduler && state.scheduler.stepping()) {
                         revealNode(nodeId, { quiet: true }); // il blocco evidenziato si vede sempre
                     }
@@ -1002,6 +1011,50 @@
                 state.scheduler.stop();
             }
         }
+
+        // --- Pannello delle variabili (passo 15, FR-RUN-06, DEC-075) -----------------------
+
+        var variablesPane = byId('variables-pane');
+        var variablesStrip = byId('variables-strip');
+        var stripToggle = byId('variables-strip-toggle');
+        var stripBody = byId('variables-strip-body');
+        var variablesOptions = {
+            t: t,
+            formatValue: formatValue,
+            formatFull: function (value) { return NumberFormat.formatRealFull(value, numberFormat); }
+        };
+        var paneView = VariablesView.create(byId('variables-pane-body'), variablesOptions);
+        var stripView = VariablesView.create(stripBody, variablesOptions);
+
+        /* Le variabili della chiamata in corso, dopo ogni passo e a ogni turno dell'esecuzione. */
+        function showVariables() {
+            var snapshot = state.scheduler ? state.scheduler.variables() : null;
+            if (!snapshot) {
+                hideVariables();
+                return;
+            }
+            variablesPane.hidden = false;
+            variablesStrip.hidden = false;
+            paneView.show(snapshot);
+            stripView.show(snapshot);
+            byId('variables-strip-summary').textContent = VariablesView.summary(snapshot, t, formatValue);
+        }
+
+        /* Il programma è cambiato o riparte: le variabili di prima non valgono più. */
+        function hideVariables() {
+            variablesPane.hidden = true;
+            variablesStrip.hidden = true;
+            paneView.reset();
+            stripView.reset();
+        }
+
+        stripToggle.addEventListener('click', function () {
+            var open = stripToggle.getAttribute('aria-expanded') !== 'true';
+            stripToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            stripToggle.setAttribute('aria-label', t(open ? 'ui.variablesPanel.collapse' : 'ui.variablesPanel.expand'));
+            stripBody.hidden = !open;
+        });
+        stripToggle.setAttribute('aria-label', t('ui.variablesPanel.expand'));
 
         var consoleView = ConsoleView.create(byId('console-log'), {
             t: t,

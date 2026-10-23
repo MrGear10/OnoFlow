@@ -521,3 +521,13 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 - **Stato:** «Passo a passo» al posto di «In pausa», con lo stesso segno (quadrato vuoto, DEC-055).
 - **Telefono:** nel passo-passo all'avvio resta in primo piano il **diagramma** (il punto è vedere il blocco evidenziato), non la console di FR-MOB-02. Un input porta alla console; dopo il valore si torna al diagramma. L'output che arriva mentre si guarda il diagramma mette il segno sulla scheda Console.
 - **Inquadratura:** a ogni passo il blocco evidenziato si porta in vista se non lo è.
+
+## DEC-075 — Pannello delle variabili
+
+- **Passo:** 15 · **Decisa da:** sviluppo, dentro le scelte dell'autore di DEC-073 · **Tocca:** FR-RUN-06, D-05, FR-ERR-03, DEC-051
+- **Da dove vengono:** a ogni blocco l'interprete comunica anche la chiamata in corso (`{ type: 'step', nodeId, frame }`); lo scheduler offre `variables()`, la fotografia di quel momento (la stessa degli errori, FR-ERR-03): le variabili della funzione in esecuzione, con il suo nome.
+- **Cosa mostra:** «Variabili di Main» (o della funzione); per ogni variabile nome, tipo (per un array anche il numero di elementi) e valore come lo stampa la console, con le stringhe tra virgolette come negli errori; «nessun valore» se non è ancora assegnata. Un array mostra gli elementi con l'indice (al massimo 50, poi «e altri N»).
+- **D-05:** per un Real il cui valore stampato è arrotondato, sotto in piccolo il valore completo (`NumberFormat.formatRealFull`: tutte le cifre della rappresentazione più corta, con la virgola, mai notazione scientifica né -0).
+- **Cambiata nell'ultimo passo:** il valore è sottolineato col gesso (il giallo resta solo del blocco in esecuzione, DEC-051), e per i lettori di schermo c'è «(cambiata nell'ultimo passo)». Per un array si segnano solo gli elementi cambiati. Passando a un'altra funzione non si confronta.
+- **Quando:** si aggiorna a ogni passo, a ogni turno dell'esecuzione continua e alla fine; i valori finali restano fino alla prossima esecuzione o modifica (una modifica cambia il programma, quindi il pannello sparisce).
+- **Dove:** sul computer in cima alla console, sulla stessa lavagna (al massimo il 40% dell'altezza, poi scorre). Sul telefono, durante l'esecuzione, una striscia sotto il diagramma con il riassunto in una riga («n = 7 · i = 2»); un tocco la allarga. A programma finito la striscia sparisce, perché al suo posto torna la barra della selezione: i valori finali sono nel pannello della scheda Console.

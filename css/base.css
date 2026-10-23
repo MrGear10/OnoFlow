@@ -1203,6 +1203,154 @@ button.diagram-error-entry:active {
     border-radius: var(--radius);
 }
 
+/* --- Pannello delle variabili (FR-RUN-06, DEC-075) ------------------------------------ */
+
+/* Sul computer in cima alla console: la stessa lavagna, con il gesso. */
+.variables-pane {
+    flex: none;
+    max-height: 40%;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-3) var(--square);
+    background: var(--slate);
+    color: var(--chalk);
+    border-bottom: 1px solid var(--slate-line);
+    font-family: var(--font-code);
+}
+
+.variables-pane[hidden],
+.variables-strip[hidden] {
+    display: none;
+}
+
+.variables-title {
+    margin: 0 0 var(--space-2);
+    font-family: var(--font-ui);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--chalk-muted);
+}
+
+.variables-empty {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: 0.875rem;
+}
+
+.variables-list {
+    display: grid;
+    grid-template-columns: max-content max-content minmax(0, 1fr);
+    column-gap: var(--space-4);
+    row-gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.variable {
+    display: contents;
+}
+
+.variable-name {
+    font-weight: 700;
+}
+
+.variable-type {
+    font-family: var(--font-ui);
+    font-size: 0.8125rem;
+    opacity: 0.8;
+}
+
+.variable-value,
+.variable-elements {
+    overflow-wrap: anywhere;
+}
+
+/* Cambiata nell'ultimo passo: sottolineata col gesso (il giallo è solo del blocco in esecuzione). */
+.variable.is-changed .variable-value,
+.variable-elements .is-changed .variable-element {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+.variable-full {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.75;
+}
+
+.variable-elements {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.variable-index {
+    margin-right: var(--space-1);
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.variable-index::after {
+    content: ":";
+}
+
+/* Sul telefono, durante l'esecuzione: una striscia sotto il diagramma, che si allarga. */
+.variables-strip {
+    display: none;
+    position: absolute;
+    left: calc(var(--space-3) + env(safe-area-inset-left, 0px));
+    right: calc(var(--space-3) + env(safe-area-inset-right, 0px));
+    bottom: calc(var(--touch) + 2 * var(--space-3));
+    max-height: 55%;
+    flex-direction: column;
+    background: var(--slate);
+    color: var(--chalk);
+    border-radius: var(--radius);
+    font-family: var(--font-code);
+}
+
+.variables-strip-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--touch);
+    padding: 0 var(--space-3);
+    background: none;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    font-size: 0.875rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.variables-strip-summary {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.variables-strip-toggle[aria-expanded="true"] .icon {
+    transform: rotate(180deg);
+}
+
+.variables-strip-body {
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 0 var(--space-3) var(--space-3);
+}
+
+.variables-strip-body[hidden] {
+    display: none;
+}
+
 /* --- Passo-passo (FR-RUN-05) -------------------------------------------------------- */
 
 /* Sul telefono la barra è piena: durante l'esecuzione Passo prende il posto di Annulla e Ripeti. */
@@ -1222,6 +1370,14 @@ button.diagram-error-entry:active {
     }
 
     .history-controls--sheet {
+        display: flex;
+    }
+}
+
+@media (max-width: 55.99rem) {
+    .app[data-run-state="running"] .variables-strip:not([hidden]),
+    .app[data-run-state="paused"] .variables-strip:not([hidden]),
+    .app[data-run-state="waitingInput"] .variables-strip:not([hidden]) {
         display: flex;
     }
 }

@@ -227,3 +227,16 @@ La finestra di modifica arriva al passo 10: per ora un blocco inserito resta vuo
 - [ ] **F10** fa lo stesso di Passo. In passo-passo, **Riprendi** continua senza fermarsi; **Ferma** ferma.
 - [ ] **Esempi → Somma, massimo e minimo** in passo-passo: entrando nel `do` e nel `for` il giallo segue i blocchi e il foglio scorre da solo quando il blocco esce dallo schermo.
 - [ ] **Telefono:** Menu → **Esegui passo a passo**: resta il diagramma; in basso a sinistra **Passo** al posto di Annulla e Ripeti. All'input si passa alla console e, dopo il valore, si torna al diagramma. Con un output nuovo la scheda Console ha il pallino.
+
+---
+
+## Passo 15 — Pannello delle variabili
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (405 test).
+- [ ] **Esempi → Somma, massimo e minimo** in passo-passo: in cima alla console compare «Variabili di Main»; dopo le dichiarazioni le variabili ci sono con «nessun valore»; dopo `dim = 0` il valore di `dim` è 0 e sottolineato.
+- [ ] A ogni passo è sottolineato solo ciò che è appena cambiato; al passo successivo senza cambiamenti nessuna sottolineatura.
+- [ ] Dopo la dichiarazione di `numeri` l'array mostra «Integer, 2 elementi» e gli elementi `0:` e `1:` con «nessun valore»; dopo gli input, i valori, sottolineato solo quello appena assegnato.
+- [ ] **Valore completo (D-05):** un programma con `Real x` e `x = 0.1 + 0.2`: il pannello mostra «0,3» e sotto, in piccolo, «0,30000000000000004». Con `x = 2.5` niente valore completo.
+- [ ] A programma finito i valori finali restano; una modifica al diagramma li fa sparire.
+- [ ] Con l'esecuzione continua (Esegui) il pannello segue i valori; in Pausa mostra quelli del blocco evidenziato.
+- [ ] **Telefono:** durante il passo-passo, sotto il diagramma una striscia scura «n = … · …»; un tocco la allarga con tutte le variabili, un altro la richiude. A programma finito la striscia sparisce e i valori sono nella scheda Console.

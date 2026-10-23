@@ -123,6 +123,13 @@
                     <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M13 4.5L16.5 8 13 11.5"/><path d="M16.5 8H8a4 4 0 0 0 0 8h3"/></svg>
                 </button>
             </div>
+            <section class="variables-strip" id="variables-strip" data-i18n-label="ui.variablesPanel.label" hidden>
+                <button class="variables-strip-toggle" id="variables-strip-toggle" type="button" aria-expanded="false" aria-controls="variables-strip-body">
+                    <span class="variables-strip-summary" id="variables-strip-summary"></span>
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 12.5L10 8l4.5 4.5"/></svg>
+                </button>
+                <div class="variables-strip-body" id="variables-strip-body" hidden></div>
+            </section>
             <div class="step-controls">
                 <button class="button step-sheet" id="step-sheet" type="button" data-i18n-title="ui.step.title">
                     <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4.5v11l7.5-5.5z"/><path d="M15.5 4.5v11"/></svg>
@@ -144,6 +151,9 @@
         </section>
 
         <section class="pane pane--console" id="panel-console" role="tabpanel" aria-labelledby="tab-console">
+            <section class="variables-pane" id="variables-pane" data-i18n-label="ui.variablesPanel.label" hidden>
+                <div id="variables-pane-body"></div>
+            </section>
             <div class="slate" id="console-scroll">
                 <p class="console-trimmed" id="console-trimmed" data-i18n="ui.console.trimmed" hidden></p>
                 <p class="console-empty" id="console-empty" data-i18n="ui.console.empty"></p>
@@ -190,6 +200,7 @@
 <script src="js/ui/block-menu.js"></script>
 <script src="js/ui/block-editor.js"></script>
 <script src="js/ui/console-view.js"></script>
+<script src="js/ui/variables-view.js"></script>
 <script src="js/ui/session-copy.js"></script>
 <script src="js/app.js"></script>
 <script>

@@ -288,6 +288,13 @@
             'ui.variables.value': 'Valore',
             'ui.variables.arrayType': '{type}, {size} elementi',
             'ui.value.none': 'nessun valore',
+            'ui.variablesPanel.label': 'Variabili',
+            'ui.variablesPanel.title': 'Variabili di {name}',
+            'ui.variablesPanel.empty': 'Nessuna variabile dichiarata finora.',
+            'ui.variablesPanel.changed': 'cambiata nell\'ultimo passo',
+            'ui.variablesPanel.full': 'Valore completo: {value}',
+            'ui.variablesPanel.expand': 'Mostra tutte le variabili',
+            'ui.variablesPanel.collapse': 'Riduci le variabili',
             'ui.value.more': 'e altri {count}',
 
             'ui.notice.close': 'Chiudi',

@@ -19,6 +19,9 @@
  *
  * Stati: 'idle', 'running', 'paused', 'waitingInput', 'finished'; stepping() dice se
  * l'esecuzione va avanti un passo alla volta.
+ *
+ * variables() → { functionName, variables } | null: le variabili della chiamata in corso al
+ * blocco evidenziato, come le fotografa l'interprete (FR-RUN-06, passo 15).
  * Opzioni (tutte facoltative tranne i gestori che servono):
  *     onOutput(evento), onInput(evento), onStep(nodeId), onStateChange(stato),
  *     onLongRun(), onFinish(esito)
@@ -67,6 +70,7 @@
         var hasPendingInput = false;
         var currentNodeId = null;
         var stepping = false;
+        var currentFrame = null;
 
         function setState(next) {
             if (state !== next) {
@@ -99,6 +103,7 @@
             var event = result.value;
             if (event.type === 'step') {
                 currentNodeId = event.nodeId;
+                currentFrame = event.frame || null;
                 if (stepping) {
                     // Passo-passo: ci si ferma prima di eseguire questo blocco.
                     setState('paused');
@@ -251,6 +256,11 @@
             step: step,
             stop: stop,
             stepping: function () { return stepping; },
+            variables: function () {
+                return currentFrame
+                    ? { functionName: currentFrame.programFunction.name, variables: currentFrame.snapshot() }
+                    : null;
+            },
             provideInput: provideInput,
             state: function () { return state; },
             currentNodeId: function () { return currentNodeId; }

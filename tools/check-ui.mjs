@@ -894,6 +894,24 @@ async function checkStep(page, checks, viewport) {
         checks.ok(await page.isVisible('#panel-diagram'), 'dopo il valore si torna al diagramma');
     }
     checks.ok((await highlighted() || '').startsWith('if'), `poi l'if: ${await highlighted()}`);
+    // Pannello delle variabili (FR-RUN-06): n vale 7, appena cambiata.
+    const variableValue = (where) => page.evaluate((selector) => {
+        const row = document.querySelector(`${selector} [data-name="n"]`);
+        return row ? { value: row.querySelector('.variable-value').textContent, changed: row.classList.contains('is-changed') } : null;
+    }, where);
+    if (viewport.width >= 896) {
+        checks.ok(await page.isVisible('#variables-pane'), 'sul computer il pannello delle variabili è in cima alla console');
+        const n = await variableValue('#variables-pane');
+        checks.ok(n && n.value === '7' && n.changed, `n = 7, segnata come cambiata: ${JSON.stringify(n)}`);
+    } else {
+        checks.ok(await page.isVisible('#variables-strip'), 'sul telefono la striscia delle variabili è sotto il diagramma');
+        checks.ok((await page.textContent('#variables-strip-summary')).includes('n = 7'), `riassunto: ${await page.textContent('#variables-strip-summary')}`);
+        await press('#variables-strip-toggle');
+        const n = await variableValue('#variables-strip');
+        checks.ok(await page.isVisible('#variables-strip-body') && n && n.value === '7' && n.changed, `striscia aperta: n = 7, cambiata (${JSON.stringify(n)})`);
+        await press('#variables-strip-toggle');
+        checks.ok(!(await page.isVisible('#variables-strip-body')), 'la striscia si richiude');
+    }
     await press(step);
     await settled();
     checks.ok((await highlighted()) === 'Output n & " è dispari"', `il ramo Falso: ${await highlighted()}`);
@@ -902,6 +920,10 @@ async function checkStep(page, checks, viewport) {
     await page.waitForSelector('.console-note--done', { state: 'attached' });
     checks.ok((await page.textContent('#console-log')).includes('7 è dispari') && (await status()) === 'Terminato', 'ultimo passo: fine del programma');
     checks.ok(!(await page.isDisabled(step)), 'a programma finito Passo ricomincia');
+    if (viewport.width < 896) {
+        checks.ok(!(await page.isVisible('#variables-strip')), 'a programma finito la striscia lascia il posto alla barra della selezione');
+    }
+    checks.ok((await page.getAttribute('#variables-pane', 'hidden')) === null, 'i valori finali restano nel pannello della console');
 
     // Riprendi torna all'esecuzione continua; Ferma.
     if (!viewport.phone) {
@@ -918,6 +940,12 @@ async function checkStep(page, checks, viewport) {
         checks.ok((await status()) === 'In attesa di un valore', 'Riprendi continua senza fermarsi fino all\'input');
         await page.click('#stop');
         checks.ok((await status()) === 'Fermato', 'Ferma');
+        // Una modifica cambia il programma: le variabili di prima spariscono.
+        checks.ok(await page.isVisible('#variables-pane'), 'dopo Ferma le variabili restano');
+        // Una cancellazione, che non passa dai campi della finestra di modifica.
+        await page.focus('#diagram .is-selectable');
+        await page.keyboard.press('Delete');
+        checks.ok(!(await page.isVisible('#variables-pane')), 'dopo una modifica il pannello delle variabili sparisce');
     }
     checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale durante il passo-passo');
 }

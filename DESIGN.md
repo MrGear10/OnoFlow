@@ -367,6 +367,8 @@ Contorno d'inchiostro di 2.5px, a 0,3 quadretti dal blocco, angoli di 0,25 quadr
 
 **Passo** (DEC-074): pulsante come Pausa e Ferma, con l'icona del triangolo e della barra, nella barra accanto a Esegui da 28rem in su; sul telefono, durante l'esecuzione, in basso a sinistra del foglio al posto di Annulla e Ripeti. Nel passo-passo lo stato dice «Passo a passo», con il segno della pausa.
 
+**Pannello delle variabili** (DEC-075): sulla lavagna della console, in cima; titolo piccolo «Variabili di Main», righe nome (grassetto) · tipo (piccolo, attenuato) · valore. Valore cambiato nell'ultimo passo sottolineato col gesso, mai in giallo; valore completo dei Real sotto in piccolo. Sul telefono una striscia scura arrotondata sopra i comandi del foglio, con il riassunto in una riga e la freccia per allargarla.
+
 **Annulla e Ripeti** (DEC-068): due pulsanti quadrati da 44 px con la sola icona (freccia curva a sinistra e a destra); quando non c'è nulla da fare il barrato è diagonale, come Pausa e Ferma con la sola icona. Da 64rem in su stanno nella barra superiore, subito prima di Esegui; sotto, in basso a sinistra del foglio, accanto ai comandi dello zoom.
 
 ### Menu dei blocchi

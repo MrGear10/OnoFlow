@@ -120,6 +120,17 @@
         return joinNumber(rounded, rounded.fractionDigits.replace(/0+$/, ''), format);
     }
 
+    /*
+     * Real con tutte le cifre della rappresentazione più corta (D-05, DEC-073): il "valore
+     * completo" del pannello delle variabili, es. 0.1 + 0.2 → "0,30000000000000004".
+     * Stesso separatore e stesse regole dell'output, tranne il numero di decimali.
+     */
+    function formatRealFull(value, format) {
+        var digits = decimalDigits(Math.abs(value));
+        var fraction = digits.fractionDigits.replace(/0+$/, '');
+        return joinNumber({ negative: value < 0, integerDigits: digits.integerDigits }, fraction, format);
+    }
+
     /* Testo di ToFixed: "decimals" cifre, zeri finali conservati (§6.9). */
     function formatFixed(value, decimals, format) {
         if (!Number.isInteger(decimals) || decimals < 0 || decimals > MAX_FIXED_DECIMALS) {
@@ -251,6 +262,7 @@
         formatReal: formatReal,
         formatFixed: formatFixed,
         formatValue: formatValue,
+        formatRealFull: formatRealFull,
         parseInput: parseInput
     };
 })(window.OnoFlow);
