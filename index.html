@@ -31,6 +31,9 @@
                     <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M13 4.5L16.5 8 13 11.5"/><path d="M16.5 8H8a4 4 0 0 0 0 8h3"/></svg>
                 </button>
             </div>
+            <a class="button docs-button" id="docs-link" href="documentazione.html" target="_blank" rel="noopener" data-docs-link data-i18n-label="ui.docs.open" data-i18n-title="ui.docs.open">
+                <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4.5c2.5-1 5-1 7 .5v11c-2-1.5-4.5-1.5-7-.5zM17 4.5c-2.5-1-5-1-7 .5v11c2-1.5 4.5-1.5 7-.5z"/></svg>
+            </a>
             <button class="button theme-button" id="theme-toggle" type="button">
                 <svg class="icon theme-icon theme-icon--sun" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.5"/><path d="M10 2v2.5M10 15.5V18M2 10h2.5M15.5 10H18M4.3 4.3l1.8 1.8M13.9 13.9l1.8 1.8M4.3 15.7l1.8-1.8M13.9 6.1l1.8-1.8"/></svg>
                 <svg class="icon theme-icon theme-icon--moon" viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 12.5A6.5 6.5 0 0 1 7.5 4.5a6.5 6.5 0 1 0 8 8z"/></svg>
@@ -73,6 +76,7 @@
                     <button class="menu-item" id="cmd-redo" type="button" role="menuitem" data-i18n="ui.redo" disabled></button>
                     <p class="menu-heading" data-i18n="ui.menu.about"></p>
                     <button class="menu-item" id="cmd-theme" type="button" role="menuitem"></button>
+                    <a class="menu-item" id="cmd-docs" href="documentazione.html" target="_blank" rel="noopener" role="menuitem" data-docs-link data-i18n="ui.docs.open"></a>
                     <button class="menu-item" id="cmd-info" type="button" role="menuitem" data-i18n="ui.info.open"></button>
                 </div>
             </div>
@@ -91,7 +95,7 @@
                 </div>
                 <footer class="footer">
                     <p class="footer-line">
-                        <span data-i18n="ui.footer.short.independent"></span><span class="footer-sep" aria-hidden="true"> · </span><span id="footer-hosting"></span><span class="footer-sep" aria-hidden="true"> · </span><button class="footer-link" id="footer-info" type="button" data-i18n="ui.info.open"></button>
+                        <span data-i18n="ui.footer.short.independent"></span><span class="footer-sep" aria-hidden="true"> · </span><span id="footer-hosting"></span><span class="footer-sep" aria-hidden="true"> · </span><a class="footer-link" id="footer-docs" href="documentazione.html" target="_blank" rel="noopener" data-docs-link data-i18n="ui.docs.open"></a><span class="footer-sep" aria-hidden="true"> · </span><button class="footer-link" id="footer-info" type="button" data-i18n="ui.info.open"></button>
                     </p>
                 </footer>
             </div>
@@ -106,6 +110,7 @@
                 <p id="info-hosting"></p>
                 <p data-i18n="ui.info.session"></p>
                 <p data-i18n="ui.info.license"></p>
+                <p><a href="documentazione.html" target="_blank" rel="noopener" data-docs-link data-i18n="ui.docs.full"></a></p>
             </section>
             <div class="selection-bar" id="selection-bar" role="group" data-i18n-label="ui.selection.label" hidden>
                 <button class="button selection-edit" id="edit-block" type="button" data-i18n-title="ui.selection.edit">

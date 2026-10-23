@@ -1,0 +1,462 @@
+/*
+ * OnoFlow — pagina della documentazione (documentazione.html, DEC-081). Valori in css/tokens.css.
+ *
+ * Lo stesso quaderno dell'app (DEC-051): carta e inchiostro per il testo, lavagna e gesso
+ * per i blocchi di codice, linee a un pixel, niente ombre. A differenza dell'app la pagina
+ * scorre: è un documento da leggere, non uno strumento a tutto schermo.
+ * Computer: indice a sinistra, fisso mentre si legge. Sotto i 56rem: indice a scomparsa.
+ */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-padding-top: calc(var(--bar-height) + var(--space-4));
+}
+
+body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--text-body);
+    line-height: 1.6;
+}
+
+a {
+    color: var(--ink);
+    text-underline-offset: 0.2em;
+}
+
+:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.skip {
+    position: absolute;
+    left: var(--space-3);
+    top: -4rem;
+    z-index: 3;
+    padding: var(--space-2) var(--space-3);
+    background: var(--ink);
+    color: var(--on-ink);
+}
+
+.skip:focus {
+    top: var(--space-2);
+}
+
+/* --- Pulsanti, come nell'app --------------------------------------------------- */
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-width: var(--touch);
+    min-height: var(--touch);
+    padding: 0 var(--space-3);
+    background: transparent;
+    border: 1px solid var(--ink);
+    border-radius: var(--radius);
+    color: var(--ink);
+    font: inherit;
+    font-weight: 600;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.button:active {
+    background: var(--ink);
+    color: var(--on-ink);
+}
+
+.icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.theme-button {
+    width: var(--touch);
+    padding: 0;
+}
+
+.theme-button[data-target="light"] .theme-icon--moon,
+.theme-button[data-target="dark"] .theme-icon--sun,
+.theme-button:not([data-target]) .theme-icon--sun {
+    display: none;
+}
+
+/* --- Barra ----------------------------------------------------------------------- */
+
+.docs-bar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--bar-height);
+    padding: var(--space-1) calc(var(--space-3) + env(safe-area-inset-right, 0px)) var(--space-1) calc(var(--space-3) + env(safe-area-inset-left, 0px));
+    background: var(--chrome);
+    border-bottom: 1px solid var(--chrome-line);
+}
+
+.brand {
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.docs-bar-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.docs-index-button {
+    display: none;
+}
+
+/* --- Indice ---------------------------------------------------------------------- */
+
+.docs-layout {
+    display: grid;
+    grid-template-columns: 18rem minmax(0, 1fr);
+}
+
+.docs-nav {
+    position: sticky;
+    top: var(--bar-height);
+    align-self: start;
+    max-height: calc(100vh - var(--bar-height));
+    max-height: calc(100dvh - var(--bar-height));
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-4) var(--space-3) var(--space-6);
+    background: var(--chrome);
+    border-right: 1px solid var(--chrome-line);
+    font-size: 0.9375rem;
+}
+
+.docs-filter {
+    width: 100%;
+    min-height: var(--touch);
+    margin-bottom: var(--space-3);
+    padding: 0 var(--space-3);
+    background: var(--paper);
+    color: var(--text);
+    border: 1px solid var(--chrome-line);
+    border-radius: var(--radius);
+    font: inherit;
+    font-size: max(16px, 1rem);
+}
+
+.docs-filter:focus {
+    outline: none;
+    border-color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.docs-filter-empty {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.nav-docs,
+.nav-docs ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.nav-doc {
+    margin-bottom: var(--space-3);
+}
+
+.nav-doc-link {
+    display: block;
+    padding: var(--space-1) 0;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.nav-docs ul a {
+    display: block;
+    padding: var(--space-1) 0 var(--space-1) var(--space-3);
+    border-left: 2px solid transparent;
+    color: var(--text);
+    text-decoration: none;
+}
+
+.nav-docs a[aria-current="location"] {
+    border-left-color: var(--ink);
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.nav-docs ul a code {
+    font-size: 0.875em;
+}
+
+/* --- Testo ----------------------------------------------------------------------- */
+
+.docs-main {
+    min-width: 0;
+    padding: var(--space-6) var(--space-6) 6rem;
+    outline: none;
+}
+
+.doc {
+    max-width: 52rem;
+    margin-bottom: 4rem;
+    padding-bottom: 3rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.doc-source {
+    margin: 0;
+    color: var(--text-muted);
+    font-family: var(--font-code);
+    font-size: 0.8125rem;
+}
+
+.doc h1,
+.doc h2,
+.doc h3,
+.doc h4,
+.doc h5,
+.doc h6 {
+    color: var(--ink);
+    line-height: 1.25;
+}
+
+.doc h1 {
+    margin: 0 0 var(--space-6);
+    font-size: 2rem;
+}
+
+.doc h2 {
+    margin: 3rem 0 var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--line);
+    font-size: 1.5rem;
+}
+
+.doc h3 {
+    margin: 2.25rem 0 var(--space-2);
+    font-size: 1.25rem;
+}
+
+.doc h4,
+.doc h5,
+.doc h6 {
+    margin: 1.75rem 0 var(--space-2);
+    font-size: 1.0625rem;
+}
+
+.anchor {
+    margin-left: var(--space-2);
+    color: var(--text-muted);
+    font-weight: 400;
+    text-decoration: none;
+    opacity: 0;
+}
+
+.doc :is(h2, h3, h4, h5, h6):hover .anchor,
+.anchor:focus-visible {
+    opacity: 1;
+}
+
+.doc p,
+.doc ul,
+.doc ol,
+.doc blockquote,
+.doc .table-wrap,
+.doc pre {
+    margin: 0 0 var(--space-4);
+}
+
+.doc ul ul,
+.doc ol ol,
+.doc ul ol,
+.doc ol ul {
+    margin: var(--space-1) 0 0;
+}
+
+.doc li + li {
+    margin-top: var(--space-1);
+}
+
+.doc blockquote {
+    padding: var(--space-3) var(--space-4);
+    background: var(--info-soft);
+    border-left: 3px solid var(--ink);
+}
+
+.doc blockquote p {
+    margin: 0;
+}
+
+.doc hr {
+    margin: 2.5rem 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+}
+
+.doc code {
+    padding: 0.05em 0.3em;
+    background: var(--chrome);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    font-family: var(--font-code);
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+}
+
+/* Blocchi di codice: la lavagna della console, con il gesso. */
+.doc pre {
+    overflow: auto;
+    padding: var(--space-4);
+    background: var(--slate);
+    color: var(--chalk);
+    border-radius: var(--radius);
+    font-family: var(--font-code);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.doc pre code {
+    padding: 0;
+    background: none;
+    border: 0;
+    color: inherit;
+    font-size: inherit;
+    overflow-wrap: normal;
+}
+
+.doc pre.plain {
+    white-space: pre-wrap;
+}
+
+/* Le tabelle larghe scorrono da sole: la pagina non scorre mai di lato (NFR-ACC-03). */
+.table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+.doc table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+}
+
+.doc th,
+.doc td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+}
+
+.doc th {
+    background: var(--chrome);
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.doc tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.doc td:first-child {
+    white-space: nowrap;
+}
+
+/* --- Schermi stretti: indice a scomparsa ---------------------------------------- */
+
+@media (max-width: 55.99rem) {
+    .docs-layout {
+        display: block;
+    }
+
+    .docs-index-button {
+        display: inline-flex;
+    }
+
+    .docs-nav {
+        position: fixed;
+        top: var(--bar-height);
+        left: 0;
+        bottom: 0;
+        z-index: 2;
+        width: min(22rem, 100%);
+        max-height: none;
+        border-right: 1px solid var(--chrome-line);
+        transform: translateX(-100%);
+        visibility: hidden;
+        transition: transform var(--duration-state) var(--ease-out), visibility var(--duration-state);
+    }
+
+    .is-index-open .docs-nav {
+        transform: none;
+        visibility: visible;
+    }
+
+    .docs-main {
+        padding: var(--space-4) calc(var(--space-4) + env(safe-area-inset-right, 0px)) 4rem calc(var(--space-4) + env(safe-area-inset-left, 0px));
+    }
+
+    .doc h1 {
+        font-size: 1.625rem;
+    }
+
+    .doc td:first-child {
+        white-space: normal;
+    }
+}
+
+@media (max-width: 27.5rem) {
+    .docs-bar-title {
+        display: none;
+    }
+
+    .docs-back {
+        margin-left: auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .docs-nav {
+        transition: none;
+    }
+}

@@ -44,6 +44,7 @@ Progettato da **MrGear10** e sviluppato con l'assistenza di **Claude (Anthropic)
   node check-ui.mjs                               # la pagina vera, su computer e telefono
   ```
 
+- **Documentazione navigabile:** `documentazione.html`, generata dai documenti qui sotto con `node build-docs.mjs` (cartella `tools/`); si apre anche dall'app (pulsante con il libro, Menu → Documentazione).
 - Documenti: [`OnoFlow_progetto.md`](OnoFlow_progetto.md) (specifica), [`DECISIONI.md`](DECISIONI.md) (decisioni prese durante lo sviluppo), [`PRODUCT.md`](PRODUCT.md) e [`DESIGN.md`](DESIGN.md) (prodotto e sistema visivo), [`docs/checklist-manuale.md`](docs/checklist-manuale.md) (controlli a mano).
 
 ## Licenza

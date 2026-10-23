@@ -350,6 +350,8 @@
             'ui.footer.short.local': 'Copia locale: nessun dato inviato',
             'ui.menu.about': 'Progetto',
             'ui.info.open': 'Informazioni',
+            'ui.docs.open': 'Documentazione',
+            'ui.docs.full': 'Documentazione completa: presentazione, specifica, decisioni, sistema visivo, controlli manuali.',
             'ui.theme.toLight': 'Tema chiaro',
             'ui.theme.toDark': 'Tema scuro',
             'ui.info.title': 'Informazioni',

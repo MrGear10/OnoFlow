@@ -365,6 +365,8 @@ A metà di ogni freccia di Main, un cerchietto su carta (raggio 0,45 quadretti) 
 ### Selezione del blocco (B3)
 Contorno d'inchiostro di 2.5px, a 0,3 quadretti dal blocco, angoli di 0,25 quadretti: si distingue dal cerchio rosso dell'errore per colore e forma. La barra della selezione ha **Modifica** (icona della matita), **Inserisci dopo** (icona del cerchio con il +) ed **Elimina** (icona del cestino; sui telefoni stretti senza testo): sul computer in basso a sinistra del foglio, sul telefono sopra i comandi dello zoom. Dopo una cancellazione l'avviso informativo sotto la barra superiore offre **Annulla** (DEC-067). Su un foglio sotto i 44rem la barra della selezione sta sopra lo zoom anche sul computer.
 
+**Documentazione** (DEC-081): `documentazione.html` usa gli stessi valori (`css/tokens.css`) con `css/docs.css`: carta e inchiostro per il testo, titoli in inchiostro, indice sul colore della barra, blocchi di codice sulla lavagna con il gesso, tabelle con le linee a un pixel. Nell'app un pulsante con il libro nella barra (da 64rem) e la voce Documentazione nel menu.
+
 **Tema** (DEC-080): pulsante quadrato da 44 px con la sola icona nella barra (da 64rem), il sole verso il chiaro e la luna verso lo scuro; la voce nel menu, sezione Progetto, dice «Tema chiaro» o «Tema scuro». La lavagna della console non cambia.
 
 **Spostamento** (DEC-079): il blocco in viaggio ha i contorni tratteggiati e opacità 0,55; i + dove non può andare scendono a 0,2. Sposta ha l'icona delle quattro frecce. Sotto i 27,5rem la barra della selezione ha tre pulsanti con la sola icona (Modifica, Sposta, Elimina) e Inserisci dopo con il testo.

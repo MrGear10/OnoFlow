@@ -49,10 +49,13 @@
  *     rinomina con le chiamate e Annulla, cancellazione e Annulla, file salvato (FR-EDIT-11);
  *   - spostamento: Sposta, + spenti attorno al blocco, un + nel ramo Vero, Annulla, Non spostare,
  *     Esc (FR-EDIT-12, D-03);
- *   - tema chiaro o scuro: pulsante nella barra o voce del menu, ?tema=, contro il sistema (DEC-080).
+ *   - tema chiaro o scuro: pulsante nella barra o voce del menu, ?tema=, contro il sistema (DEC-080);
+ *   - documentazione: pagina aggiornata rispetto ai documenti, escape, ancore, indice, tema,
+ *     telefono; collegamenti dall'app con il tema scelto (DEC-081).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
+import { buildDocs, inline, renderMarkdown, DOCUMENTS } from './build-docs.mjs';
 import { mkdir, readFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
@@ -60,6 +63,7 @@ import path from 'node:path';
 const ENGINES = { chromium, firefox };
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const URL = pathToFileURL(path.join(ROOT, 'index.html')).href;
+const DOCS_URL = pathToFileURL(path.join(ROOT, 'documentazione.html')).href;
 const QA04_INPUTS = ['5', 's', '3', 'n', '4', '9'];
 const QA04_LAST_LINES = [
     'Somma del primo set di numeri: 8',
@@ -1090,6 +1094,90 @@ async function checkTheme(page, checks, viewport, browser) {
     await context.close();
 }
 
+/* La pagina generata corrisponde ai documenti; il convertitore fa l'escape e regge le forme usate (DEC-081). */
+async function checkDocsSource(checks) {
+    checks.ok((await readFile(path.join(ROOT, 'documentazione.html'), 'utf8')) === await buildDocs(),
+        'documentazione.html corrisponde ai documenti (altrimenti: node build-docs.mjs)');
+    checks.ok(inline('<script>x</script> & **a** `<b>`') === '&lt;script&gt;x&lt;/script&gt; &amp; <strong>a</strong> <code>&lt;b&gt;</code>',
+        'il testo entra con l\'escape, anche nel codice');
+    checks.ok(inline('[decisioni](DECISIONI.md)') === '<a href="#decisioni">decisioni</a>', 'un collegamento a un altro documento diventa un\'ancora');
+    const table = renderMarkdown('| a | b |\n|---|---|\n| `x \\| y` | uno<br>due |\n', 'prova', []);
+    checks.ok(table.includes('<code>x | y</code>') && table.includes('uno<br>due'), `tabella con \\| e <br>: ${table}`);
+    const list = renderMarkdown('- uno\n  - dentro\n- due\n', 'prova', []);
+    checks.ok(list === '<ul><li>uno<ul><li>dentro</li></ul></li><li>due</li></ul>', `elenco annidato: ${list}`);
+}
+
+/* La documentazione: indice, ancore, tema, telefono; e i collegamenti dall'app (DEC-081). */
+async function checkDocs(page, checks, viewport) {
+    // Dall'app: in un'altra scheda, con il tema scelto.
+    checks.ok((await page.getAttribute('#cmd-docs', 'target')) === '_blank', 'Menu → Documentazione si apre in un\'altra scheda');
+    checks.ok(await page.isVisible('#footer-docs') || (await page.locator('#footer-docs').count()) === 1, 'la riga in fondo al foglio porta alla documentazione');
+    if (viewport.width >= 1024) {
+        checks.ok(await page.isVisible('#docs-link'), 'nella barra il pulsante della documentazione');
+    }
+    await page.click('#menu-button');
+    await page.click('#cmd-theme');
+    const chosen = await page.getAttribute('html', 'data-theme');
+    checks.ok((await page.getAttribute('#cmd-docs', 'href')) === 'documentazione.html?tema=' + (chosen === 'dark' ? 'scuro' : 'chiaro'),
+        `la documentazione si apre con il tema scelto: ${await page.getAttribute('#cmd-docs', 'href')}`);
+    await page.click('#menu-button');
+    await page.click('#cmd-theme'); // si torna al tema di prima
+
+    const docs = await page.context().newPage();
+    const errors = [];
+    docs.on('pageerror', (error) => errors.push(error.message));
+    await docs.goto(DOCS_URL);
+    await docs.waitForSelector('.doc');
+    checks.ok((await docs.locator('article.doc').count()) === DOCUMENTS.length, `${DOCUMENTS.length} documenti nella pagina`);
+    const broken = await docs.evaluate(() => Array.from(document.querySelectorAll('a[href^="#"]'))
+        .map((link) => link.getAttribute('href').slice(1)).filter((id) => id && !document.getElementById(id)));
+    checks.ok(broken.length === 0, `ogni ancora porta da qualche parte (${broken.slice(0, 5).join(', ')})`);
+    const leftovers = await docs.evaluate(() => {
+        const text = document.querySelector('.docs-main').innerText;
+        return (text.match(/\*\*|\]\(|^#{1,6} /gm) || []).length;
+    });
+    checks.ok(leftovers === 0, `nessun segno di Markdown rimasto nel testo (${leftovers})`);
+    checks.ok(await noHorizontalScroll(docs), 'documentazione: nessuno scorrimento orizzontale');
+    const paper = () => docs.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    const before = await paper();
+    await docs.click('#theme-toggle');
+    checks.ok((await paper()) !== before, 'documentazione: il tema cambia');
+    if (viewport.width < 896) {
+        checks.ok(!(await docs.isVisible('#docs-nav .nav-doc-link')), 'sul telefono l\'indice è chiuso');
+        await docs.click('#docs-index-button');
+        await docs.waitForTimeout(250);
+        checks.ok(await docs.isVisible('#docs-nav .nav-doc-link'), 'Indice lo apre');
+        checks.ok((await docs.getAttribute('#docs-index-button', 'aria-expanded')) === 'true', 'aria-expanded segue');
+        await docs.click('#docs-nav a[href="#prodotto"]');
+        await docs.waitForTimeout(250);
+        checks.ok(!(await docs.isVisible('#docs-nav .nav-doc-link')), 'una voce dell\'indice lo chiude');
+        const top = await docs.evaluate(() => document.getElementById('prodotto').getBoundingClientRect().top);
+        checks.ok(top >= 0 && top < viewport.height / 2, `e porta al documento (${Math.round(top)} px dall'alto)`);
+    } else {
+        checks.ok(await docs.isVisible('#docs-nav .nav-doc-link'), 'sul computer l\'indice è sempre a sinistra');
+        await docs.fill('#docs-filter', 'operatori');
+        const shown = await docs.locator('#docs-nav .nav-doc:not([hidden])').count();
+        checks.ok(shown >= 1 && shown < DOCUMENTS.length, `il filtro lascia i documenti con quel titolo (${shown})`);
+        await docs.press('#docs-filter', 'Enter');
+        await docs.waitForTimeout(250);
+        checks.ok((await docs.evaluate(() => window.location.hash)).includes('operatori'), 'Invio porta al primo titolo trovato');
+    }
+    checks.ok(errors.length === 0, `documentazione: errori nella pagina: ${errors.join('; ')}`);
+    await docs.close();
+
+    // Andata e ritorno con le schede vere: Torna all'app chiude la documentazione, l'app resta com'era.
+    if (viewport.width >= 1024) {
+        const name = await page.inputValue('#file-name');
+        const [opened] = await Promise.all([page.context().waitForEvent('page'), page.click('#docs-link')]);
+        await opened.waitForLoadState();
+        checks.ok(opened.url().includes('documentazione.html'), 'il pulsante apre la documentazione in un\'altra scheda');
+        await opened.click('.docs-back', { noWaitAfter: true }).catch(() => {}); // la scheda si chiude durante il clic
+        await page.waitForTimeout(600);
+        checks.ok(opened.isClosed(), 'Torna all\'app chiude la scheda della documentazione');
+        checks.ok((await page.inputValue('#file-name')) === name, 'e l\'app ha ancora il suo diagramma');
+    }
+}
+
 /* Passo-passo sull'esempio Pari o dispari (FR-RUN-05, DEC-073). */
 async function checkStep(page, checks, viewport) {
     const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
@@ -1253,6 +1341,7 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
         await checkFunctions(page, checks, viewport);
         await checkMove(page, checks, viewport);
         await checkTheme(page, checks, viewport, browser);
+        await checkDocs(page, checks, viewport);
         if (!viewport.phone) {
             await checkFocusReveal(page, checks);
             await checkMenuKeyboard(page, checks);
@@ -1274,6 +1363,15 @@ async function main() {
         await mkdir(options.screenshots, { recursive: true });
     }
     let failed = false;
+    const source = new Checks('documentazione');
+    await checkDocsSource(source);
+    if (source.failures.length === 0) {
+        console.log(`[${source.label}] OK — ${source.count} verifiche`);
+    } else {
+        failed = true;
+        console.log(`[${source.label}] FALLITO — ${source.failures.length} su ${source.count}`);
+        source.failures.forEach((failure) => console.log(`  ✗ ${failure}`));
+    }
     for (const engineName of options.engines) {
         let browser;
         try {

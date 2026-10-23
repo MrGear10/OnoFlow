@@ -300,3 +300,15 @@ La finestra di modifica arriva al passo 10: per ora un blocco inserito resta vuo
 - [ ] Con il sistema in modalità scura, **Tema chiaro** rende chiaro il foglio; la console resta scura.
 - [ ] Ricaricando la pagina si torna al tema del sistema (la scelta non si ricorda); con `index.html?tema=chiaro` (o `?tema=scuro`) il tema è quello.
 - [ ] Al proiettore, nel tema chiaro: blocchi, frecce e testi leggibili dal fondo dell'aula.
+
+---
+
+## Documentazione navigabile
+
+- [ ] Dall'app: pulsante con il libro nella barra (computer), **Menu → Documentazione**, la riga in fondo al foglio, il pannello Informazioni. Si apre in un'altra scheda; il diagramma resta nell'app.
+- [ ] La pagina ha sette documenti, dalla Presentazione alla Licenza; l'indice a sinistra porta ai capitoli e segna quello che si sta leggendo. Il filtro dei titoli («operatori») lascia solo i capitoli che lo contengono; Invio porta al primo.
+- [ ] Ctrl + F trova parole in qualunque documento. Le tabelle larghe scorrono da sole; la pagina non scorre di lato.
+- [ ] Il tema: lo stesso pulsante dell'app; se nell'app si è scelto un tema, la documentazione si apre con quello.
+- [ ] **Torna all'app** chiude la scheda della documentazione e si torna all'app con il diagramma aperto.
+- [ ] **Telefono:** pulsante **Indice** in alto; l'indice copre la pagina, una voce lo chiude e porta lì.
+- [ ] Dopo una modifica a un documento, `node build-docs.mjs` dalla cartella `tools/` aggiorna la pagina (le verifiche automatiche lo segnalano se manca).

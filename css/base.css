@@ -446,6 +446,10 @@ a {
     cursor: pointer;
 }
 
+a.menu-item {
+    text-decoration: none; /* Documentazione è un collegamento, ma nel menu si presenta come le altre voci */
+}
+
 .menu-item:focus-visible {
     outline: none;
     background: var(--info-soft);
@@ -1240,9 +1244,16 @@ button.diagram-error-entry:active {
     margin-left: auto;
 }
 
-.history-controls--bar + .theme-button,
+.history-controls--bar + .docs-button,
 .theme-button + .run-controls {
     margin-left: var(--space-2);
+}
+
+/* Documentazione (DEC-081): un collegamento con l'aspetto di un pulsante, con il libro. */
+.docs-button {
+    width: var(--touch);
+    padding: 0;
+    text-decoration: none;
 }
 
 /* Tema chiaro o scuro (DEC-080): l'icona dice dove si va, il sole verso il chiaro. */
@@ -1444,8 +1455,9 @@ button.diagram-error-entry:active {
 /* Sotto i 64rem nella barra mancherebbe spazio per il nome del file (B2). */
 @media (max-width: 63.99rem) {
     .history-controls--bar,
+    .docs-button,
     .theme-button {
-        display: none; /* il tema resta nel menu */
+        display: none; /* tema e documentazione restano nel menu */
     }
 
     .history-controls--sheet {

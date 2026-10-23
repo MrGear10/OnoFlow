@@ -96,6 +96,11 @@
         var themeButton = byId('theme-toggle');
         var themeItem = byId('cmd-theme');
         function showTheme(current) {
+            // La documentazione si apre con lo stesso tema, se è stato scelto a mano (DEC-081).
+            var chosen = document.documentElement.getAttribute('data-theme');
+            Array.prototype.forEach.call(document.querySelectorAll('[data-docs-link]'), function (link) {
+                link.setAttribute('href', 'documentazione.html' + (chosen ? '?tema=' + (chosen === 'dark' ? 'scuro' : 'chiaro') : ''));
+            });
             var target = current === 'dark' ? 'light' : 'dark';
             var label = t(target === 'light' ? 'ui.theme.toLight' : 'ui.theme.toDark');
             themeItem.textContent = label;
@@ -1417,6 +1422,9 @@
         commands.save.addEventListener('click', function () {
             closeMenu();
             save();
+        });
+        byId('cmd-docs').addEventListener('click', function () {
+            closeMenu(); // la documentazione si apre in un'altra scheda: qui il menu si chiude
         });
         themeItem.addEventListener('click', function () {
             closeMenu();
