@@ -215,3 +215,15 @@ La finestra di modifica arriva al passo 10: per ora un blocco inserito resta vuo
 - [ ] Con un esempio largo (Somma, massimo e minimo) e il foglio scorso a destra, la riga in fondo al foglio parte dal margine e non è tagliata; sul telefono, con un blocco selezionato, non finisce sotto la barra della selezione.
 - [ ] **Informazioni** dice «Progettato da MrGear10 e sviluppato con l'assistenza di Claude (Anthropic).»
 - [ ] **Telefono:** durante un'esecuzione in attesa di un valore, ruotare il telefono e tornare in verticale: l'esecuzione aspetta ancora il valore, il diagramma è al suo posto.
+
+---
+
+## Passo 14 — Passo-passo
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (393 test).
+- [ ] **Esempi → Pari o dispari**, **Passo** (nella barra, accanto a Esegui): lo stato dice «Passo a passo» e il blocco `Integer n` è giallo; la console è vuota.
+- [ ] Ogni **Passo** esegue il blocco giallo e colora il successivo: dopo il secondo la console mostra «Scrivi un numero intero».
+- [ ] Al passo dell'input la console chiede il valore; con `7` il giallo passa all'`if`, poi al ramo Falso, poi il programma finisce con «7 è dispari».
+- [ ] **F10** fa lo stesso di Passo. In passo-passo, **Riprendi** continua senza fermarsi; **Ferma** ferma.
+- [ ] **Esempi → Somma, massimo e minimo** in passo-passo: entrando nel `do` e nel `for` il giallo segue i blocchi e il foglio scorre da solo quando il blocco esce dallo schermo.
+- [ ] **Telefono:** Menu → **Esegui passo a passo**: resta il diagramma; in basso a sinistra **Passo** al posto di Annulla e Ripeti. All'input si passa alla console e, dopo il valore, si torna al diagramma. Con un output nuovo la scheda Console ha il pallino.

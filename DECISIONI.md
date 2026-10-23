@@ -503,3 +503,21 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 
 - **Data:** 23 ottobre 2026 · **Verificata da:** autore · **Tocca:** Q-04, FR-FILE-10, FMT-W-06, FMT-W-07, DEC-061
 - **Esito:** i file salvati da OnoFlow si aprono in Flowgorithm, sia quello creato da zero (attributi di DEC-061, senza `created`/`edited`) sia l'Appendice A modificata con `created`/`edited` conservati (checklist del passo 13). FR-FILE-10 è soddisfatto anche nella sua seconda metà.
+
+## DEC-073 — Piano della fase 2 e decisioni D-03, D-05, D-06
+
+- **Data:** 23 ottobre 2026 · **Decisa da:** autore (proposte consigliate) · **Tocca:** §13, FR-RUN-05, FR-RUN-06, FR-ERR-06, FR-EDIT-10…12, D-03, D-05, D-06
+- **Ordine:** 14 passo-passo, 15 pannello delle variabili, 16 analisi statica completa, 17 `call` e `comment` nell'editor, 18 funzioni, 19 spostamento dei blocchi. Un branch per passo (`fase2/passo-NN`), come DEC-012.
+- **D-03 (spostamento):** "Sposta" nella barra della selezione stacca il blocco con il contenuto; un tocco su un + lo mette lì. Funziona uguale con dito, mouse e tastiera, non litiga con lo scorrimento e il pizzico, ed è un solo passo di annulla/ripeti.
+- **D-05 (valori Real):** nel pannello il valore come lo stampa la console («0,3»); solo se è diverso, sotto in piccolo il valore completo («0,30000000000000004»), con il separatore della lingua.
+- **D-06 (maiuscole):** un nome sconosciuto che differisce solo per le maiuscole da una parola chiave, una variabile o una funzione (`True`, `Somma`, `tostring`) dà l'errore con il suggerimento.
+- **Pannello delle variabili sul telefono:** durante il passo-passo, una striscia in fondo alla scheda Diagramma, che si allarga con un tocco: blocco evidenziato e variabili insieme.
+
+## DEC-074 — Passo-passo
+
+- **Passo:** 14 · **Decisa da:** sviluppo (l'autore può rivederla) · **Tocca:** FR-RUN-05, FR-MOB-02, FR-MOB-10, §11.1, DEC-043, DEC-055
+- **Scheduler:** `step()` esegue il blocco evidenziato e si ferma prima del successivo, che diventa quello evidenziato; da fermo avvia l'esecuzione e si ferma prima del primo blocco. Funziona anche dopo una Pausa dell'esecuzione continua. Riprendi torna all'esecuzione continua. Un input a metà passo si chiede come sempre; dopo il valore il passo arriva al blocco successivo. I commenti non sono un passo (DEC-043).
+- **Comandi:** **Passo** (icona: triangolo e barra) nella barra accanto a Esegui da 28rem in su; Menu → Esecuzione → **Esegui passo a passo**; **F10**, come nei debugger. Sul telefono la barra è piena: si comincia dal menu, e durante l'esecuzione Passo prende il posto di Annulla e Ripeti in basso a sinistra del foglio (lì disabilitati comunque, FR-EDIT-07).
+- **Stato:** «Passo a passo» al posto di «In pausa», con lo stesso segno (quadrato vuoto, DEC-055).
+- **Telefono:** nel passo-passo all'avvio resta in primo piano il **diagramma** (il punto è vedere il blocco evidenziato), non la console di FR-MOB-02. Un input porta alla console; dopo il valore si torna al diagramma. L'output che arriva mentre si guarda il diagramma mette il segno sulla scheda Console.
+- **Inquadratura:** a ogni passo il blocco evidenziato si porta in vista se non lo è.

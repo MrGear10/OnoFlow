@@ -797,6 +797,17 @@ La prima versione si pubblica solo quando creazione da zero e modifica funzionan
 | 12 | Annulla/ripeti | FR-EDIT-05, QA-13 |
 | 13 | Salvataggio di file creati e modificati | FR-FILE-09, FR-FILE-10, QA-11, QA-12 |
 
+**Ordine interno della fase 2** (DEC-073; prima l'esecuzione didattica, poi l'editor esteso):
+
+| Passo | Contenuto | Verifica |
+|---|---|---|
+| 14 | Passo-passo | FR-RUN-05 |
+| 15 | Pannello delle variabili | FR-RUN-06, D-05 |
+| 16 | Analisi statica completa | FR-ERR-06, D-06 |
+| 17 | Blocchi `call` e `comment` nell'editor | FR-EDIT-10 |
+| 18 | Gestione delle funzioni | FR-EDIT-11, Q-07 |
+| 19 | Spostamento dei blocchi | FR-EDIT-12, D-03 |
+
 **Il telefono non è un passo a sé:** ogni passo con interfaccia (6–13) DEVE soddisfare la §5.9 e QA-14 nel momento in cui viene fatto. Adattare dopo un'interfaccia nata solo per il mouse costa molto di più, soprattutto per l'editor.
 
 **Il renderer viene prima dell'editor:** il modello di interazione dell'editor (clic sulla freccia) si appoggia sul diagramma disegnato. Il passo 7 è la parte tecnicamente più difficile del percorso: disposizione leggibile di cicli e `if` annidati, su schermi larghi e stretti.
@@ -828,10 +839,10 @@ La prima versione si pubblica solo quando creazione da zero e modifica funzionan
 |---|---|---|
 | D-01 | Attributi di un file creato in OnoFlow — **decisa (DEC-061):** `name`, `authors` vuoto, `about` vuoto, `saved`; niente `created`/`edited` | Prima del passo 8 |
 | D-02 | Meccanismo di annulla/ripeti (comandi reversibili o copie del modello) e limite della storia — **decisa (DEC-068):** operazioni reversibili; una apertura della finestra di modifica = un passo, unito all'inserimento se il blocco è nuovo; 100 passi; storia vuota a ogni diagramma aperto | Prima del passo 12 |
-| D-03 | Forma dello spostamento dei blocchi (trascinamento o taglia/incolla) | Fase 2 |
+| D-03 | Forma dello spostamento dei blocchi (trascinamento o taglia/incolla) — **decisa (DEC-073):** "Sposta" nella barra della selezione, poi un tocco sul + di destinazione | Fase 2 |
 | D-04 | Interazione dell'editor al tocco — **decisa (DEC-063):** entrambi; punti con il + sempre visibili sulle frecce (nascosti durante l'esecuzione) e "Inserisci dopo" sul blocco selezionato | Prima del passo 9 |
-| D-05 | "Valore completo" nel pannello delle variabili (es. `0.30000000000000004`) e con quale separatore | Fase 2 |
-| D-06 | Suggerimento sulle maiuscole nell'analisi statica (`x = True` → "intendevi `true`?") | Fase 2 |
+| D-05 | "Valore completo" nel pannello delle variabili (es. `0.30000000000000004`) e con quale separatore — **decisa (DEC-073):** il valore come lo stampa la console e, solo se diverso, sotto in piccolo il valore completo, con il separatore della lingua | Fase 2 |
+| D-06 | Suggerimento sulle maiuscole nell'analisi statica (`x = True` → "intendevi `true`?") — **decisa (DEC-073):** sì, per parole chiave, variabili e funzioni | Fase 2 |
 | D-07 | Array in C++: `std::vector` o array statici | Fase 3 |
 | D-08 | Il codice generato replica la stampa a due decimali con la virgola, o usa il formato nativo? | Fase 3 |
 | D-09 | Contenuto di un blocco nuovo — **decisa (DEC-063):** vuoto, con un suggerimento grigio nel campo che non entra nel file | Prima del passo 9 |

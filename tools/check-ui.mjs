@@ -1,5 +1,5 @@
 /*
- * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–13).
+ * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–14).
  *
  * Dipendenze: playwright (solo in tools/, mai nell'applicazione).
  *
@@ -39,7 +39,9 @@
  *   - QA-12: l'Appendice A modificata (un'espressione, un blocco aggiunto, uno cancellato), salvata:
  *     solo quelle righe cambiano, gli attributi restano; poi riaperta (FR-FILE-09);
  *   - il focus su un blocco o un punto fuori vista lo porta in vista, anche in Firefox (DEC-069);
- *   - telefono ruotato a metà dell'esecuzione: l'esecuzione e il diagramma restano (FR-MOB-13).
+ *   - telefono ruotato a metà dell'esecuzione: l'esecuzione e il diagramma restano (FR-MOB-13);
+ *   - passo-passo: Passo (barra, foglio sul telefono, menu, F10) si ferma prima di ogni blocco,
+ *     che è quello evidenziato; input a metà passo; Riprendi e Ferma (FR-RUN-05).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -94,9 +96,9 @@ async function noHorizontalScroll(page) {
     return page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
 }
 
-async function chooseExample(page) {
+async function chooseExample(page, id = 'somma-massimo-minimo') {
     await page.click('#menu-button');
-    await page.click('[data-example="somma-massimo-minimo"]');
+    await page.click(`[data-example="${id}"]`);
 }
 
 async function runQa04(page, checks, viewport) {
@@ -835,6 +837,91 @@ async function checkFocusReveal(page, checks) {
     }
 }
 
+/* Passo-passo sull'esempio Pari o dispari (FR-RUN-05, DEC-073). */
+async function checkStep(page, checks, viewport) {
+    const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
+    const phoneBar = viewport.width < 448; // 28rem: sotto, Passo sta sul foglio durante l'esecuzione
+    const highlighted = () => page.evaluate(() => {
+        const node = document.querySelector('#diagram .is-running');
+        return node ? node.textContent.replace(/\s+/g, ' ').trim() : null;
+    });
+    const status = async () => (await page.textContent('#status')).trim();
+    // Il passo avviene al turno successivo dello scheduler: si aspetta che si fermi di nuovo.
+    const settled = () => page.waitForFunction(() => ['Passo a passo', 'In attesa di un valore', 'Terminato', 'Fermato']
+        .includes(document.getElementById('status').textContent.trim()));
+    await chooseExample(page, 'pari-dispari');
+    await leaveUnsaved(page, press);
+    if (phoneBar) {
+        checks.ok(!(await page.isVisible('#step')), 'sul telefono Passo non è nella barra');
+        await page.click('#menu-button');
+        await page.click('#cmd-step');
+    } else {
+        await press('#step');
+    }
+    await settled();
+    checks.ok((await status()) === 'Passo a passo', `passo-passo avviato: ${await status()}`);
+    checks.ok((await highlighted()) === 'Integer n', `fermo prima del primo blocco: ${await highlighted()}`);
+    if (viewport.phone) {
+        checks.ok(await page.isVisible('#panel-diagram'), 'sul telefono resta in primo piano il diagramma');
+    }
+    const step = phoneBar ? '#step-sheet' : '#step';
+    if (phoneBar) {
+        checks.ok(await page.isVisible('#step-sheet') && !(await page.isVisible('#undo-sheet')), 'sul foglio Passo prende il posto di Annulla e Ripeti');
+        const button = await page.locator('#step-sheet').boundingBox();
+        const zoom = await page.locator('.zoom').boundingBox();
+        checks.ok(button.height >= 44 && button.x + button.width <= zoom.x, 'Passo alto 44 px, a sinistra dello zoom');
+    }
+    await press(step);
+    await settled();
+    checks.ok((await highlighted()) === 'Output "Scrivi un numero intero"', `un passo: ${await highlighted()}`);
+    checks.ok(!(await page.textContent('#console-log')).includes('Scrivi'), 'il blocco evidenziato non è ancora eseguito');
+    await press(step);
+    await settled();
+    checks.ok((await page.textContent('#console-log')).includes('Scrivi un numero intero'), 'il passo ha eseguito l\'output');
+    if (viewport.phone) {
+        checks.ok((await page.getAttribute('#tab-console', 'data-badge')) === 'new', 'output non visto: segno sulla scheda Console');
+    }
+    checks.ok((await highlighted()) === 'Input n', `poi l'input: ${await highlighted()}`);
+    await press(step);
+    await settled();
+    const field = page.locator('.console-field');
+    await field.waitFor();
+    checks.ok((await status()) === 'In attesa di un valore', 'l\'input chiede il valore');
+    await field.fill('7');
+    await field.press('Enter');
+    await page.waitForFunction(() => document.getElementById('status').textContent.trim() === 'Passo a passo');
+    if (viewport.phone) {
+        checks.ok(await page.isVisible('#panel-diagram'), 'dopo il valore si torna al diagramma');
+    }
+    checks.ok((await highlighted() || '').startsWith('if'), `poi l'if: ${await highlighted()}`);
+    await press(step);
+    await settled();
+    checks.ok((await highlighted()) === 'Output n & " è dispari"', `il ramo Falso: ${await highlighted()}`);
+    await press(step);
+    await settled();
+    await page.waitForSelector('.console-note--done', { state: 'attached' });
+    checks.ok((await page.textContent('#console-log')).includes('7 è dispari') && (await status()) === 'Terminato', 'ultimo passo: fine del programma');
+    checks.ok(!(await page.isDisabled(step)), 'a programma finito Passo ricomincia');
+
+    // Riprendi torna all'esecuzione continua; Ferma.
+    if (!viewport.phone) {
+        await page.focus('#sheet');
+        await page.keyboard.press('F10');
+        await settled();
+        checks.ok((await status()) === 'Passo a passo' && (await highlighted()) === 'Integer n', 'F10 avvia il passo-passo');
+        await page.keyboard.press('F10');
+        await settled();
+        checks.ok((await highlighted()) === 'Output "Scrivi un numero intero"', 'F10 fa un passo');
+        checks.ok((await page.textContent('#pause-label')).trim() === 'Riprendi', 'in pausa: Riprendi');
+        await page.click('#pause');
+        await page.locator('.console-field').waitFor();
+        checks.ok((await status()) === 'In attesa di un valore', 'Riprendi continua senza fermarsi fino all\'input');
+        await page.click('#stop');
+        checks.ok((await status()) === 'Fermato', 'Ferma');
+    }
+    checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale durante il passo-passo');
+}
+
 async function checkViewport(browser, engineName, viewport, screenshotsDir) {
     const checks = new Checks(`${engineName} ${viewport.name}`);
     const context = await browser.newContext({
@@ -879,6 +966,7 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
             : null;
         await checkQa11(page, checks, viewport, shot);
         await checkQa12(page, checks, viewport);
+        await checkStep(page, checks, viewport);
         if (!viewport.phone) {
             await checkFocusReveal(page, checks);
             await checkMenuKeyboard(page, checks);

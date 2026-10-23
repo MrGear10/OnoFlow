@@ -365,6 +365,8 @@ A metà di ogni freccia di Main, un cerchietto su carta (raggio 0,45 quadretti) 
 ### Selezione del blocco (B3)
 Contorno d'inchiostro di 2.5px, a 0,3 quadretti dal blocco, angoli di 0,25 quadretti: si distingue dal cerchio rosso dell'errore per colore e forma. La barra della selezione ha **Modifica** (icona della matita), **Inserisci dopo** (icona del cerchio con il +) ed **Elimina** (icona del cestino; sui telefoni stretti senza testo): sul computer in basso a sinistra del foglio, sul telefono sopra i comandi dello zoom. Dopo una cancellazione l'avviso informativo sotto la barra superiore offre **Annulla** (DEC-067). Su un foglio sotto i 44rem la barra della selezione sta sopra lo zoom anche sul computer.
 
+**Passo** (DEC-074): pulsante come Pausa e Ferma, con l'icona del triangolo e della barra, nella barra accanto a Esegui da 28rem in su; sul telefono, durante l'esecuzione, in basso a sinistra del foglio al posto di Annulla e Ripeti. Nel passo-passo lo stato dice «Passo a passo», con il segno della pausa.
+
 **Annulla e Ripeti** (DEC-068): due pulsanti quadrati da 44 px con la sola icona (freccia curva a sinistra e a destra); quando non c'è nulla da fare il barrato è diagonale, come Pausa e Ferma con la sola icona. Da 64rem in su stanno nella barra superiore, subito prima di Esegui; sotto, in basso a sinistra del foglio, accanto ai comandi dello zoom.
 
 ### Menu dei blocchi

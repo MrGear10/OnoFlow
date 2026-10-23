@@ -12,7 +12,13 @@
  * continuare o fermare, senza finestre modali. Il conteggio riparte all'avvio, a ogni
  * input fornito e a ogni ripresa (FR-RUN-04, L-07).
  *
- * Stati: 'idle', 'running', 'paused', 'waitingInput', 'finished'.
+ * Passo-passo (FR-RUN-05, passo 14): step() esegue il blocco evidenziato e si ferma prima
+ * del successivo, che diventa quello evidenziato; da 'idle' avvia l'esecuzione e si ferma prima
+ * del primo blocco. Un input a metà passo si chiede come sempre; dopo il valore il passo
+ * continua fino al blocco successivo. resume() torna all'esecuzione continua.
+ *
+ * Stati: 'idle', 'running', 'paused', 'waitingInput', 'finished'; stepping() dice se
+ * l'esecuzione va avanti un passo alla volta.
  * Opzioni (tutte facoltative tranne i gestori che servono):
  *     onOutput(evento), onInput(evento), onStep(nodeId), onStateChange(stato),
  *     onLongRun(), onFinish(esito)
@@ -60,6 +66,7 @@
         var pendingInput;
         var hasPendingInput = false;
         var currentNodeId = null;
+        var stepping = false;
 
         function setState(next) {
             if (state !== next) {
@@ -92,6 +99,12 @@
             var event = result.value;
             if (event.type === 'step') {
                 currentNodeId = event.nodeId;
+                if (stepping) {
+                    // Passo-passo: ci si ferma prima di eseguire questo blocco.
+                    setState('paused');
+                    handlers.onStep(currentNodeId);
+                    return false;
+                }
                 return true;
             }
             if (event.type === 'output') {
@@ -144,6 +157,11 @@
             if (state !== 'idle') {
                 return;
             }
+            stepping = false;
+            begin();
+        }
+
+        function begin() {
             generator = Interpreter.execute(program, {
                 numberFormat: settings.numberFormat,
                 random: settings.random,
@@ -170,9 +188,23 @@
             if (state !== 'paused') {
                 return;
             }
+            stepping = false;
             runningSince = now();
             setState('running');
             scheduleTurn();
+        }
+
+        /* Un passo: dall'inizio, oppure da una pausa (anche dopo Pausa nell'esecuzione continua). */
+        function step() {
+            if (state === 'idle') {
+                stepping = true;
+                begin();
+            } else if (state === 'paused') {
+                stepping = true;
+                runningSince = now();
+                setState('running');
+                scheduleTurn();
+            }
         }
 
         function provideInput(text) {
@@ -216,7 +248,9 @@
             start: start,
             pause: pause,
             resume: resume,
+            step: step,
             stop: stop,
+            stepping: function () { return stepping; },
             provideInput: provideInput,
             state: function () { return state; },
             currentNodeId: function () { return currentNodeId; }

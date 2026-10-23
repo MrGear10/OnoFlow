@@ -217,4 +217,106 @@
             });
         }, { timeout: 3000 });
     });
+    T.suite('Scheduler › passo-passo (FR-RUN-05)', function () {
+        function stepper(program) {
+            var fake = fakeRun(program, { onStep: function (nodeId) { fake.steps.push(nodeId); } });
+            fake.steps = [];
+            // Al massimo 1000 turni: uno scheduler che non si ferma fa fallire il test, non blocca la pagina (QA-10).
+            fake.step = function () {
+                fake.scheduler.step();
+                for (var turns = 0; turns < 1000 && fake.turn(); turns++) { /* fino alla pausa successiva */ }
+            };
+            return fake;
+        }
+
+        T.test('il primo passo si ferma prima del primo blocco, che è quello evidenziato', function (assert) {
+            var program = H.program([H.output('"a"'), H.output('"b"')]);
+            var fake = stepper(program);
+            fake.step();
+            assert.equal(fake.scheduler.state(), 'paused');
+            assert.isTrue(fake.scheduler.stepping());
+            assert.equal(fake.scheduler.currentNodeId(), program.functions[0].body[0].id);
+            assert.deepEqual(fake.outputs, [], 'il blocco evidenziato non è ancora eseguito');
+        });
+
+        T.test('ogni passo esegue il blocco evidenziato e si ferma prima del successivo', function (assert) {
+            var program = H.program([H.output('"a"'), H.output('"b"')]);
+            var body = program.functions[0].body;
+            var fake = stepper(program);
+            fake.step();
+            fake.step();
+            assert.deepEqual(fake.outputs, ['a']);
+            assert.equal(fake.scheduler.currentNodeId(), body[1].id);
+            assert.equal(fake.steps[fake.steps.length - 1], body[1].id, 'evidenziato con onStep');
+            fake.step();
+            assert.deepEqual(fake.outputs, ['a', 'b']);
+            assert.deepEqual(fake.finished, { status: 'done' });
+        });
+
+        T.test('un input a metà passo: dopo il valore il passo arriva al blocco successivo', function (assert) {
+            var program = H.program([H.declare('x', 'Integer'), H.input('x'), H.output('x * 2')]);
+            var body = program.functions[0].body;
+            var fake = stepper(program);
+            fake.step(); // prima della dichiarazione
+            fake.step(); // prima dell'input
+            assert.equal(fake.scheduler.currentNodeId(), body[1].id);
+            fake.step(); // l'input chiede il valore
+            assert.equal(fake.scheduler.state(), 'waitingInput');
+            fake.scheduler.provideInput('21');
+            while (fake.turn()) { /* fino alla pausa */ }
+            assert.equal(fake.scheduler.state(), 'paused');
+            assert.equal(fake.scheduler.currentNodeId(), body[2].id);
+            assert.deepEqual(fake.outputs, []);
+            fake.step();
+            assert.deepEqual(fake.outputs, ['42']);
+        });
+
+        T.test('Riprendi torna all\'esecuzione continua', function (assert) {
+            var fake = stepper(H.program([H.output('"a"'), H.output('"b"'), H.output('"c"')]));
+            fake.step();
+            fake.scheduler.resume();
+            assert.isFalse(fake.scheduler.stepping());
+            while (fake.turn()) { /* fino alla fine */ }
+            assert.deepEqual(fake.outputs, ['a', 'b', 'c']);
+            assert.deepEqual(fake.finished, { status: 'done' });
+        });
+
+        T.test('dopo Pausa nell\'esecuzione continua si può andare avanti di un passo', function (assert) {
+            var program = infiniteLoop();
+            var increment = program.functions[0].body[2].body[0];
+            var fake = stepper(program);
+            fake.scheduler.start();
+            fake.turn();
+            fake.scheduler.pause();
+            var before = fake.scheduler.currentNodeId();
+            fake.step();
+            assert.equal(fake.scheduler.state(), 'paused');
+            assert.notEqual(fake.scheduler.currentNodeId(), before, 'un blocco avanti');
+            assert.isTrue([increment.id, program.functions[0].body[2].id].indexOf(fake.scheduler.currentNodeId()) !== -1);
+        });
+
+        T.test('Ferma durante il passo-passo: errore sul blocco evidenziato', function (assert) {
+            var program = H.program([H.output('"a"'), H.output('"b"')]);
+            var fake = stepper(program);
+            fake.step();
+            fake.step();
+            fake.scheduler.stop();
+            assert.equal(fake.finished.status, 'error');
+            assert.equal(fake.finished.error.code, 'ERR_STOPPED');
+            assert.equal(fake.finished.error.nodeId, program.functions[0].body[1].id);
+        });
+
+        T.test('i commenti non sono un passo (DEC-043)', function (assert) {
+            var program = H.program([H.comment('nota'), H.output('"a"')]);
+            var fake = stepper(program);
+            fake.step();
+            assert.equal(fake.scheduler.currentNodeId(), program.functions[0].body[1].id);
+        });
+
+        T.test('un programma vuoto finisce al primo passo', function (assert) {
+            var fake = stepper(H.program([]));
+            fake.step();
+            assert.deepEqual(fake.finished, { status: 'done' });
+        });
+    });
 })();

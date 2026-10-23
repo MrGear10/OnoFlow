@@ -1203,6 +1203,18 @@ button.diagram-error-entry:active {
     border-radius: var(--radius);
 }
 
+/* --- Passo-passo (FR-RUN-05) -------------------------------------------------------- */
+
+/* Sul telefono la barra è piena: durante l'esecuzione Passo prende il posto di Annulla e Ripeti. */
+.step-controls {
+    display: none;
+    position: absolute;
+    left: calc(var(--space-3) + env(safe-area-inset-left, 0px));
+    bottom: var(--space-3);
+    background: var(--paper);
+    border-radius: var(--radius);
+}
+
 /* Sotto i 64rem nella barra mancherebbe spazio per il nome del file (B2). */
 @media (max-width: 63.99rem) {
     .history-controls--bar {
@@ -1726,6 +1738,22 @@ button.diagram-error-entry:active {
 
 /* Telefoni stretti: Pausa e Ferma restano visibili, con la sola icona. */
 @media (max-width: 27.5rem) {
+    #step {
+        display: none;
+    }
+
+    .app[data-run-state="running"] .step-controls,
+    .app[data-run-state="paused"] .step-controls,
+    .app[data-run-state="waitingInput"] .step-controls {
+        display: flex;
+    }
+
+    .app[data-run-state="running"] .history-controls--sheet,
+    .app[data-run-state="paused"] .history-controls--sheet,
+    .app[data-run-state="waitingInput"] .history-controls--sheet {
+        display: none;
+    }
+
     #pause .button-label,
     #stop .button-label,
     .selection-delete .button-label {

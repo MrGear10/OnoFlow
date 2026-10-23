@@ -97,6 +97,7 @@
         var modifiedMark = byId('modified');
         var statusLabel = byId('status');
         var runButton = byId('run');
+        var stepButtons = [byId('step'), byId('step-sheet')];
         var pauseButton = byId('pause');
         var pauseLabel = byId('pause-label');
         var stopButton = byId('stop');
@@ -827,6 +828,9 @@
 
         function statusText() {
             var current = schedulerState();
+            if (current === 'paused' && state.scheduler.stepping()) {
+                return t('ui.status.stepping');
+            }
             if (current !== 'finished') {
                 return current === 'idle' ? '' : t('ui.status.' + current);
             }
@@ -859,6 +863,9 @@
             pauseButton.disabled = current !== 'running' && current !== 'paused';
             pauseLabel.textContent = t(current === 'paused' ? 'ui.resume' : 'ui.pause');
             pauseButton.setAttribute('aria-pressed', current === 'paused' ? 'true' : 'false');
+            // Passo: per cominciare, o da una pausa (FR-RUN-05).
+            stepButtons.forEach(function (button) { button.disabled = active && current !== 'paused'; });
+            byId('cmd-step').disabled = active;
             commands['new'].disabled = active;
             commands.open.disabled = active;
             // Niente annulla/ripeti durante l'esecuzione (FR-EDIT-07).
@@ -905,6 +912,25 @@
         }
 
         function run() {
+            startRun(false);
+        }
+
+        /*
+         * Passo (FR-RUN-05): da fermo avvia l'esecuzione fermandosi prima del primo blocco; in
+         * pausa esegue il blocco evidenziato e si ferma al successivo.
+         */
+        function stepRun() {
+            var current = schedulerState();
+            if (!isActive()) {
+                startRun(true);
+            } else if (current === 'paused') {
+                consoleView.hideLongRun();
+                state.scheduler.step();
+            }
+        }
+
+        /* stepMode: passo-passo; sul telefono resta in primo piano il diagramma, che è il punto. */
+        function startRun(stepMode) {
             if (isActive()) {
                 return;
             }
@@ -918,17 +944,21 @@
             showStaticErrors();
             state.outcome = null;
             state.pendingReveal = null;
-            // All'avvio la console viene in primo piano (FR-MOB-02, D-11).
-            showTab('console');
+            // All'avvio la console viene in primo piano (FR-MOB-02, D-11), tranne nel passo-passo.
+            showTab(stepMode ? 'diagram' : 'console');
             state.scheduler = Scheduler.create(state.program, {
                 numberFormat: numberFormat,
                 invalidInput: 'retry',
                 onOutput: function (event) {
                     consoleView.write(event.text, event.newline);
+                    badgeConsole('new');
                 },
                 onStep: function (nodeId) {
                     consoleView.flush();
                     setRunning(nodeId);
+                    if (state.scheduler && state.scheduler.stepping()) {
+                        revealNode(nodeId, { quiet: true }); // il blocco evidenziato si vede sempre
+                    }
                 },
                 onInput: function (event) {
                     setRunning(event.nodeId);
@@ -949,7 +979,11 @@
                 },
                 onFinish: finish
             });
-            state.scheduler.start();
+            if (stepMode) {
+                state.scheduler.step();
+            } else {
+                state.scheduler.start();
+            }
         }
 
         function togglePause() {
@@ -978,6 +1012,9 @@
             trimmedNotice: byId('console-trimmed'),
             onSubmitInput: function (text) {
                 state.scheduler.provideInput(text);
+                if (narrow.matches && state.scheduler.stepping()) {
+                    showTab('diagram'); // il passo continua sul diagramma
+                }
             },
             onContinue: function () {
                 consoleView.hideLongRun();
@@ -992,6 +1029,18 @@
         });
 
         runButton.addEventListener('click', run);
+        stepButtons.forEach(function (button) { button.addEventListener('click', stepRun); });
+        byId('cmd-step').addEventListener('click', function () {
+            closeMenu();
+            stepRun();
+        });
+        // F10, come nei debugger: comodo al proiettore.
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'F10' && !event.ctrlKey && !event.altKey && !event.metaKey) {
+                event.preventDefault();
+                stepRun();
+            }
+        });
         pauseButton.addEventListener('click', togglePause);
         stopButton.addEventListener('click', stop);
 

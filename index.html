@@ -36,6 +36,10 @@
                     <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5v11l9-5.5z"/></svg>
                     <span class="button-label" data-i18n="ui.run"></span>
                 </button>
+                <button class="button" id="step" type="button" data-i18n-title="ui.step.title">
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4.5v11l7.5-5.5z"/><path d="M15.5 4.5v11"/></svg>
+                    <span class="button-label" data-i18n="ui.step"></span>
+                </button>
                 <button class="button" id="pause" type="button" aria-pressed="false" disabled>
                     <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4.5v11M13 4.5v11"/></svg>
                     <span class="button-label" id="pause-label" data-i18n="ui.pause"></span>
@@ -57,6 +61,8 @@
                     <button class="menu-item" id="cmd-save" type="button" role="menuitem" data-i18n="ui.save"></button>
                     <p class="menu-heading" data-i18n="ui.menu.examples"></p>
                     <div id="examples-list" role="group"></div>
+                    <p class="menu-heading" data-i18n="ui.menu.run"></p>
+                    <button class="menu-item" id="cmd-step" type="button" role="menuitem" data-i18n="ui.runStep"></button>
                     <p class="menu-heading" data-i18n="ui.menu.edit"></p>
                     <button class="menu-item" id="cmd-undo" type="button" role="menuitem" data-i18n="ui.undo" disabled></button>
                     <button class="menu-item" id="cmd-redo" type="button" role="menuitem" data-i18n="ui.redo" disabled></button>
@@ -115,6 +121,12 @@
                 </button>
                 <button class="button history-button" id="redo-sheet" type="button" data-i18n-label="ui.redo" data-i18n-title="ui.redo.title" disabled>
                     <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M13 4.5L16.5 8 13 11.5"/><path d="M16.5 8H8a4 4 0 0 0 0 8h3"/></svg>
+                </button>
+            </div>
+            <div class="step-controls">
+                <button class="button step-sheet" id="step-sheet" type="button" data-i18n-title="ui.step.title">
+                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4.5v11l7.5-5.5z"/><path d="M15.5 4.5v11"/></svg>
+                    <span data-i18n="ui.step"></span>
                 </button>
             </div>
             <div class="zoom" role="group" data-i18n-label="ui.zoom.label">
