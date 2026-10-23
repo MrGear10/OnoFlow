@@ -477,3 +477,12 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 - **Difetto trovato e corretto:** in Firefox il focus su un `<g>` dell'SVG (blocco o punto, con Tab) non fa scorrere il foglio, e `scrollIntoView` lo sposta in un punto sbagliato. Chi usa la tastiera perdeva di vista ciò che aveva selezionato. Ora, quando il focus entra in un blocco o in un punto **del tutto fuori dal foglio**, lo inquadra la pagina (`DiagramViewport.reveal`). Se è anche solo in parte visibile non si muove nulla, così un clic su un ciclo grande non fa saltare il foglio.
 - **Verifiche e Firefox:** per lo stesso motivo lo scorrimento automatico di Playwright non porta in vista un `<g>` in Firefox; nelle verifiche di QA-11 e QA-12 il foglio si fa scorrere fino all'elemento e si tocca il suo centro, controllando che lì non ci sia un altro elemento.
 - **Resta da verificare in Flowgorithm (Q-04):** che i file salvati, creati da zero e modificati, si aprano anche lì (seconda metà di FR-FILE-10).
+
+## DEC-070 — Esempi brevi del menu (B6) e riga in fondo al foglio
+
+- **Data:** 23 ottobre 2026, dopo il passo 13 · **Decisa da:** sviluppo, da sottoporre all'autore (B6) · **Tocca:** FR-FILE-06, QA-06, NFR-PRIV-05, Q-02, DEC-036, DEC-061, DEC-065
+- **Sei esempi brevi**, uno per costrutto, dopo "Somma, massimo e minimo": **Pari o dispari** (if, `mod`), **Tabellina** (for), **Media di più numeri** (for con Real, if che evita la divisione per zero), **Fattoriale** (accumulo; 13 esce dagli Integer, un errore utile in classe), **Massimo comun divisore** (while, Euclide), **Somma fino allo zero** (do).
+- **Scritti da OnoFlow come file nuovi** (DEC-061): `name`, `authors` e `about` vuoti, `saved` neutro (23 ottobre 2026, 10:00); niente `created`/`edited`. Così il round-trip è identico per costruzione e non c'è nessun dato personale (NFR-PRIV-05). Il test della privacy accetta per `authors` il valore neutro dell'Appendice A ("studente") o il vuoto.
+- **Solo operatori prudenti (Q-02):** `mod`, `==`, `>`, `&`; niente `%`, `!=`, `&&`, `||`, `!`, finché non si verifica che Flowgorithm li accetti.
+- **QA-06:** `tests/examples.test.js` controlla per ogni esempio apertura senza avvisi né errori, round-trip, titolo nel catalogo, e l'output con input noti.
+- **Riga in fondo al foglio (DEC-065):** non scorre più di lato con un disegno largo (`position: sticky`) e, su un foglio stretto, ha sotto lo spazio per le due file di comandi (selezione e zoom), così non finisce sotto la barra della selezione.

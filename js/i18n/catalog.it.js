@@ -139,6 +139,12 @@
 
             // Esempi (FR-FILE-06).
             'examples.sumMaxMin.title': 'Somma, massimo e minimo',
+            'examples.evenOdd.title': 'Pari o dispari',
+            'examples.timesTable.title': 'Tabellina',
+            'examples.average.title': 'Media di più numeri',
+            'examples.factorial.title': 'Fattoriale',
+            'examples.gcd.title': 'Massimo comun divisore',
+            'examples.sumPositive.title': 'Somma fino allo zero',
 
             // Testo dei blocchi nel diagramma: i segnaposto sono i campi del blocco (js/ui/block-text.js).
             // Le parole del linguaggio restano come in Flowgorithm.

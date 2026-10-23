@@ -1221,10 +1221,15 @@ button.diagram-error-entry:active {
     container-type: inline-size;
 }
 
-/* Foglio stretto (finestra piccola sul computer): la barra della selezione sale sopra lo zoom. */
+/* Foglio stretto (telefono, finestra piccola): la barra della selezione sale sopra lo zoom. */
 @container (max-width: 44rem) {
     .selection-bar {
         bottom: calc(var(--touch) + 2 * var(--space-3));
+    }
+
+    /* La riga in fondo resta sopra le due file di comandi (prima della regola base nel file). */
+    .sheet .footer {
+        padding-bottom: calc(2 * var(--touch) + 4 * var(--space-3) + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -1261,6 +1266,9 @@ button.diagram-error-entry:active {
     font-size: 0.75rem;
     line-height: 1.5;
     color: var(--text-muted);
+    /* Non scorre di lato con un disegno più largo del foglio. */
+    position: sticky;
+    left: 0;
 }
 
 .footer a,

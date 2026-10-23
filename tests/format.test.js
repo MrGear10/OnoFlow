@@ -412,7 +412,8 @@
                 var attributes = load(example.text).program.attributes;
                 attributes.forEach(function (attribute) {
                     if (attribute.name === 'authors') {
-                        assert.equal(attribute.value, 'studente', example.id + ' authors');
+                        // Neutro: "studente" nell'Appendice A, vuoto negli esempi scritti come file nuovi (DEC-061).
+                        assert.isTrue(attribute.value === 'studente' || attribute.value === '', example.id + ' authors: ' + attribute.value);
                     }
                     if (attribute.name === 'created' || attribute.name === 'edited') {
                         // Il contenuto è "utente;PC;..." in Base64 (§7.2): si controllano i valori neutri.
