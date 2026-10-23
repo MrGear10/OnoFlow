@@ -16,7 +16,10 @@
  * Senza errori di sintassi, sotto il campo compare l'errore dell'analisi statica di quel campo
  * (fieldIssue, passo 16): «b = True» si vede subito, anche a tutto schermo sul telefono.
  *
- *     create(host, { t, formatError, onChange(block), onClose(), fieldIssue(block, campo) }) →
+ * Dal passo 18 apre anche una funzione (FR-EDIT-11, DEC-078): nome, valore restituito,
+ * variabile restituita, parametri (nome, tipo, array) da aggiungere e togliere.
+ *
+ *     create(host, { t, formatError, onChange(block), onClose(), fieldIssue(block, campo, parametro) }) →
  *         { open(block, { returnFocus }), close(), isOpen(), blockId(), element }
  * Ogni testo del blocco entra come testo, mai come HTML (NFR-SEC-01).
  */
@@ -66,8 +69,20 @@
         ],
         // Passo 17 (FR-EDIT-10): il commento è un testo libero, non un'espressione.
         call: [{ name: 'expression', control: 'text', label: 'call' }],
-        comment: [{ name: 'text', control: 'comment', label: 'comment' }]
+        comment: [{ name: 'text', control: 'comment', label: 'comment' }],
+        // Passo 18: la firma di una funzione; la variabile restituita solo se c'è un valore.
+        'function': [
+            { name: 'name', control: 'property', label: 'functionName' },
+            { name: 'type', control: 'returnType', label: 'returnType' },
+            { name: 'variable', control: 'property', label: 'returnVariable', onlyIf: function (fn) { return fn.type !== 'None'; } },
+            { name: 'parameters', control: 'parameters', label: 'parameters' }
+        ]
     };
+
+    /* Il tipo di ciò che si modifica: una funzione non ha kind. */
+    function kindOf(target) {
+        return target.kind || 'function';
+    }
 
     /*
      * Virgolette tipografiche → dritte (FR-MOB-16): la tastiera di iOS può sostituirle
@@ -155,7 +170,7 @@
                 options.onChange(block);
             }
             rows.forEach(function (row) {
-                if (row.spec.control === 'text') {
+                if (row.error) {
                     // Un campo vuoto mai lasciato resta senza errore, come quello in cui si scrive.
                     showFieldError(row, !row.left || row.input === document.activeElement);
                 }
@@ -164,10 +179,12 @@
 
         /* Errore di un campo: messaggio della §8.4 e il testo con l'onda nel punto esatto. */
         function showFieldError(row, focused) {
-            var field = block.fields[row.spec.name];
-            var error = field.error;
+            // Un campo di un blocco ha il suo errore di sintassi; il nome di una funzione o di un parametro no.
+            var field = block.fields ? block.fields[row.spec.name] : null;
+            var text = row.text ? row.text() : field.text;
+            var error = field ? field.error : null;
             if (!error && options.fieldIssue) {
-                error = options.fieldIssue(block, row.spec.name);
+                error = options.fieldIssue(block, row.spec.field || row.spec.name, row.parameter);
             }
             if (error && error.code === 'ERR_SYNTAX_EMPTY_EXPRESSION' && focused) {
                 error = null; // un campo vuoto si segnala quando lo si lascia, non mentre lo si scrive
@@ -179,9 +196,8 @@
                 return;
             }
             row.error.appendChild(element('span', 'edit-error-message', formatError(error)));
-            if (error.position && field.text !== '') {
+            if (error.position && text !== '') {
                 var mirror = element('code', 'edit-mirror');
-                var text = field.text;
                 var start = Math.max(0, Math.min(error.position.start, text.length));
                 var end = Math.max(start, Math.min(error.position.end, text.length));
                 mirror.appendChild(document.createTextNode(text.slice(0, start)));
@@ -195,9 +211,143 @@
         function updateVisibility() {
             rows.forEach(function (row) {
                 if (row.spec.onlyIf) {
-                    row.root.hidden = !block[row.spec.onlyIf];
+                    row.root.hidden = typeof row.spec.onlyIf === 'function' ? !row.spec.onlyIf(block) : !block[row.spec.onlyIf];
                 }
             });
+        }
+
+        /* Un campo di testo per una proprietà semplice: nome della funzione o di un parametro. */
+        function propertyInput(id, value, hintKey) {
+            var input = element('input', 'edit-input');
+            input.type = 'text';
+            input.id = id;
+            input.value = value;
+            input.placeholder = t(hintKey);
+            ['autocomplete', 'autocorrect', 'autocapitalize'].forEach(function (name) { input.setAttribute(name, 'off'); });
+            input.setAttribute('spellcheck', 'false');
+            input.setAttribute('enterkeyhint', 'done');
+            return input;
+        }
+
+        function errorBox(id, input) {
+            var error = element('div', 'edit-error');
+            error.id = id + '-error';
+            error.setAttribute('aria-live', 'polite');
+            input.setAttribute('aria-describedby', error.id);
+            return error;
+        }
+
+        /* Riga con un campo, l'errore sotto e i soliti tasti (Invio avanti, focus per i simboli). */
+        function wireTextRow(row, onText) {
+            row.input.addEventListener('focus', function () { lastText = row.input; });
+            row.input.addEventListener('input', function () {
+                onText(row.input.value);
+                notifyChange();
+            });
+            row.input.addEventListener('blur', function () {
+                if (block && rows.indexOf(row) !== -1) {
+                    row.left = true;
+                    showFieldError(row, false);
+                }
+            });
+            row.input.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    focusNext(row);
+                }
+            });
+            return row;
+        }
+
+        /* Nome della funzione o variabile restituita: errori dall'analisi statica (fieldIssue). */
+        function propertyRow(spec, id) {
+            var root = element('div', 'edit-row');
+            var label = element('label', 'edit-label', t('ui.edit.' + spec.label));
+            label.htmlFor = id;
+            var input = propertyInput(id, block[spec.name], 'ui.edit.hint.function.' + spec.name);
+            var error = errorBox(id, input);
+            root.appendChild(label);
+            root.appendChild(input);
+            root.appendChild(error);
+            var row = { spec: spec, root: root, input: input, error: error, left: false, text: function () { return block[spec.name]; } };
+            return wireTextRow(row, function (value) { block[spec.name] = value; });
+        }
+
+        /* Parametri: una riga per parametro (nome, tipo, array, Togli) e Aggiungi parametro. */
+        function parametersRows(spec, id) {
+            var root = element('fieldset', 'edit-row edit-parameters');
+            root.appendChild(element('legend', 'edit-label', t('ui.edit.' + spec.label)));
+            var created = [{ spec: spec, root: root, input: null }];
+            if (block.parameters.length === 0) {
+                root.appendChild(element('p', 'edit-note', t('ui.edit.noParameters')));
+            }
+            block.parameters.forEach(function (parameter, index) {
+                var line = element('div', 'edit-parameter');
+                var nameId = id + '-' + index + '-name';
+                var nameInput = propertyInput(nameId, parameter.name, 'ui.edit.hint.function.parameter');
+                nameInput.setAttribute('aria-label', t('ui.edit.parameterName', { position: String(index + 1) }));
+                var typeSelect = element('select', 'edit-select');
+                typeSelect.setAttribute('aria-label', t('ui.edit.parameterType', { position: String(index + 1) }));
+                Model.TYPES.forEach(function (type) {
+                    var option = element('option', '', type);
+                    option.value = type;
+                    typeSelect.appendChild(option);
+                });
+                typeSelect.value = parameter.type;
+                typeSelect.addEventListener('change', function () {
+                    parameter.type = typeSelect.value;
+                    notifyChange();
+                });
+                var arrayLabel = element('label', 'edit-parameter-array');
+                var arrayInput = element('input', 'edit-check');
+                arrayInput.type = 'checkbox';
+                arrayInput.checked = parameter.array;
+                arrayInput.addEventListener('change', function () {
+                    parameter.array = arrayInput.checked;
+                    notifyChange();
+                });
+                arrayLabel.appendChild(arrayInput);
+                arrayLabel.appendChild(document.createTextNode(t('ui.edit.array')));
+                var remove = element('button', 'button button--quiet edit-parameter-remove', t('ui.edit.removeParameter'));
+                remove.type = 'button';
+                remove.setAttribute('aria-label', t('ui.edit.removeParameterNamed', { position: String(index + 1) }));
+                remove.addEventListener('click', function () {
+                    block.parameters.splice(index, 1);
+                    notifyChange();
+                    rebuild(id + '-add');
+                });
+                var error = errorBox(nameId, nameInput);
+                line.appendChild(nameInput);
+                line.appendChild(typeSelect);
+                line.appendChild(arrayLabel);
+                line.appendChild(remove);
+                root.appendChild(line);
+                root.appendChild(error);
+                created.push(wireTextRow({
+                    spec: { name: 'parameter', field: 'parameters', control: 'text' },
+                    root: line, input: nameInput, error: error, left: false, parameter: index,
+                    text: function () { return parameter.name; }
+                }, function (value) { parameter.name = value; }));
+            });
+            var add = element('button', 'button edit-parameter-add', t('ui.edit.addParameter'));
+            add.type = 'button';
+            add.id = id + '-add';
+            add.addEventListener('click', function () {
+                block.parameters.push({ name: '', type: 'Integer', array: false });
+                notifyChange();
+                rebuild(id + '-' + (block.parameters.length - 1) + '-name');
+            });
+            root.appendChild(add);
+            return created;
+        }
+
+        /* Ridisegna i campi (dopo Aggiungi o Togli parametro) e rimette il focus. */
+        function rebuild(focusId) {
+            buildForm();
+            var target = document.getElementById(focusId);
+            if (target) {
+                target.focus();
+            }
         }
 
         function textRow(spec, id) {
@@ -299,13 +449,22 @@
             var select = element('select', 'edit-select');
             select.id = id;
             values.forEach(function (value, index) {
-                var option = element('option', '', labelKeys ? t(labelKeys[index]) : value);
+                var option = element('option', '', labelKeys && labelKeys[index] ? t(labelKeys[index]) : value);
                 option.value = value;
                 select.appendChild(option);
             });
             select.value = block[spec.name];
             select.addEventListener('change', function () {
-                Model.setProperty(block, spec.name, select.value);
+                if (kindOf(block) === 'function') {
+                    // Valore restituito di una funzione: senza valore non c'è variabile (§6.8).
+                    block.type = select.value;
+                    if (block.type === 'None') {
+                        block.variable = '';
+                    }
+                    updateVisibility();
+                } else {
+                    Model.setProperty(block, spec.name, select.value);
+                }
                 notifyChange();
             });
             root.appendChild(label);
@@ -342,18 +501,29 @@
             }
         }
 
-        function open(target, openOptions) {
-            block = target;
-            returnFocus = openOptions && openOptions.returnFocus ? openOptions.returnFocus : null;
-            lastText = null;
-            icon.textContent = '';
-            icon.appendChild(DiagramRenderer.blockIcon(block.kind));
-            title.textContent = t('block.name.' + block.kind);
+        function buildForm() {
             form.textContent = '';
-            rows = (FIELDS[block.kind] || []).map(function (spec) {
+            rows = [];
+            (FIELDS[kindOf(block)] || []).forEach(function (spec) {
                 var id = 'edit-' + idCount + '-' + spec.name;
                 var row;
-                if (spec.control === 'text') {
+                if (spec.control === 'parameters') {
+                    parametersRows(spec, id).forEach(function (created, index) {
+                        if (index === 0) {
+                            form.appendChild(created.root);
+                        } else {
+                            rows.push(created);
+                        }
+                    });
+                    return;
+                }
+                if (spec.control === 'property') {
+                    row = propertyRow(spec, id);
+                } else if (spec.control === 'returnType') {
+                    row = choiceRow(spec, id, OnoFlow.Editor.RETURN_TYPES, OnoFlow.Editor.RETURN_TYPES.map(function (type) {
+                        return type === 'None' ? 'ui.edit.returnNone' : null;
+                    }));
+                } else if (spec.control === 'text') {
                     row = textRow(spec, id);
                 } else if (spec.control === 'type') {
                     row = choiceRow(spec, id, Model.TYPES, null);
@@ -365,15 +535,24 @@
                     row = checkRow(spec, id);
                 }
                 form.appendChild(row.root);
-                return row;
+                rows.push(row);
             });
             updateVisibility();
-            // Gli errori di un blocco che esiste già si vedono subito; quelli di un campo vuoto no.
             rows.forEach(function (row) {
-                if (row.spec.control === 'text') {
+                if (row.error) {
                     showFieldError(row, true);
                 }
             });
+        }
+
+        function open(target, openOptions) {
+            block = target;
+            returnFocus = openOptions && openOptions.returnFocus ? openOptions.returnFocus : null;
+            lastText = null;
+            icon.textContent = '';
+            icon.appendChild(DiagramRenderer.blockIcon(kindOf(block)));
+            title.textContent = t('block.name.' + kindOf(block));
+            buildForm(); // gli errori di ciò che esiste già si vedono subito; quelli di un campo vuoto no
             panel.hidden = false;
             var first = rows[0];
             if (first) {

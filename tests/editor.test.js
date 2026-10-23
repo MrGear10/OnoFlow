@@ -95,15 +95,15 @@
             assert.equal(program.functions[0].body.length, 2, 'in fondo si può');
         });
 
-        T.test('si modifica solo Main (DEC-004)', function (assert) {
+        T.test('si modifica in ogni funzione (DEC-078, prima solo Main: DEC-004)', function (assert) {
             var other = H.fn('Doppio', 'Integer', 'r', [['n', 'Integer']], [H.assign('r', 'n * 2')]);
             var program = H.program([], [other]);
             assert.isTrue(Editor.canEdit(program, program.functions[0].id));
-            assert.isFalse(Editor.canEdit(program, other.id));
-            assert.isFalse(Editor.canEdit(program, other.body[0].id));
-            assert.throws(function () {
-                Editor.insertAt(program, { ownerId: other.id, list: 'body', index: 0 }, Editor.createNewBlock('input'));
-            }, RangeError);
+            assert.isTrue(Editor.canEdit(program, other.id));
+            assert.isTrue(Editor.canEdit(program, other.body[0].id));
+            assert.isFalse(Editor.canEdit(program, 'n-nessuno'));
+            Editor.insertAt(program, { ownerId: other.id, list: 'body', index: 0 }, Editor.createNewBlock('input'));
+            assert.equal(other.body[0].kind, 'input');
         });
 
         T.test('Inserisci dopo: subito dopo il blocco, nello stesso elenco', function (assert) {
@@ -119,7 +119,9 @@
             assert.deepEqual(Editor.slotAfter(program, inElse.id), { ownerId: test.id, list: 'else', index: 1 });
             assert.deepEqual(Editor.slotAfter(program, inLoop.id), { ownerId: loop.id, list: 'body', index: 1 });
             assert.deepEqual(Editor.slotAfter(program, loop.id), { ownerId: program.functions[0].id, list: 'body', index: 3 });
-            assert.throws(function () { Editor.slotAfter(program, program.functions[0].id); }, RangeError);
+            assert.deepEqual(Editor.slotAfter(program, program.functions[0].id), { ownerId: program.functions[0].id, list: 'body', index: 0 },
+                'dopo Inizio: all\'inizio del corpo (passo 18)');
+            assert.throws(function () { Editor.slotAfter(program, 'n-nessuno'); }, RangeError);
         });
     });
 
@@ -165,14 +167,14 @@
             assert.deepEqual([back.id, back.then[0].id, back['else'][0].id], ids);
         });
 
-        T.test('si cancella solo in Main, e solo un blocco', function (assert) {
+        T.test('si cancella in ogni funzione, e solo un blocco', function (assert) {
             var other = H.fn('Doppio', 'Integer', 'r', [['n', 'Integer']], [H.assign('r', 'n * 2')]);
             var program = H.program([H.output('1')], [other]);
-            assert.throws(function () { Editor.removeAt(program, other.body[0].id); }, RangeError);
             assert.throws(function () { Editor.removeAt(program, program.functions[0].id); }, RangeError, 'non una funzione');
             assert.throws(function () { Editor.removeAt(program, 'n-nessuno'); }, RangeError);
-            assert.equal(other.body.length, 1);
             assert.equal(program.functions[0].body.length, 1);
+            Editor.removeAt(program, other.body[0].id);
+            assert.equal(other.body.length, 0, 'anche fuori da Main');
         });
     });
 
@@ -190,23 +192,21 @@
             return { container: container, view: view };
         }
 
-        T.test('un punto per freccia, solo in Main, raggiungibile da tastiera', function (assert) {
+        T.test('un punto per freccia, in ogni funzione, raggiungibile da tastiera', function (assert) {
             var test = H.when('x', [H.output('1')], []);
             var other = H.fn('Doppio', 'Integer', 'r', [['n', 'Integer']], [H.assign('r', 'n * 2')]);
             var program = H.program([test], [other]);
             var drawn = draw(program);
             var points = drawn.container.querySelectorAll('[data-slot]');
-            assert.equal(points.length, 2 + 2 + 1, 'Main: 2; ramo Vero: 2; ramo Falso: 1');
+            assert.equal(points.length, 2 + 2 + 1 + 2, 'Main: 2; ramo Vero: 2; ramo Falso: 1; Doppio: 2');
             assert.equal(drawn.view.slots.length, points.length);
-            drawn.view.slots.forEach(function (slot) {
-                assert.equal(slot.functionId, program.functions[0].id, 'nessun punto nell\'altra funzione');
-            });
+            assert.equal(drawn.view.slots.filter(function (slot) { return slot.functionId === other.id; }).length, 2);
             assert.equal(points[0].getAttribute('tabindex'), '0');
             assert.equal(points[0].getAttribute('role'), 'button');
             assert.equal(points[0].getAttribute('aria-label'), 'punto body 0');
         });
 
-        T.test('si selezionano solo i blocchi di Main', function (assert) {
+        T.test('si selezionano i blocchi di tutte le funzioni; Inizio di Main no', function (assert) {
             var mine = H.output('1');
             var other = H.fn('Doppio', 'Integer', 'r', [], [H.assign('r', '2')]);
             var program = H.program([mine], [other]);
@@ -214,15 +214,16 @@
             var group = function (id) { return drawn.container.querySelector('[data-id="' + id + '"]'); };
             assert.isTrue(group(mine.id).classList.contains('is-selectable'));
             assert.equal(group(mine.id).getAttribute('tabindex'), '0');
-            assert.isFalse(group(other.body[0].id).classList.contains('is-selectable'));
-            assert.isFalse(group(program.functions[0].id).classList.contains('is-selectable'), 'Inizio non si seleziona');
+            assert.isTrue(group(other.body[0].id).classList.contains('is-selectable'));
+            assert.isFalse(group(program.functions[0].id).classList.contains('is-selectable'), 'Inizio di Main non si seleziona');
+            assert.isTrue(group(other.id).classList.contains('is-selectable'), 'Inizio di un\'altra funzione sì: apre la sua firma');
 
             drawn.view.setSelected(mine.id);
             assert.isTrue(group(mine.id).classList.contains('is-selected'));
             assert.equal(group(mine.id).getAttribute('aria-pressed'), 'true');
             assert.equal(drawn.container.querySelectorAll('.dg-selected').length, 1);
             drawn.view.setSelected(other.body[0].id);
-            assert.equal(drawn.container.querySelectorAll('.is-selected, .dg-selected').length, 0, 'fuori da Main: nessuna selezione');
+            assert.isTrue(group(other.body[0].id).classList.contains('is-selected'), 'anche fuori da Main');
             drawn.view.setSelected(mine.id);
             drawn.view.setSelected(null);
             assert.equal(drawn.container.querySelectorAll('.is-selected, .dg-selected').length, 0);

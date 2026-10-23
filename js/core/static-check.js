@@ -53,9 +53,9 @@
         if (nameError) {
             errors.push(nameError);
         } else if (Builtins.get(programFunction.name)) {
-            errors.push(error('ERR_FUNCTION_NAME_RESERVED', { name: programFunction.name }, id));
+            errors.push(error('ERR_FUNCTION_NAME_RESERVED', { name: programFunction.name }, id, { field: 'name' }));
         } else if (Object.prototype.hasOwnProperty.call(seenFunctions, programFunction.name)) {
-            errors.push(error('ERR_DUPLICATE_FUNCTION', { name: programFunction.name }, id));
+            errors.push(error('ERR_DUPLICATE_FUNCTION', { name: programFunction.name }, id, { field: 'name' }));
         }
         seenFunctions[programFunction.name] = true;
 
@@ -69,9 +69,10 @@
                 errors.push(returnError);
             }
         }
-        programFunction.parameters.forEach(function (parameter) {
+        programFunction.parameters.forEach(function (parameter, index) {
             var parameterError = checkName(parameter.name, id, 'parameters');
             if (parameterError) {
+                parameterError.parameter = index; // la riga del parametro nella finestra (passo 18)
                 errors.push(parameterError);
             }
         });

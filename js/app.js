@@ -160,7 +160,7 @@
                 return null;
             }
             if (found.node.kind === undefined) { // è una funzione, non un blocco
-                return t('ui.diagram.function', { name: found.node.name });
+                return t('ui.diagram.functionName', { name: found.node.name });
             }
             return BlockText.plainText(found.node, t, 'head');
         }
@@ -343,7 +343,7 @@
             state.diagram = DiagramRenderer.render(diagram, state.program, {
                 t: t,
                 measurer: measurer,
-                // Si modifica solo Main (DEC-004).
+                // Si modifica in ogni funzione dal passo 18 (DEC-078).
                 editable: function (functionId) { return Editor.canEdit(state.program, functionId); },
                 describeSlot: describeSlot
             });
@@ -372,7 +372,15 @@
         /* Chiamate e commenti si modificano nella fase 2 (FR-EDIT-10). */
         function canOpenEditor(nodeId) {
             var found = Model.findById(state.program, nodeId);
+            if (found && isFunction(found.node)) {
+                return found.node.name !== 'Main'; // la firma di Main non si cambia (§6.8)
+            }
             return Boolean(found) && Boolean(BlockEditor.FIELDS[found.node.kind]) && Editor.canEdit(state.program, nodeId);
+        }
+
+        /* Una funzione non ha kind (passo 18). */
+        function isFunction(node) {
+            return node.kind === undefined;
         }
 
         var redrawFrame = 0;
@@ -404,10 +412,11 @@
             formatError: formatError,
             onChange: afterFieldChange,
             // Errori dell'analisi statica di un campo, già calcolati da afterFieldChange (passo 16).
-            fieldIssue: function (block, fieldName) {
+            fieldIssue: function (block, fieldName, parameter) {
                 var found = null;
                 state.staticErrors.forEach(function (error) {
-                    if (!found && error.nodeId === block.id && error.field === fieldName) {
+                    if (!found && error.nodeId === block.id && error.field === fieldName &&
+                            (parameter === undefined || error.parameter === parameter)) {
                         found = error;
                     }
                 });
@@ -434,7 +443,9 @@
             select(nodeId);
             app.classList.add('is-editing');
             var block = Model.findById(state.program, nodeId).node;
-            state.editSession = { blockId: nodeId, before: Editor.contentOf(block), revision: state.document.revision() };
+            state.editSession = isFunction(block)
+                ? { functionId: nodeId, before: Editor.signatureOf(block), revision: state.document.revision() }
+                : { blockId: nodeId, before: Editor.contentOf(block), revision: state.document.revision() };
             blockEditor.open(block);
             revealNode(nodeId, { quiet: true });
         }
@@ -513,6 +524,10 @@
             if (!session) {
                 return;
             }
+            if (session.functionId) {
+                commitFunction(session);
+                return;
+            }
             var found = Model.findById(state.program, session.blockId);
             var last = state.history.last();
             var fresh = last && last.kind === 'insert' && last.fresh && last.block.id === session.blockId;
@@ -530,6 +545,88 @@
             }
         }
 
+        // --- Editor: funzioni (passo 18, FR-EDIT-11, DEC-078) ------------------------------
+
+        /* Un nome che le chiamate possono prendere: valido, non predefinito, non già di un'altra funzione. */
+        function canTakeName(name, programFunction) {
+            if (name === 'Main' || OnoFlow.Builtins.get(name) || OnoFlow.Expressions.parseName(name).error) {
+                return false;
+            }
+            return state.program.functions.every(function (other) { return other === programFunction || other.name !== name; });
+        }
+
+        /*
+         * Chiude il passo della firma: un solo passo, con le chiamate rinominate se il nome è
+         * cambiato (alla chiusura, non a ogni tasto: a metà parola il nome può coincidere con un
+         * altro, e le sue chiamate verrebbero rinominate per sbaglio). Una funzione appena creata
+         * resta un passo solo con la sua creazione.
+         */
+        function commitFunction(session) {
+            var found = Model.findById(state.program, session.functionId);
+            var last = state.history.last();
+            var fresh = last && last.kind === 'addFunction' && last.fresh && last.fn.id === session.functionId;
+            if (last && last.kind === 'addFunction') {
+                last.fresh = false;
+            }
+            if (!found) {
+                return;
+            }
+            var programFunction = found.node;
+            var after = Editor.signatureOf(programFunction);
+            if (fresh) {
+                last.revisions.after = state.document.revision();
+                return;
+            }
+            if (Editor.sameSignature(session.before, after)) {
+                return;
+            }
+            var calls = [];
+            if (after.name !== session.before.name && canTakeName(after.name, programFunction)) {
+                calls = Editor.renameCalls(state.program, session.before.name, after.name);
+            }
+            if (calls.length) {
+                state.document.markChanged();
+                refresh(session.functionId, { focus: false });
+            }
+            recordStep({ kind: 'editFunction', functionId: session.functionId, before: session.before, after: after, calls: calls }, session.revision);
+        }
+
+        /* Menu → Nuova funzione: in fondo al programma, con la sua firma subito aperta. */
+        function newFunction() {
+            if (isActive()) {
+                return;
+            }
+            if (blockEditor.isOpen()) {
+                blockEditor.close();
+            }
+            var before = state.document.revision();
+            var created = Editor.newFunction(state.program);
+            var placed = Editor.insertFunction(state.program, null, created);
+            afterEdit(created.id);
+            recordStep({ kind: 'addFunction', fn: created, index: placed.index, fresh: true }, before);
+            openEditor(created.id);
+        }
+
+        /* Elimina su una funzione: con tutto il corpo, Annulla nell'avviso come per i blocchi. */
+        function deleteFunction(functionId) {
+            var before = state.document.revision();
+            var removed = Editor.removeFunction(state.program, functionId);
+            var inside = removed.fn.body.reduce(function (sum, block) { return sum + 1 + Editor.countInside(block); }, 0);
+            afterEdit(null);
+            recordStep({ kind: 'removeFunction', fn: removed.fn, index: removed.index }, before);
+            var name = removed.fn.name;
+            var message = inside === 0 ? t('ui.deleteFunction.done', { name: name })
+                : inside === 1 ? t('ui.deleteFunction.doneOne', { name: name })
+                : t('ui.deleteFunction.doneMany', { name: name, count: NumberFormat.formatInteger(inside, numberFormat) });
+            state.undoBar = notice('info', message, null, [{
+                label: t('ui.delete.undo'),
+                run: function () {
+                    state.undoBar = null;
+                    travel(true);
+                }
+            }]);
+        }
+
         /* Annulla (backwards) o Ripeti. Il blocco toccato resta selezionato e inquadrato. */
         function travel(backwards) {
             if (isActive()) {
@@ -544,10 +641,13 @@
                 return;
             }
             state.document.setRevision(backwards ? step.revisions.before : step.revisions.after);
-            var gone = step.kind === 'insert' ? backwards : step.kind === 'remove' ? !backwards : false;
+            var adding = step.kind === 'insert' || step.kind === 'addFunction';
+            var removing = step.kind === 'remove' || step.kind === 'removeFunction';
+            var gone = adding ? backwards : removing ? !backwards : false;
+            var touched = step.blockId || step.functionId || (step.block || step.fn).id;
             var focusInside = diagram.contains(document.activeElement) || document.activeElement === document.body;
-            refresh(gone ? null : step.blockId || step.block.id, { focus: focusInside });
-            if (gone && focusInside) {
+            refresh(gone ? null : touched, { focus: focusInside });
+            if (gone && focusInside && step.slot) {
                 focusSlot(step.slot);
             }
         }
@@ -592,6 +692,13 @@
                 blockEditor.close();
             }
             blockMenu.close({ restoreFocus: false });
+            var found = Model.findById(state.program, nodeId);
+            if (found && isFunction(found.node)) {
+                if (found.node.name !== 'Main') {
+                    deleteFunction(nodeId);
+                }
+                return;
+            }
             var before = state.document.revision();
             var removed = Editor.removeAt(state.program, nodeId);
             var block = removed.block;
@@ -884,6 +991,7 @@
             byId('cmd-step').disabled = active;
             commands['new'].disabled = active;
             commands.open.disabled = active;
+            byId('cmd-new-function').disabled = active;
             // Niente annulla/ripeti durante l'esecuzione (FR-EDIT-07).
             var canUndo = !active && Boolean(state.history) && state.history.canUndo();
             var canRedo = !active && Boolean(state.history) && state.history.canRedo();
@@ -1196,6 +1304,10 @@
         commands.save.addEventListener('click', function () {
             closeMenu();
             save();
+        });
+        byId('cmd-new-function').addEventListener('click', function () {
+            closeMenu();
+            newFunction();
         });
         commands.undo.addEventListener('click', function () {
             closeMenu();

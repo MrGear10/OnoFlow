@@ -8,6 +8,11 @@
  *     { kind: 'insert', block, slot }            annullare = togliere il blocco
  *     { kind: 'remove', block, slot }            annullare = rimetterlo nello stesso punto
  *     { kind: 'edit', blockId, before, after }   contenuto prima e dopo (Editor.contentOf)
+ *     { kind: 'addFunction', fn, index }         passo 18: annullare = togliere la funzione
+ *     { kind: 'removeFunction', fn, index }      annullare = rimetterla nello stesso posto
+ *     { kind: 'editFunction', functionId, before, after, calls }
+ *                                                firma prima e dopo (Editor.signatureOf) e le
+ *                                                chiamate rinominate (Editor.renameCalls)
  * più revisions: { before, after }, le versioni del documento prima e dopo la modifica, perché
  * annullando si torni anche allo stato "salvato" (QA-13).
  *
@@ -38,7 +43,28 @@
         return found.node;
     }
 
+    function functionOf(program, id) {
+        var found = Model.findById(program, id);
+        if (!found || found.node.kind !== undefined) {
+            throw new RangeError('History: funzione inesistente ' + id);
+        }
+        return found.node;
+    }
+
     function apply(program, step, backwards) {
+        if (step.kind === 'addFunction' || step.kind === 'removeFunction') {
+            if ((step.kind === 'addFunction') === backwards) {
+                Editor.removeFunction(program, step.fn.id);
+            } else {
+                Editor.insertFunction(program, step.index, step.fn);
+            }
+            return;
+        }
+        if (step.kind === 'editFunction') {
+            Editor.setSignature(functionOf(program, step.functionId), backwards ? step.before : step.after);
+            Editor.applyTexts(program, step.calls || [], backwards);
+            return;
+        }
         var removing = (step.kind === 'insert') === backwards;
         if (step.kind === 'edit') {
             Editor.setContent(blockOf(program, step.blockId), backwards ? step.before : step.after);
@@ -56,7 +82,7 @@
 
         return {
             record: function (step) {
-                if (['insert', 'remove', 'edit'].indexOf(step.kind) === -1) {
+                if (['insert', 'remove', 'edit', 'addFunction', 'removeFunction', 'editFunction'].indexOf(step.kind) === -1) {
                     throw new TypeError('History: passo sconosciuto ' + step.kind);
                 }
                 done.push(step);

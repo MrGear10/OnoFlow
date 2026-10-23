@@ -1,5 +1,5 @@
 /*
- * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–17).
+ * OnoFlow — verifica di index.html da file:// in Chromium e Firefox con Playwright (passi 6–18).
  *
  * Dipendenze: playwright (solo in tools/, mai nell'applicazione).
  *
@@ -44,7 +44,9 @@
  *     che è quello evidenziato; input a metà passo; Riprendi e Ferma (FR-RUN-05);
  *   - analisi statica: «b = True» segnalato sotto il campo mentre si scrive, con il suggerimento,
  *     e prima dell'esecuzione (FR-ERR-06, D-06);
- *   - commento e chiamata dal menu, modificati, disegnati e salvati (FR-EDIT-10).
+ *   - commento e chiamata dal menu, modificati, disegnati e salvati (FR-EDIT-10);
+ *   - funzioni: nuova, firma con parametro e valore, corpo, chiamata da Main ed esecuzione,
+ *     rinomina con le chiamate e Annulla, cancellazione e Annulla, file salvato (FR-EDIT-11).
  * Esce con codice 1 se una verifica non riesce.
  */
 import { chromium, firefox } from 'playwright';
@@ -910,6 +912,97 @@ async function checkCallComment(page, checks, viewport) {
     checks.ok(!(await page.isDisabled('#edit-block')), 'un commento si modifica: Modifica attivo');
 }
 
+/* Funzioni: crearle, scriverne il corpo, chiamarle, rinominarle, cancellarle (FR-EDIT-11, passo 18). */
+async function checkFunctions(page, checks, viewport) {
+    const press = pressInSheet(page, viewport);
+    const fill = (selector, text) => page.locator(`.block-editor ${selector}`).first().fill(text);
+    const mainText = () => page.evaluate(() => {
+        const program = window.OnoFlow.Format.importFprg(JSON.parse(sessionStorage.getItem('onoflow.diagram')).text).program;
+        return program.functions.map((fn) => fn.name + ':' + fn.body.map((block) => block.kind + (block.fields.expression ? '[' + block.fields.expression.text + ']' : '')).join(',')).join(' | ');
+    });
+    await page.click('#menu-button');
+    await page.click('#cmd-new');
+    await leaveUnsaved(page, press);
+    await page.click('#menu-button');
+    await page.click('#cmd-new-function');
+    checks.ok(await page.isVisible('.block-editor .edit-parameter-add'), 'Nuova funzione apre la sua firma');
+    await fill('[id$="-name"]', 'Doppio');
+    await page.locator('.block-editor [id$="-type"]').selectOption('Integer');
+    await fill('[id$="-variable"]', 'r');
+    await press('.edit-parameter-add');
+    checks.ok(await page.evaluate(() => /-0-name$/.test(document.activeElement.id)), 'Aggiungi parametro: il focus va sul nome del parametro');
+    await page.keyboard.type('n');
+    // Un secondo parametro con un nome sbagliato: l'errore sta sotto di lui, non sotto il primo.
+    await press('.edit-parameter-add');
+    await page.keyboard.type('2b');
+    const paramError = (index) => page.locator(`.block-editor [id$="-parameters-${index}-name-error"]`);
+    checks.ok(await paramError(1).isVisible() && await paramError(0).isHidden(), 'l\'errore del parametro sta sotto quel parametro');
+    await press('.block-editor .edit-parameter-remove >> nth=1');
+    checks.ok((await page.locator('.block-editor .edit-parameter').count()) === 1, 'Togli toglie il parametro');
+    await press('.edit-done');
+    checks.ok((await page.textContent('#diagram')).includes('Funzione Doppio(Integer n) \u2192 Integer r'), 'il titolo mostra la firma');
+    checks.ok((await page.textContent('#diagram-errors')).includes('deve dichiarare la variabile'), 'la variabile restituita va dichiarata');
+
+    // Il corpo di Doppio, poi Main che la chiama.
+    const fnId = await page.evaluate(() => document.querySelector('#diagram .is-function').getAttribute('data-id'));
+    const mainId = await page.getAttribute('#diagram [data-slot="0"]', 'data-owner');
+    const addBlock = async (slotOwner, kind, fields) => {
+        if (slotOwner) {
+            await press(`#diagram [data-owner="${slotOwner}"][data-list="body"][data-index="0"]`);
+        } else {
+            await press('#insert-after');
+        }
+        await press(`.block-menu [data-kind="${kind}"]`);
+        for (const [name, value] of Object.entries(fields)) {
+            if (name === 'type') {
+                await page.locator('.block-editor [id$="-type"]').selectOption(value);
+            } else {
+                await fill(`[id$="-${name}"]`, value);
+            }
+        }
+        await press('.edit-done');
+    };
+    await addBlock(fnId, 'declare', { names: 'r' });
+    await addBlock(null, 'assign', { variable: 'r', expression: 'n * 2' });
+    await addBlock(mainId, 'declare', { names: 'x' });
+    await addBlock(null, 'assign', { variable: 'x', expression: 'Doppio(21)' });
+    await addBlock(null, 'output', { expression: 'x' });
+    checks.ok((await page.locator('#diagram-errors .diagram-error').count()) === 0, 'nessun errore: la funzione è completa');
+    await page.click('#run');
+    await page.waitForSelector('.console-note--done', { state: 'attached' });
+    checks.ok((await page.textContent('#console-log')).includes('42'), 'Main chiama Doppio(21) e stampa 42');
+    if (viewport.phone) {
+        await page.click('#tab-diagram');
+    }
+
+    // Rinominare: le chiamate seguono, in un solo passo di Annulla.
+    await press(`#diagram [data-id="${fnId}"] text`);
+    checks.ok(!(await page.isDisabled('#edit-block')), 'l\'Inizio di una funzione si seleziona e si modifica');
+    await press('#edit-block');
+    await fill('[id$="-name"]', 'Triplo');
+    await press('.edit-done');
+    checks.ok((await mainText()).includes('assign[Triplo(21)]'), `rinominata, la chiamata segue: ${await mainText()}`);
+    checks.ok((await page.locator('#diagram-errors .diagram-error').count()) === 0, 'dopo la rinomina nessun errore');
+    const undo = viewport.width >= 1024 ? '#undo' : '#undo-sheet';
+    await press(undo);
+    checks.ok((await mainText()).includes('assign[Doppio(21)]') && (await mainText()).includes('Doppio:'), `Annulla: nome e chiamata di prima (${await mainText()})`);
+
+    // Cancellare la funzione e rimetterla. Dopo Annulla è già selezionata: un altro tocco la aprirebbe (B3).
+    if (!(await page.evaluate((id) => document.querySelector(`#diagram [data-id="${id}"]`).classList.contains('is-selected'), fnId))) {
+        await press(`#diagram [data-id="${fnId}"] text`);
+    }
+    await press('#delete-block');
+    checks.ok((await page.textContent('#notices')).includes('Funzione «Doppio» eliminata, con i 2 blocchi che conteneva'), 'Elimina toglie la funzione con il corpo');
+    checks.ok((await page.textContent('#diagram-errors')).includes('Doppio'), 'la chiamata a una funzione che non c\'è più è un errore');
+    await press('.notice-action:has-text("Annulla")');
+    checks.ok((await mainText()).startsWith('Main:') && (await mainText()).includes('Doppio:declare,assign[n * 2]'), 'Annulla la rimette con il corpo');
+
+    const saved = await saveFromMenu(page);
+    checks.ok(saved.text.includes('<function name="Doppio" type="Integer" variable="r">') &&
+        saved.text.includes('<parameter name="n" type="Integer" array="False"/>'), 'nel file la funzione con il parametro (§7.4)');
+    checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale con le funzioni');
+}
+
 /* Passo-passo sull'esempio Pari o dispari (FR-RUN-05, DEC-073). */
 async function checkStep(page, checks, viewport) {
     const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
@@ -1070,6 +1163,7 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
         await checkStep(page, checks, viewport);
         await checkStaticAnalysis(page, checks, viewport);
         await checkCallComment(page, checks, viewport);
+        await checkFunctions(page, checks, viewport);
         if (!viewport.phone) {
             await checkFocusReveal(page, checks);
             await checkMenuKeyboard(page, checks);

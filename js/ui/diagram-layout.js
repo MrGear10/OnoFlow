@@ -34,11 +34,13 @@
     // Forma e colore di ogni tipo di blocco (forme classiche dei diagrammi di flusso).
     var SHAPE_OF_KIND = {
         declare: 'declare', assign: 'rect', input: 'parallelogram', output: 'parallelogram',
-        'if': 'diamond', 'while': 'hexagon', 'do': 'hexagon', 'for': 'hexagon', call: 'call', comment: 'comment'
+        'if': 'diamond', 'while': 'hexagon', 'do': 'hexagon', 'for': 'hexagon', call: 'call', comment: 'comment',
+        'function': 'terminal' // l'icona della finestra di una funzione (passo 18)
     };
     var COLOR_OF_KIND = {
         declare: 'declare', assign: 'assign', input: 'input', output: 'output',
-        'if': 'if', 'while': 'loop', 'do': 'loop', 'for': 'loop', call: 'call', comment: 'comment'
+        'if': 'if', 'while': 'loop', 'do': 'loop', 'for': 'loop', call: 'call', comment: 'comment',
+        'function': 'terminal'
     };
 
     function layout(program, options) {
@@ -57,7 +59,8 @@
         var LABEL_GAP = 0.25 * s;
         var TEXT_HEIGHT_RATIO = 1.25;    // altezza del testo rispetto al corpo, per il rombo
         var FUNCTION_GAP = 3 * s;
-        var TITLE_HEIGHT = 2 * s;
+        // Tre quadretti: tra il titolo e Inizio c'è posto per il cerchio di un errore sulla funzione.
+        var TITLE_HEIGHT = 3 * s;
 
         var labelThen = t('ui.diagram.then');
         var labelElse = t('ui.diagram.else');
@@ -301,6 +304,19 @@
             return shapeBox(null, 'terminal', 'terminal', [{ text: t(key), role: 'keyword', field: null }]);
         }
 
+        /* Titolo con la firma: «Funzione Doppio(Integer n, Real v[]) → Integer r» (passo 18). */
+        function signatureText(programFunction) {
+            var parameters = programFunction.parameters.map(function (parameter) {
+                return parameter.type + ' ' + parameter.name + (parameter.array ? '[]' : '');
+            }).join(', ');
+            if (programFunction.name === 'Main' || programFunction.type === 'None') {
+                return t('ui.diagram.function', { name: programFunction.name, parameters: parameters });
+            }
+            return t('ui.diagram.functionReturns', {
+                name: programFunction.name, parameters: parameters, type: programFunction.type, variable: programFunction.variable
+            });
+        }
+
         // Le funzioni stanno una sotto l'altra, ognuna con il suo asse; il nome solo se sono più d'una.
         var showNames = program.functions.length > 1;
         var top = 0;
@@ -311,7 +327,7 @@
             var body = measureSequence(programFunction.body, programFunction.id, 'body');
             var left = ceilTo(Math.max(start.left, body.left, end.left), s);
             var right = Math.max(start.right, body.right, end.right);
-            var title = showNames ? t('ui.diagram.function', { name: programFunction.name }) : '';
+            var title = showNames ? signatureText(programFunction) : '';
             if (index > 0) {
                 top += FUNCTION_GAP;
             }

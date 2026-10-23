@@ -1148,6 +1148,49 @@ button.diagram-error-entry:active {
     outline-offset: -3px;
 }
 
+/* Parametri di una funzione (passo 18): nome, tipo, array e Togli su una riga. */
+.edit-parameters {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.edit-parameter {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(7rem, auto) auto auto;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+}
+
+.edit-parameter-array {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--touch);
+}
+
+.edit-parameter-remove,
+.edit-parameter-add {
+    min-height: var(--touch);
+}
+
+.edit-note {
+    margin: 0 0 var(--space-2);
+    color: var(--text-muted);
+}
+
+/* Sul telefono il nome ha una riga sua, sotto tipo, array e Togli. */
+@media (max-width: 27.5rem) {
+    .edit-parameter {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+    }
+
+    .edit-parameter .edit-input {
+        grid-column: 1 / -1;
+    }
+}
+
 /* Il testo di un commento: un'area che cresce in verticale (passo 17). */
 .edit-comment {
     min-height: calc(2 * var(--touch));

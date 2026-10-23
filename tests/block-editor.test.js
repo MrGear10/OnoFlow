@@ -336,4 +336,74 @@
             assert.deepEqual(OnoFlow.StaticCheck.check(OnoFlow.Format.importFprg(text).program), []);
         });
     });
+    T.suite('Finestra di modifica › firma di una funzione (passo 18, FR-EDIT-11)', function () {
+        function withFunction(fn, run) {
+            var program = H.program([], [fn]);
+            var host = document.createElement('div');
+            document.body.appendChild(host);
+            var errors = OnoFlow.StaticCheck.check(program);
+            var editor = BlockEditor.create(host, {
+                t: t, formatError: formatError,
+                onChange: function () { errors = OnoFlow.StaticCheck.check(program); },
+                fieldIssue: function (target, name, parameter) {
+                    return errors.filter(function (e) {
+                        return e.nodeId === target.id && e.field === name && (parameter === undefined || e.parameter === parameter);
+                    })[0] || null;
+                }
+            });
+            try {
+                editor.open(fn);
+                run(editor.element, function (suffix) { return editor.element.querySelector('[id$="' + suffix + '"]'); });
+            } finally {
+                editor.close();
+                document.body.removeChild(host);
+            }
+        }
+
+        T.test('nome, valore restituito, variabile solo con un valore, parametri', function (assert) {
+            var fn = H.fn('Doppio', 'Integer', 'r', [['n', 'Integer']], [H.declare('r', 'Integer')]);
+            withFunction(fn, function (panel, field) {
+                assert.equal(panel.querySelector('.edit-title').textContent, 'Funzione');
+                assert.deepEqual(labels(panel), [t('ui.edit.functionName'), t('ui.edit.returnType'), t('ui.edit.returnVariable'), t('ui.edit.parameters')]);
+                type(field('-name'), 'Triplo');
+                assert.equal(fn.name, 'Triplo');
+                field('-type').value = 'None';
+                field('-type').dispatchEvent(new Event('change'));
+                assert.equal(fn.type, 'None');
+                assert.equal(fn.variable, '', 'senza valore niente variabile restituita');
+                assert.isTrue(field('-variable').closest('.edit-row').hidden);
+                assert.equal(field('-type').options[0].textContent, t('ui.edit.returnNone'));
+            });
+        });
+
+        T.test('Aggiungi parametro e Togli', function (assert) {
+            var fn = H.fn('F', 'None', '', [['a', 'Integer']]);
+            withFunction(fn, function (panel, field) {
+                panel.querySelector('.edit-parameter-add').click();
+                assert.equal(fn.parameters.length, 2);
+                assert.deepEqual(fn.parameters[1], { name: '', type: 'Integer', array: false });
+                assert.equal(document.activeElement, field('-1-name'), 'il focus va sul parametro nuovo');
+                type(field('-1-name'), 'v');
+                var line = field('-1-name').closest('.edit-parameter');
+                line.querySelector('select').value = 'Real';
+                line.querySelector('select').dispatchEvent(new Event('change'));
+                line.querySelector('input[type="checkbox"]').click();
+                assert.deepEqual(fn.parameters[1], { name: 'v', type: 'Real', array: true });
+                panel.querySelectorAll('.edit-parameter-remove')[0].click();
+                assert.deepEqual(fn.parameters.map(function (p) { return p.name; }), ['v']);
+                assert.equal(panel.querySelectorAll('.edit-parameter').length, 1);
+            });
+        });
+
+        T.test('l\'errore sul nome di un parametro sta sotto quel parametro', function (assert) {
+            var fn = H.fn('F', 'None', '', [['a', 'Integer'], ['b', 'Integer']]);
+            withFunction(fn, function (panel, field) {
+                var second = field('-1-name');
+                second.focus();
+                type(second, '2b');
+                assert.isFalse(document.getElementById(second.id + '-error').hidden);
+                assert.isTrue(document.getElementById(field('-0-name').id + '-error').hidden);
+            });
+        });
+    });
 })();

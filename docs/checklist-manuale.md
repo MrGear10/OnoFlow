@@ -262,3 +262,18 @@ La finestra di modifica arriva al passo 10: per ora un blocco inserito resta vuo
 - [ ] **Chiamata** `Saluta()`: sotto il campo «Non esiste una funzione chiamata «Saluta»». Con `ToString(1)` l'errore sparisce.
 - [ ] **Salva** e apri il file con un editor di testo: `<comment text="Somma dei &quot;voti&quot;"/>` e `<call expression="ToString(1)"/>`. **Flowgorithm (Q-07):** il file si apre e mostra il commento e la chiamata.
 - [ ] Un commento o una chiamata selezionati hanno **Modifica** attivo; doppio clic e secondo tocco li aprono.
+
+---
+
+## Passo 18 — Gestione delle funzioni
+
+- [ ] `tests.html` mostra **"Tutti i test superati"** (445 test).
+- [ ] **Nuovo**, poi **Menu → Nuova funzione**: si apre la finestra «Funzione» con il nome `Funzione`. Nome `Doppio`, valore restituito Integer, variabile restituita `r`, **Aggiungi parametro** `n`. Il titolo nel diagramma: «Funzione Doppio(Integer n) → Integer r». Sotto «Variabile restituita» l'errore: va dichiarata.
+- [ ] Nel corpo di Doppio: `Integer r`, `r = n * 2`. In Main: `Integer x`, `x = Doppio(21)`, `Output x`. **Esegui**: 42. In passo-passo il giallo entra nella funzione e il pannello mostra «Variabili di Doppio».
+- [ ] Selezionare l'**Inizio** di Doppio, **Modifica**, rinominarla `Triplo`, **Fatto**: in Main la chiamata diventa `Triplo(21)`. **Annulla**: tornano insieme nome e chiamata.
+- [ ] Valore restituito «Nessuno»: la variabile restituita sparisce; in Main `x = Doppio(21)` diventa un errore («non restituisce un valore»).
+- [ ] **Togli** un parametro; il nome di un parametro non valido (`2b`) è segnato sotto quel parametro.
+- [ ] Selezionare l'Inizio di Doppio, **Elimina**: «Funzione «Doppio» eliminata, con i 2 blocchi che conteneva.»; la chiamata in Main è un errore. **Annulla**: torna con il corpo.
+- [ ] L'Inizio di Main non si seleziona.
+- [ ] **Salva**: nel file `<function name="Doppio" type="Integer" variable="r">` con `<parameter name="n" type="Integer" array="False"/>`. **Flowgorithm (Q-07):** il file si apre e la funzione è uguale.
+- [ ] **Telefono:** la finestra della funzione è a tutto schermo; ogni parametro ha il nome su una riga e tipo, Array e Togli sotto.

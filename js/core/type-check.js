@@ -454,12 +454,12 @@
             var symbol = symbolsOf(programFunction)[programFunction.variable];
             var params = { name: programFunction.variable, 'function': programFunction.name };
             if (!symbol) {
-                return [{ code: 'ERR_RETURN_UNDECLARED', params: params, nodeId: programFunction.id }];
+                return [{ code: 'ERR_RETURN_UNDECLARED', params: params, nodeId: programFunction.id, field: 'variable' }];
             }
             if (symbol.array || !assignable(symbol.type, programFunction.type)) {
                 params.expected = programFunction.type;
                 params.given = symbol.type;
-                return [{ code: 'ERR_RETURN_TYPE', params: params, nodeId: programFunction.id }];
+                return [{ code: 'ERR_RETURN_TYPE', params: params, nodeId: programFunction.id, field: 'variable' }];
             }
             return [];
         }

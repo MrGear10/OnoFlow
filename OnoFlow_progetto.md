@@ -171,7 +171,7 @@ L'editor fa parte della **prima versione**: senza, lo studente può eseguire dia
 | FR-EDIT-08 | Modifica dei campi non testuali: tipo e "array" nelle dichiarazioni, "a capo" nell'output, verso e passo del `for` | 1 |
 | FR-EDIT-09 | L'editor DEVE essere pienamente usabile al tocco: vedi §5.9 | 1 |
 | FR-EDIT-10 | Blocchi `call` e `comment` (formato da verificare, §7.4) | 2 |
-| FR-EDIT-11 | Gestione delle funzioni: aggiunta, rinomina, parametri, valore di ritorno, cancellazione (formato da verificare, §7.4). Nella fase 1 le funzioni di un file importato si caricano, si disegnano e si eseguono, ma l'editor modifica solo `Main` (DEC-004) | 2 |
+| FR-EDIT-11 | Gestione delle funzioni: aggiunta, rinomina, parametri, valore di ritorno, cancellazione (formato da verificare, §7.4). Nella fase 1 le funzioni di un file importato si caricano, si disegnano e si eseguono, ma l'editor modifica solo `Main` (DEC-004); dal passo 18 si modificano tutte (DEC-078) | 2 |
 | FR-EDIT-12 | Spostamento di blocchi (trascinamento o taglia/incolla) | 2 |
 
 ### 5.4 Esecuzione

@@ -233,7 +233,10 @@
         svg.appendChild(marksLayer);
         var editable = options.editable || function () { return false; };
         var functionIds = Object.create(null);
-        program.functions.forEach(function (programFunction) { functionIds[programFunction.id] = true; });
+        program.functions.forEach(function (programFunction) {
+            // Il blocco Inizio di una funzione diversa da Main si seleziona: apre la firma (passo 18).
+            functionIds[programFunction.id] = programFunction.name === 'Main' ? 'main' : 'function';
+        });
 
         var groupsById = Object.create(null);
         var shapesById = Object.create(null);
@@ -264,7 +267,10 @@
                     group.setAttribute('data-id', item.id);
                     groupsById[item.id] = group;
                     shapesById[item.id] = item;
-                    if (!functionIds[item.id] && editable(item.functionId)) {
+                    if (functionIds[item.id] !== 'main' && editable(item.functionId)) {
+                        if (functionIds[item.id]) {
+                            group.classList.add('is-function');
+                        }
                         group.setAttribute('tabindex', '0');
                         group.setAttribute('role', 'button');
                         group.setAttribute('aria-pressed', 'false');

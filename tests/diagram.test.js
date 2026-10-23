@@ -228,12 +228,15 @@
             assertTidy(assert, lay(program));
         });
 
-        T.test('più funzioni: una sotto l\'altra, ognuna con il suo nome', function (assert) {
-            var program = H.program([H.output('Doppio(2)')], [H.fn('Doppio', 'Integer', 'r', [['n', 'Integer']], [H.assign('r', 'n * 2')])]);
+        T.test('più funzioni: una sotto l\'altra, ognuna con la sua firma (passo 18)', function (assert) {
+            var program = H.program([H.output('Doppio(2)')], [
+                H.fn('Doppio', 'Integer', 'r', [['n', 'Integer'], ['v', 'Real', true]], [H.assign('r', 'n * 2')]),
+                H.fn('Saluta', 'None', '', [])
+            ]);
             var result = lay(program);
             var titles = result.items.filter(function (item) { return item.type === 'title'; });
             assert.deepEqual(titles.map(function (item) { return item.text; }),
-                [t('ui.diagram.function', { name: 'Main' }), t('ui.diagram.function', { name: 'Doppio' })]);
+                ['Funzione Main()', 'Funzione Doppio(Integer n, Real v[]) \u2192 Integer r', 'Funzione Saluta()']);
             assert.isTrue(titles[1].y > shapeOf(result, program.functions[0].id).y, 'la seconda sta sotto');
             assertTidy(assert, result);
         });
