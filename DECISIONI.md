@@ -498,3 +498,8 @@ Decisioni prese durante lo sviluppo che non erano nel [documento di progetto](On
 - **`.nojekyll`:** senza `.impeccable/` non c'è più nulla da nascondere; GitHub Pages serve i file come sono, senza Jekyll.
 - **Email dei commit:** prima della pubblicazione la storia si riscrive con l'indirizzo noreply di GitHub dell'autore, perché l'email personale non diventi pubblica.
 - **FR-MOB-13:** le verifiche ruotano il telefono a metà dell'esecuzione (in attesa di un valore): l'esecuzione e il diagramma restano.
+
+## DEC-072 — Q-04 verificata in Flowgorithm
+
+- **Data:** 23 ottobre 2026 · **Verificata da:** autore · **Tocca:** Q-04, FR-FILE-10, FMT-W-06, FMT-W-07, DEC-061
+- **Esito:** i file salvati da OnoFlow si aprono in Flowgorithm, sia quello creato da zero (attributi di DEC-061, senza `created`/`edited`) sia l'Appendice A modificata con `created`/`edited` conservati (checklist del passo 13). FR-FILE-10 è soddisfatto anche nella sua seconda metà.
