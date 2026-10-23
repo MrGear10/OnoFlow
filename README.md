@@ -16,7 +16,7 @@ OnoFlow serve a scuola: si costruisce un diagramma di flusso, lo si esegue con l
 
 ## Come si usa
 
-- **Online:** dall'indirizzo di GitHub Pages del repository. Sui telefoni si usa così.
+- **Online:** [mrgear10.github.io/OnoFlow](https://mrgear10.github.io/OnoFlow/), ospitato su GitHub Pages. Sui telefoni si usa così.
 - **Offline, sul computer:** scaricare lo ZIP del repository (Code → Download ZIP), estrarlo e aprire `index.html` con un doppio clic. Funziona da `file://`, senza rete; in fondo alla pagina compare "Copia locale".
 
 Browser di riferimento: Firefox (anche su Linux), Chrome su Android, Safari su iPhone e iPad.
