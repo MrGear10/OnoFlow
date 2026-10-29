@@ -3,8 +3,8 @@
 | | |
 |---|---|
 | **Prodotto** | OnoFlow — editor web di diagrammi di flusso, compatibile con i file `.fprg` |
-| **Versione del documento** | 1.14 — 22 ottobre 2026 |
-| **Stato** | Base per una nuova implementazione da zero |
+| **Versione del documento** | 1.15 — 29 ottobre 2026 |
+| **Stato** | Fasi 1 e 2 implementate e pubblicate (DEC-082); fase 3 da iniziare |
 | **Origine** | Sintesi del documento di progetto (rev. 7) e di un prototipo che ha completato i passi 1–6 della fase 1 |
 | **Licenza prevista** | MIT |
 
@@ -19,7 +19,7 @@ Questo PRD è la **fonte di verità** del prodotto. È scritto per essere conseg
 | Termine | Significato |
 |---|---|
 | **DEVE** | Requisito obbligatorio |
-| **DOVREBBE** | Raccomandato; si può derogare con una motivazione scritta nel registro delle decisioni ([`DECISIONI.md`](DECISIONI.md)) |
+| **DOVREBBE** | Raccomandato; si può derogare con una motivazione scritta nel registro delle decisioni (`DECISIONI.md`, tenuto in locale e non pubblicato; nel testo le decisioni si citano come DEC-NNN) |
 | **PUÒ** | Facoltativo |
 
 **Origine delle regole del linguaggio** (§6): **V** = verificato in Flowgorithm · **P** = scelta di progetto · **?** = da verificare in Flowgorithm.
@@ -30,7 +30,7 @@ Questo PRD è la **fonte di verità** del prodotto. È scritto per essere conseg
 2. Lavorare per passi piccoli e verificabili (§13). Ogni passo termina con codice che l'autore può provare.
 3. Consegnare file completi, mai frammenti da incollare.
 4. Ogni modulo ha i suoi test nella batteria comune (§12). Va verificato anche che i test **sappiano fallire**, introducendo difetti di proposito.
-5. Alla fine di ogni passo, elencare le decisioni prese che non erano in questo documento, registrarle in [`DECISIONI.md`](DECISIONI.md) e aggiornare questo documento.
+5. Alla fine di ogni passo, elencare le decisioni prese che non erano in questo documento, registrarle in `DECISIONI.md` e aggiornare questo documento.
 6. Distinguere sempre tra "non so", "non sono sicuro" e "dipende da contesto mancante".
 
 ---
@@ -172,7 +172,7 @@ L'editor fa parte della **prima versione**: senza, lo studente può eseguire dia
 | FR-EDIT-09 | L'editor DEVE essere pienamente usabile al tocco: vedi §5.9 | 1 |
 | FR-EDIT-10 | Blocchi `call` e `comment` (formato da verificare, §7.4) | 2 |
 | FR-EDIT-11 | Gestione delle funzioni: aggiunta, rinomina, parametri, valore di ritorno, cancellazione (formato da verificare, §7.4). Nella fase 1 le funzioni di un file importato si caricano, si disegnano e si eseguono, ma l'editor modifica solo `Main` (DEC-004); dal passo 18 si modificano tutte (DEC-078) | 2 |
-| FR-EDIT-12 | Spostamento di blocchi (trascinamento o taglia/incolla) | 2 |
+| FR-EDIT-12 | Spostamento di blocchi: "Sposta" nella barra della selezione, poi un tocco sul + di destinazione (D-03, DEC-073, DEC-079) | 2 |
 
 ### 5.4 Esecuzione
 
@@ -718,7 +718,8 @@ Questa architettura è stata **validata nel prototipo** dei passi 1–6. È racc
 
 ### 11.1 Disposizione e comandi
 
-- **Barra superiore:** nome dell'app, nome del file aperto con l'indicazione "modificato", Nuovo, Apri, Esempi, Salva, Annulla, Ripeti, Esegui, Pausa/Riprendi, Ferma, stato dell'esecuzione.
+- **Barra superiore:** nome dell'app, nome del file aperto con l'indicazione "modificato", stato dell'esecuzione, Esegui, Passo, Pausa/Riprendi, Ferma e il Menu; da 64rem anche Annulla, Ripeti, tema e documentazione (DEC-068, DEC-080, DEC-081).
+- **Menu:** File (Nuovo, Apri, Salva), Esempi, Esecuzione (Esegui passo a passo), Modifica (Nuova funzione, Annulla, Ripeti), Progetto (tema, Documentazione, Informazioni).
 - **Zona del diagramma** e **zona della console** affiancate su computer e tablet in orizzontale; **su telefono a tutto schermo, una alla volta**, con un modo rapido per passare dall'una all'altra (§5.9).
 - **Su telefono:** indicazione "non salvato" ben visibile e messaggio di ripristino quando la pagina si riapre (FR-MOB-15); barra dei comandi compatta (Esegui/Ferma sempre visibili, il resto in un menu), finestra di modifica a tutto schermo con la barra dei simboli, diagramma con scorrimento, zoom e "adatta allo schermo".
 - Durante l'esecuzione Nuovo, Apri, Esempi e la modifica del diagramma sono disabilitati; Pausa è disabilitato mentre si attende un input.
@@ -823,7 +824,7 @@ La prima versione si pubblica solo quando creazione da zero e modifica funzionan
 | Q-01 | `7 / 2` tra due `Integer` dà `3.5`? | §6.4 |
 | Q-02 | Sono accettati `&&`, `\|\|`, `!`, `%`, `!=`? | §6.3, principio di prudenza |
 | Q-03 | Il caso di riferimento (QA-04) produce lo stesso output? | QA-04 |
-| Q-04 | Un file salvato da OnoFlow si riapre in Flowgorithm? In particolare: file importato, **modificato** e riesportato con `created`/`edited` conservati (il numero finale potrebbe essere un checksum); file **creato da zero** senza `created`/`edited`; file con valori neutri. **Bloccante per FR-FILE-10** | FMT-W-06, FMT-W-07, FR-FILE-10, NFR-PRIV-05 |
+| Q-04 | Un file salvato da OnoFlow si riapre in Flowgorithm? In particolare: file importato, **modificato** e riesportato con `created`/`edited` conservati (il numero finale potrebbe essere un checksum); file **creato da zero** senza `created`/`edited`; file con valori neutri. **Bloccante per FR-FILE-10** — **verificata (DEC-072):** sì, sia i file creati da zero sia quelli modificati | FMT-W-06, FMT-W-07, FR-FILE-10, NFR-PRIV-05 |
 | Q-05 | A capo CRLF o LF? Codifica dei file (UTF-8, con BOM, Windows-1252)? | FMT-R-01, FMT-W-01 |
 | Q-06 | Elementi vuoti autochiusi (`<then/>`, `<body/>`, cicli vuoti) e a capo nei commenti | FMT-W-03, FMT-W-04 |
 | Q-07 | Formato di funzioni con parametri e ritorno, `call`, `comment`, tipi `Real` e `Boolean` (serve un secondo file campione) | §7.4 |
@@ -846,14 +847,14 @@ La prima versione si pubblica solo quando creazione da zero e modifica funzionan
 | D-07 | Array in C++: `std::vector` o array statici | Fase 3 |
 | D-08 | Il codice generato replica la stampa a due decimali con la virgola, o usa il formato nativo? | Fase 3 |
 | D-09 | Contenuto di un blocco nuovo — **decisa (DEC-063):** vuoto, con un suggerimento grigio nel campo che non entra nel file | Prima del passo 9 |
-| D-10 | Cosa succede salvando un file importato e modificato: `edited` resta com'era (potrebbe non corrispondere più al contenuto) o si toglie? Dipende da Q-04 | Prima del passo 13 |
-| D-11 | Modo di passare tra diagramma e console su telefono: schede in basso, pulsante, scorrimento laterale (FR-MOB-01) | Prima del passo 6 |
-| D-12 | Tastiera per l'input numerico nella console su telefono: testo normale o tastiera numerica (`inputmode`)? Alcune tastiere numeriche, in particolare su iOS, non hanno il segno meno o la virgola | Prima del passo 6 |
-| D-13 | Versioni minime di Android e iOS da supportare (dipende dai telefoni degli studenti) | Prima del passo 6 |
+| D-10 | Cosa succede salvando un file importato e modificato: `edited` resta com'era (potrebbe non corrispondere più al contenuto) o si toglie? Dipende da Q-04 — **risolta da Q-04 (DEC-072):** `edited` resta com'era e il file si riapre in Flowgorithm | Prima del passo 13 |
+| D-11 | Modo di passare tra diagramma e console su telefono: schede in basso, pulsante, scorrimento laterale (FR-MOB-01) — **decisa (DEC-049):** due schede in basso, Diagramma e Console | Prima del passo 6 |
+| D-12 | Tastiera per l'input numerico nella console su telefono: testo normale o tastiera numerica (`inputmode`)? Alcune tastiere numeriche, in particolare su iOS, non hanno il segno meno o la virgola — **decisa (DEC-049):** tastiera normale | Prima del passo 6 |
+| D-13 | Versioni minime di Android e iOS da supportare (dipende dai telefoni degli studenti) — **decisa (DEC-049):** iOS/iPadOS 15.4, Chrome per Android delle ultime 3 versioni circa | Prima del passo 6 |
 
 ### 14.3 Organizzative
 
-- Disponibilità del nome OnoFlow su GitHub e creazione del repository.
+- Disponibilità del nome OnoFlow su GitHub e creazione del repository — **fatto (DEC-082):** `MrGear10/OnoFlow`.
 - Politica privacy di GitHub Pages per il README e il piè di pagina (NFR-PRIV-07, FR-INFO-03). **Non verificato:** in quali Paesi si trovino fisicamente i server che distribuiscono le pagine; l'avviso parla della sede di GitHub (USA), che determina il trasferimento fuori dall'UE.
 
 ---

@@ -21,13 +21,11 @@ import path from 'node:path';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUTPUT = path.join(ROOT, 'documentazione.html');
 
-// I documenti pubblici, nell'ordine dell'indice (PROGRESS.md e CLAUDE.md sono solo locali, DEC-071).
+// I documenti pubblici, nell'ordine dell'indice. Solo locali: PROGRESS.md, CLAUDE.md (DEC-071), DECISIONI.md, DESIGN.md, PRODUCT.md (DEC-083).
 export const DOCUMENTS = [
+    { id: 'guida', file: 'docs/guida.md', title: 'Guida d\'uso' },
     { id: 'presentazione', file: 'README.md', title: 'Presentazione' },
-    { id: 'prodotto', file: 'PRODUCT.md', title: 'Prodotto' },
     { id: 'specifica', file: 'OnoFlow_progetto.md', title: 'Specifica' },
-    { id: 'decisioni', file: 'DECISIONI.md', title: 'Decisioni' },
-    { id: 'design', file: 'DESIGN.md', title: 'Sistema visivo' },
     { id: 'controlli', file: 'docs/checklist-manuale.md', title: 'Controlli manuali' },
     { id: 'licenza', file: 'LICENSE', title: 'Licenza', plain: true }
 ];
@@ -147,7 +145,7 @@ function renderList(lines) {
  */
 export function renderMarkdown(source, docId, headings) {
     const text = source.replace(/\r\n/g, '\n')
-        .replace(/^---\n[\s\S]*?\n---\n/, '') // intestazione YAML di DESIGN.md: dati per gli strumenti
+        .replace(/^---\n[\s\S]*?\n---\n/, '') // intestazione YAML: dati per gli strumenti
         .replace(/<!--[\s\S]*?-->/g, '');
     const lines = text.split('\n');
     const out = [];

@@ -1100,7 +1100,7 @@ async function checkDocsSource(checks) {
         'documentazione.html corrisponde ai documenti (altrimenti: node build-docs.mjs)');
     checks.ok(inline('<script>x</script> & **a** `<b>`') === '&lt;script&gt;x&lt;/script&gt; &amp; <strong>a</strong> <code>&lt;b&gt;</code>',
         'il testo entra con l\'escape, anche nel codice');
-    checks.ok(inline('[decisioni](DECISIONI.md)') === '<a href="#decisioni">decisioni</a>', 'un collegamento a un altro documento diventa un\'ancora');
+    checks.ok(inline('[specifica](OnoFlow_progetto.md)') === '<a href="#specifica">specifica</a>', 'un collegamento a un altro documento diventa un\'ancora');
     const table = renderMarkdown('| a | b |\n|---|---|\n| `x \\| y` | uno<br>due |\n', 'prova', []);
     checks.ok(table.includes('<code>x | y</code>') && table.includes('uno<br>due'), `tabella con \\| e <br>: ${table}`);
     const list = renderMarkdown('- uno\n  - dentro\n- due\n', 'prova', []);
@@ -1148,19 +1148,19 @@ async function checkDocs(page, checks, viewport) {
         await docs.waitForTimeout(250);
         checks.ok(await docs.isVisible('#docs-nav .nav-doc-link'), 'Indice lo apre');
         checks.ok((await docs.getAttribute('#docs-index-button', 'aria-expanded')) === 'true', 'aria-expanded segue');
-        await docs.click('#docs-nav a[href="#prodotto"]');
+        await docs.click('#docs-nav a[href="#specifica"]');
         await docs.waitForTimeout(250);
         checks.ok(!(await docs.isVisible('#docs-nav .nav-doc-link')), 'una voce dell\'indice lo chiude');
-        const top = await docs.evaluate(() => document.getElementById('prodotto').getBoundingClientRect().top);
+        const top = await docs.evaluate(() => document.getElementById('specifica').getBoundingClientRect().top);
         checks.ok(top >= 0 && top < viewport.height / 2, `e porta al documento (${Math.round(top)} px dall'alto)`);
     } else {
         checks.ok(await docs.isVisible('#docs-nav .nav-doc-link'), 'sul computer l\'indice è sempre a sinistra');
-        await docs.fill('#docs-filter', 'operatori');
+        await docs.fill('#docs-filter', 'errori');
         const shown = await docs.locator('#docs-nav .nav-doc:not([hidden])').count();
         checks.ok(shown >= 1 && shown < DOCUMENTS.length, `il filtro lascia i documenti con quel titolo (${shown})`);
         await docs.press('#docs-filter', 'Enter');
         await docs.waitForTimeout(250);
-        checks.ok((await docs.evaluate(() => window.location.hash)).includes('operatori'), 'Invio porta al primo titolo trovato');
+        checks.ok((await docs.evaluate(() => window.location.hash)).includes('errori'), 'Invio porta al primo titolo trovato');
     }
     checks.ok(errors.length === 0, `documentazione: errori nella pagina: ${errors.join('; ')}`);
     await docs.close();

@@ -9,10 +9,15 @@ OnoFlow serve a scuola: si costruisce un diagramma di flusso, lo si esegue con l
 ## Cosa si può fare
 
 - **Aprire** un file `.fprg` (pulsante o trascinamento sulla pagina) o partire da uno degli **esempi** del menu.
-- **Costruire e modificare** il diagramma: il + sulle frecce inserisce un blocco (dichiarazione, assegnazione, input, output, if, while, do, for); un tocco seleziona, un secondo tocco modifica; Elimina toglie un blocco con il suo contenuto; Annulla e Ripeti (anche Ctrl + Z e Ctrl + Y).
-- **Eseguire** il programma: l'output e gli input nella console; Pausa e Ferma anche con un ciclo infinito; gli errori segnati in rosso sul blocco, con un messaggio pensato per lo studente.
+- **Costruire e modificare** il diagramma: il + sulle frecce inserisce un blocco (dichiarazione, assegnazione, input, output, if, while, do, for, chiamata, commento); un tocco seleziona, un secondo tocco modifica; Sposta porta un blocco in un altro punto; Elimina lo toglie con il suo contenuto; Annulla e Ripeti (anche Ctrl + Z e Ctrl + Y).
+- **Funzioni:** crearne di nuove, con parametri e valore restituito, e chiamarle dal programma.
+- **Eseguire** il programma: l'output e gli input nella console; Pausa e Ferma anche con un ciclo infinito; gli errori segnati in rosso sul blocco, con un messaggio pensato per lo studente. Molti errori si vedono già prima di eseguire, mentre si scrive.
+- **Passo a passo:** un blocco alla volta, con il pannello delle variabili che mostra i valori a ogni passo.
 - **Salvare** il file `.fprg`: un file aperto si riscrive cambiando solo quello che si è modificato.
 - Sul **telefono** diagramma e console stanno in due schede; zoom con due dita.
+- Tema chiaro o scuro, che segue il sistema o si sceglie a mano.
+
+Come si fa ogni cosa: [Guida d'uso](docs/guida.md).
 
 ## Come si usa
 
@@ -44,8 +49,8 @@ Progettato da **MrGear10** e sviluppato con l'assistenza di **Claude (Anthropic)
   node check-ui.mjs                               # la pagina vera, su computer e telefono
   ```
 
-- **Documentazione navigabile:** `documentazione.html`, generata dai documenti qui sotto con `node build-docs.mjs` (cartella `tools/`); si apre anche dall'app (pulsante con il libro, Menu → Documentazione).
-- Documenti: [`OnoFlow_progetto.md`](OnoFlow_progetto.md) (specifica), [`DECISIONI.md`](DECISIONI.md) (decisioni prese durante lo sviluppo), [`PRODUCT.md`](PRODUCT.md) e [`DESIGN.md`](DESIGN.md) (prodotto e sistema visivo), [`docs/checklist-manuale.md`](docs/checklist-manuale.md) (controlli a mano).
+- **Documentazione navigabile:** `documentazione.html`, generata dai documenti qui sotto con `node build-docs.mjs` (cartella `tools/`); si apre anche dall'app (pulsante con il libro, Menu → Progetto → Documentazione).
+- Documenti: [`docs/guida.md`](docs/guida.md) (guida d'uso), [`OnoFlow_progetto.md`](OnoFlow_progetto.md) (specifica), [`docs/checklist-manuale.md`](docs/checklist-manuale.md) (controlli a mano).
 
 ## Licenza
 

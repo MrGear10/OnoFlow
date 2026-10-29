@@ -10,7 +10,7 @@
  *   - if: rombo, ramo Falso a sinistra e ramo Vero a destra, riuniti sotto in un punto (DEC-057);
  *   - while e for: esagono in alto, corpo sotto, ritorno a sinistra, uscita a destra;
  *   - do: corpo in alto, esagono in fondo, ritorno a sinistra fino all'inizio.
- * Le misure sono in quadretti (la regola del quadretto, DESIGN.md): larghezze arrotondate a
+ * Le misure sono in quadretti (la regola del quadretto, DEC-051): larghezze arrotondate a
  * due quadretti, così gli assi cadono sulle righe del foglio.
  *
  *     layout(program, { t, measure, square, fontSize }) → {
