@@ -21,11 +21,10 @@ import path from 'node:path';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUTPUT = path.join(ROOT, 'documentazione.html');
 
-// I documenti pubblici, nell'ordine dell'indice. Solo locali: PROGRESS.md, CLAUDE.md (DEC-071), DECISIONI.md, DESIGN.md, PRODUCT.md (DEC-083).
+// I documenti pubblici, nell'ordine dell'indice. Solo locali: PROGRESS.md, CLAUDE.md (DEC-071), DECISIONI.md, DESIGN.md, PRODUCT.md, OnoFlow_progetto.md (DEC-083).
 export const DOCUMENTS = [
     { id: 'guida', file: 'docs/guida.md', title: 'Guida d\'uso' },
     { id: 'presentazione', file: 'README.md', title: 'Presentazione' },
-    { id: 'specifica', file: 'OnoFlow_progetto.md', title: 'Specifica' },
     { id: 'controlli', file: 'docs/checklist-manuale.md', title: 'Controlli manuali' },
     { id: 'licenza', file: 'LICENSE', title: 'Licenza', plain: true }
 ];

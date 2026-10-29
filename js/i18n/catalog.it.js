@@ -351,7 +351,7 @@
             'ui.menu.about': 'Progetto',
             'ui.info.open': 'Informazioni',
             'ui.docs.open': 'Documentazione',
-            'ui.docs.full': 'Documentazione completa: guida d\'uso, presentazione, specifica, controlli manuali.',
+            'ui.docs.full': 'Documentazione completa: guida d\'uso, presentazione, controlli manuali, licenza.',
             'ui.theme.toLight': 'Tema chiaro',
             'ui.theme.toDark': 'Tema scuro',
             'ui.info.title': 'Informazioni',
