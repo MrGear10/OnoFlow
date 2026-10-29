@@ -412,6 +412,29 @@ async function checkInsert(page, checks, viewport) {
     }
 }
 
+/* Al tocco vicino a un + con un blocco accanto (M-01): Chromium con isMobile sposta il tocco
+   sul blocco più vicino; conta invece l'area di 44 px del punto, a ogni zoom. */
+async function checkTouchNearSlot(page, checks) {
+    for (const times of [0, 3]) {
+        for (let i = 0; i < times; i++) {
+            await page.tap('#zoom-out');
+        }
+        const zoom = (await page.textContent('#zoom-reset')).trim();
+        const point = await page.locator('#diagram [data-slot="1"] .dg-slot-mark').boundingBox();
+        await page.touchscreen.tap(point.x + point.width / 2 + 18, point.y + point.height / 2);
+        checks.ok(await page.locator('.block-menu').count() === 1 && await page.isVisible('.block-menu'),
+            `al tocco, con lo zoom al ${zoom}, il punto si colpisce a 18 px (una sola volta)`);
+        checks.ok(await page.locator('#diagram [aria-pressed="true"]').count() === 0, `al tocco, con lo zoom al ${zoom}, nessun blocco selezionato al posto del punto`);
+        await page.keyboard.press('Escape');
+        const block = await page.locator('#diagram .is-selectable').first().boundingBox();
+        await page.touchscreen.tap(block.x + block.width / 2, block.y + block.height / 2);
+        checks.ok(await page.locator('#diagram [aria-pressed="true"]').count() === 1, `al tocco, con lo zoom al ${zoom}, un tocco dentro il blocco lo seleziona`);
+        await page.focus('#diagram .is-selectable');
+        await page.keyboard.press('Escape');
+    }
+    await page.tap('#zoom-reset');
+}
+
 /* Costruire da zero ed eseguire, solo con l'editor (verso QA-11). */
 async function checkBuildAndRun(page, checks, viewport) {
     const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
@@ -1322,6 +1345,9 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
 
         await checkRuntimeReveal(page, checks, viewport);
         await chooseExample(page);
+        if (viewport.phone) {
+            await checkTouchNearSlot(page, checks);
+        }
         await checkSave(page, checks);
         await checkBadFile(page, checks);
         await checkRestore(page, checks);

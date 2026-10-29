@@ -857,11 +857,28 @@
             }
         }
 
+        /* Al tocco alcuni browser spostano il bersaglio, e le coordinate del clic, sull'elemento cliccabile
+           più vicino: un tocco accanto a un + finiva sul blocco vicino. Per il tocco conta il punto
+           di pointerdown, che non è spostato, e decide sempre hitTest (M-01). */
+        var touchStart = null;
+        sheet.addEventListener('pointerdown', function (event) {
+            touchStart = event.pointerType === 'touch' && event.isPrimary ? { clientX: event.clientX, clientY: event.clientY } : null;
+        });
+        sheet.addEventListener('pointercancel', function () {
+            touchStart = null;
+        });
+
         sheet.addEventListener('click', function (event) {
+            var touch = touchStart;
+            touchStart = null;
             if (!diagram.contains(event.target) && event.target !== sheet && !event.target.classList.contains('sheet-content')) {
                 return; // piè di pagina e altro: non è il disegno
             }
-            activate(event, event.target.closest ? event.target.closest('[data-slot], .is-selectable') : null);
+            if (touch) {
+                activate(touch, null);
+            } else {
+                activate(event, event.target.closest ? event.target.closest('[data-slot], .is-selectable') : null);
+            }
         });
 
         diagram.addEventListener('keydown', function (event) {
