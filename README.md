@@ -50,7 +50,7 @@ Progettato da **MrGear10** e sviluppato con l'assistenza di **Claude (Anthropic)
   ```
 
 - **Documentazione navigabile:** `documentazione.html`, generata dai documenti qui sotto con `node build-docs.mjs` (cartella `tools/`); si apre anche dall'app (pulsante con il libro, Menu → Progetto → Documentazione).
-- Documenti: [`docs/guida.md`](docs/guida.md) (guida d'uso), [`docs/checklist-manuale.md`](docs/checklist-manuale.md) (controlli a mano).
+- Guida d'uso: [`docs/guida.md`](docs/guida.md).
 
 ## Licenza
 

@@ -1148,10 +1148,10 @@ async function checkDocs(page, checks, viewport) {
         await docs.waitForTimeout(250);
         checks.ok(await docs.isVisible('#docs-nav .nav-doc-link'), 'Indice lo apre');
         checks.ok((await docs.getAttribute('#docs-index-button', 'aria-expanded')) === 'true', 'aria-expanded segue');
-        await docs.click('#docs-nav a[href="#controlli"]');
+        await docs.click('#docs-nav a[href="#presentazione"]');
         await docs.waitForTimeout(250);
         checks.ok(!(await docs.isVisible('#docs-nav .nav-doc-link')), 'una voce dell\'indice lo chiude');
-        const top = await docs.evaluate(() => document.getElementById('controlli').getBoundingClientRect().top);
+        const top = await docs.evaluate(() => document.getElementById('presentazione').getBoundingClientRect().top);
         checks.ok(top >= 0 && top < viewport.height / 2, `e porta al documento (${Math.round(top)} px dall'alto)`);
     } else {
         checks.ok(await docs.isVisible('#docs-nav .nav-doc-link'), 'sul computer l\'indice è sempre a sinistra');
