@@ -1983,8 +1983,10 @@ button.diagram-error-entry:active {
     }
 }
 
-/* Telefoni stretti: Pausa e Ferma restano visibili, con la sola icona. */
-@media (max-width: 27.5rem) {
+/* Barra stretta: con tutte le etichette (e «Riprendi» al posto di «Pausa») i comandi non stanno
+   in una riga accanto al marchio e al menu, e la barra andava su tre o quattro righe (M-02).
+   Pausa e Ferma restano visibili, con la sola icona; Passo, durante l'esecuzione, sta nel foglio. */
+@media (max-width: 40rem) {
     #step {
         display: none;
     }
@@ -2002,10 +2004,7 @@ button.diagram-error-entry:active {
     }
 
     #pause .button-label,
-    #stop .button-label,
-    .selection-delete .button-label,
-    .selection-edit .button-label,
-    .selection-move .button-label {
+    #stop .button-label {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -2019,7 +2018,38 @@ button.diagram-error-entry:active {
         padding: 0;
     }
 
-    /* Quattro pulsanti con il testo non stanno in 360 px: Modifica, Sposta ed Elimina restano con l'icona. */
+    /* Con la sola icona il barrato orizzontale si confonde con il disegno: qui è in diagonale. */
+    #pause:disabled::after,
+    #stop:disabled::after {
+        left: 22%;
+        right: 22%;
+        transform: rotate(-40deg);
+        height: 1.5px;
+    }
+}
+
+/* Sotto i 360 px (fuori specifica) il marchio lascia il posto ai comandi, prima che il menu vada
+   a capo; il nome resta nel titolo della pagina. */
+@media (max-width: 22.49rem) {
+    .brand {
+        display: none;
+    }
+}
+
+/* Telefoni stretti: quattro pulsanti con il testo non stanno in 360 px nella barra della selezione:
+   Modifica, Sposta ed Elimina restano con l'icona. */
+@media (max-width: 27.5rem) {
+    .selection-delete .button-label,
+    .selection-edit .button-label,
+    .selection-move .button-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
     .selection-bar .button {
         padding: 0 var(--space-2);
     }
@@ -2030,15 +2060,6 @@ button.diagram-error-entry:active {
         width: var(--touch);
         padding: 0;
         justify-content: center;
-    }
-
-    /* Con la sola icona il barrato orizzontale si confonde con il disegno: qui è in diagonale. */
-    #pause:disabled::after,
-    #stop:disabled::after {
-        left: 22%;
-        right: 22%;
-        transform: rotate(-40deg);
-        height: 1.5px;
     }
 }
 

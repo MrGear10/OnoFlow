@@ -1314,6 +1314,56 @@ async function checkStep(page, checks, viewport) {
     checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale durante il passo-passo');
 }
 
+/* La barra del telefono resta su due righe a ogni larghezza da 360 a 895 px, ferma e durante
+   il passo a passo, quando Pausa diventa Riprendi e lo stato occupa la seconda riga (M-02). */
+async function checkBarWidths(browser, engineName) {
+    const checks = new Checks(`${engineName} barra stretta`);
+    const context = await browser.newContext({
+        viewport: { width: 360, height: 700 },
+        hasTouch: true,
+        isMobile: engineName === 'chromium'
+    });
+    const page = await context.newPage();
+    const measure = () => page.evaluate(() => {
+        const box = (selector) => document.querySelector(selector).getBoundingClientRect();
+        const buttons = Array.from(document.querySelectorAll('.run-controls .button, #menu-button'))
+            .filter((button) => button.offsetParent !== null)
+            .map((button) => button.getBoundingClientRect());
+        return {
+            height: Math.round(box('.bar').height),
+            sameRow: box('#menu-button').top === box('#run').top,
+            small: buttons.some((button) => button.width < 44 || button.height < 44),
+            scroll: document.documentElement.scrollWidth > document.documentElement.clientWidth
+        };
+    });
+    try {
+        await page.goto(URL);
+        await page.waitForSelector('#diagram .dg-block--terminal');
+        const expected = (await measure()).height;
+        await chooseExample(page);
+        for (const state of ['ferma', 'passo a passo']) {
+            if (state === 'passo a passo') {
+                await page.click('#menu-button');
+                await page.click('#cmd-step');
+                await page.locator('#status').waitFor();
+            }
+            const wrong = [];
+            for (let width = 360; width <= 895; width += 10) {
+                await page.setViewportSize({ width, height: 700 });
+                const bar = await measure();
+                if (bar.height !== expected || !bar.sameRow || bar.small || bar.scroll) {
+                    wrong.push(`${width} px: ${bar.height} px${bar.sameRow ? '' : ', menu a capo'}${bar.small ? ', pulsante sotto 44 px' : ''}${bar.scroll ? ', scorrimento' : ''}`);
+                }
+            }
+            checks.ok(wrong.length === 0, `${state}: barra su due righe (${expected} px) da 360 a 895 px${wrong.length ? ' — ' + wrong.join('; ') : ''}`);
+            await page.setViewportSize({ width: 360, height: 700 });
+        }
+    } finally {
+        await context.close();
+    }
+    return checks;
+}
+
 async function checkViewport(browser, engineName, viewport, screenshotsDir) {
     const checks = new Checks(`${engineName} ${viewport.name}`);
     const context = await browser.newContext({
@@ -1408,8 +1458,10 @@ async function main() {
             continue;
         }
         try {
-            for (const viewport of VIEWPORTS) {
-                const checks = await checkViewport(browser, engineName, viewport, options.screenshots);
+            const runs = VIEWPORTS.map((viewport) => () => checkViewport(browser, engineName, viewport, options.screenshots));
+            runs.push(() => checkBarWidths(browser, engineName));
+            for (const run of runs) {
+                const checks = await run();
                 if (checks.failures.length === 0) {
                     console.log(`[${checks.label}] OK — ${checks.count} verifiche`);
                 } else {
