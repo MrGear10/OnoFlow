@@ -6,6 +6,7 @@
  * Uso, dalla cartella tools/:
  *     node check-ui.mjs                                  Chromium e Firefox
  *     node check-ui.mjs --engines firefox --screenshots /percorso/cartella
+ *     node check-ui.mjs --solo orizzontale               solo le verifiche con quel nome
  *     DEBUG=1 node check-ui.mjs                          messaggio completo delle verifiche interrotte
  *
  * Percorsi verificati, su computer (1440 × 900, 900 × 700) e telefono (360 × 640, 375 × 667, QA-14):
@@ -40,6 +41,7 @@
  *     solo quelle righe cambiano, gli attributi restano; poi riaperta (FR-FILE-09);
  *   - il focus su un blocco o un punto fuori vista lo porta in vista, anche in Firefox (DEC-069);
  *   - telefono ruotato a metà dell'esecuzione: l'esecuzione e il diagramma restano (FR-MOB-13);
+ *   - telefono in orizzontale: barra su una riga, schede in colonna, foglio libero in mezzo (M-04);
  *   - passo-passo: Passo (barra, foglio sul telefono, menu, F10) si ferma prima di ogni blocco,
  *     che è quello evidenziato; input a metà passo; Riprendi e Ferma (FR-RUN-05);
  *   - analisi statica: «b = True» segnalato sotto il campo mentre si scrive, con il suggerimento,
@@ -78,12 +80,14 @@ const VIEWPORTS = [
 ];
 
 function readOptions(argv) {
-    const options = { engines: Object.keys(ENGINES), screenshots: '' };
+    const options = { engines: Object.keys(ENGINES), screenshots: '', only: '' };
     for (let i = 0; i < argv.length; i++) {
         if (argv[i] === '--engines') {
             options.engines = argv[++i].split(',');
         } else if (argv[i] === '--screenshots') {
             options.screenshots = argv[++i];
+        } else if (argv[i] === '--solo') {
+            options.only = argv[++i];
         }
     }
     return options;
@@ -1404,6 +1408,62 @@ async function checkBarWidths(browser, engineName) {
     return checks;
 }
 
+/* Telefono in orizzontale (M-04): barra su una riga, schede in colonna a sinistra, comandi del
+   foglio ai lati; in mezzo al foglio resta una fascia libera alta almeno 250 px. */
+async function checkLandscape(browser, engineName) {
+    const checks = new Checks(`${engineName} orizzontale`);
+    for (const size of [{ width: 740, height: 360 }, { width: 667, height: 375 }]) {
+        const context = await browser.newContext({ viewport: size, hasTouch: true, isMobile: engineName === 'chromium' });
+        const page = await context.newPage();
+        const label = `${size.width} × ${size.height}`;
+        // Altezza libera nella fascia centrale del foglio: i comandi che vi sporgono la riducono.
+        const layout = () => page.evaluate(() => {
+            const box = (element) => element.getBoundingClientRect();
+            const sheet = box(document.getElementById('sheet'));
+            const middle = { left: sheet.left + sheet.width / 2 - 80, right: sheet.left + sheet.width / 2 + 80 };
+            const covered = Array.from(document.querySelectorAll('.zoom, .history-controls--sheet, .step-controls, .variables-strip'))
+                .filter((element) => getComputedStyle(element).display !== 'none' && element.offsetParent !== null)
+                .map(box)
+                .filter((rect) => rect.right > middle.left && rect.left < middle.right)
+                .reduce((sum, rect) => sum + rect.height, 0);
+            const tabs = ['tab-diagram', 'tab-console'].map((id) => box(document.getElementById(id)));
+            return {
+                bar: Math.round(box(document.querySelector('.bar')).height),
+                free: Math.round(sheet.height - covered),
+                tabsColumn: tabs[0].left === tabs[1].left && tabs[1].top > tabs[0].top && tabs[0].right <= sheet.left + 1,
+                tabSize: Math.round(Math.min(tabs[0].width, tabs[0].height)),
+                statusWidth: Math.round(box(document.getElementById('status')).width),
+                scroll: document.documentElement.scrollWidth > window.innerWidth
+            };
+        });
+        try {
+            await page.goto(URL);
+            await page.waitForSelector('#diagram .dg-block--terminal');
+            await chooseExample(page);
+            let state = await layout();
+            checks.ok(state.bar <= 64, `${label}: barra su una riga (${state.bar} px)`);
+            checks.ok(state.tabsColumn && state.tabSize >= 44, `${label}: schede in colonna a sinistra, da 44 px`);
+            checks.ok(state.free >= 250, `${label}: fascia libera del foglio ${state.free} px`);
+            checks.ok(!state.scroll, `${label}: nessuno scorrimento orizzontale`);
+            await page.tap('#step');
+            await page.waitForFunction(() => document.getElementById('status').textContent.trim() === 'Passo a passo');
+            state = await layout();
+            checks.ok(state.bar <= 64 && state.statusWidth <= 24, `${label}: nel passo a passo lo stato è un segno nella stessa riga (${state.bar} px, segno ${state.statusWidth} px)`);
+            checks.ok(state.free >= 250, `${label}: fascia libera nel passo a passo ${state.free} px`);
+            checks.ok(await page.isVisible('#step-sheet') && await page.isVisible('#stop'), `${label}: Passo sul foglio e Ferma nella barra`);
+            await page.tap('#tab-console');
+            checks.ok(await page.isVisible('#panel-console') && !(await page.isVisible('#panel-diagram')), `${label}: la scheda Console dalla colonna`);
+            await page.tap('#tab-diagram');
+            await page.tap('#stop');
+        } catch (error) {
+            checks.ok(false, `${label}: verifica interrotta: ${error.message.split('\n')[0]}`);
+        } finally {
+            await context.close();
+        }
+    }
+    return checks;
+}
+
 async function checkViewport(browser, engineName, viewport, screenshotsDir) {
     const checks = new Checks(`${engineName} ${viewport.name}`);
     const context = await browser.newContext({
@@ -1498,9 +1558,10 @@ async function main() {
             continue;
         }
         try {
-            const runs = VIEWPORTS.map((viewport) => () => checkViewport(browser, engineName, viewport, options.screenshots));
-            runs.push(() => checkBarWidths(browser, engineName));
-            for (const run of runs) {
+            const runs = VIEWPORTS.map((viewport) => [viewport.name, () => checkViewport(browser, engineName, viewport, options.screenshots)]);
+            runs.push(['barra stretta', () => checkBarWidths(browser, engineName)]);
+            runs.push(['orizzontale', () => checkLandscape(browser, engineName)]);
+            for (const [, run] of runs.filter(([name]) => name.includes(options.only))) {
                 const checks = await run();
                 if (checks.failures.length === 0) {
                     console.log(`[${checks.label}] OK — ${checks.count} verifiche`);

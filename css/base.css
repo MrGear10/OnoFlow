@@ -1990,8 +1990,9 @@ button.diagram-error-entry:active {
    I comandi cambiano con lo stato (M-03, D-M1): da fermo Esegui e Passo, durante l'esecuzione
    Ferma e Pausa negli stessi due posti. Il comando che non vale non c'è, invece di restare
    barrato; tiene però la sua larghezza, così i posti non si spostano mai. Passo, durante
-   l'esecuzione, sta nel foglio (DEC-074). */
-@media (max-width: 40rem) {
+   l'esecuzione, sta nel foglio (DEC-074). Vale anche per il telefono in orizzontale, dove la
+   barra ha una riga sola (M-04). */
+@media (max-width: 40rem), (max-width: 55.99rem) and (orientation: landscape) and (max-height: 30rem) {
     .run-controls {
         display: grid;
         grid-template-columns: auto auto;
@@ -2065,6 +2066,124 @@ button.diagram-error-entry:active {
         right: 0;
         height: 1px;
         transform: rotate(-45deg) scaleX(1.3);
+    }
+}
+
+/* Telefono in orizzontale (M-04, D-M2): con la barra su due righe e le schede in basso restavano
+   circa 140 px di foglio. La barra ha una riga sola, con lo stato ridotto al suo segno (il testo
+   resta per i lettori di schermo); le schede diventano una colonna di icone a sinistra; lo zoom
+   è una colonna in basso a destra e Annulla, Ripeti e Passo stanno in alto a destra, così la
+   fascia in mezzo al foglio resta libera per il diagramma. */
+@media (max-width: 55.99rem) and (orientation: landscape) and (max-height: 30rem) {
+    .app {
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-rows: auto auto minmax(0, 1fr);
+        grid-template-areas: "bar bar" "tabs notices" "tabs work";
+    }
+
+    .bar {
+        grid-area: bar;
+    }
+
+    .notices {
+        grid-area: notices;
+    }
+
+    .work {
+        grid-area: work;
+    }
+
+    .tabs {
+        grid-area: tabs;
+        grid-template-columns: none;
+        grid-auto-rows: var(--touch);
+        align-content: start;
+        gap: var(--space-1);
+        padding: var(--space-1) 0 env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+        border-top: 0;
+        border-right: 1px solid var(--chrome-line);
+    }
+
+    .tab {
+        width: var(--touch);
+        min-height: var(--touch);
+        padding: 0;
+        border-top: 0;
+        border-left: 2px solid transparent;
+    }
+
+    .tab[aria-selected="true"] {
+        border-left-color: var(--ink);
+    }
+
+    .tab span {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    /* Il segno di qualcosa di nuovo nella console va nell'angolo dell'icona. */
+    .tab[data-badge]::after {
+        position: absolute;
+        top: var(--space-2);
+        right: var(--space-2);
+    }
+
+    .bar-row--main {
+        flex-wrap: nowrap;
+        padding-bottom: var(--space-1);
+    }
+
+    .file-group {
+        order: 0;
+        flex: 1 1 auto;
+    }
+
+    .status {
+        gap: 0;
+        font-size: 0;
+    }
+
+    .zoom {
+        flex-direction: column;
+    }
+
+    .zoom .button + .button {
+        border-left: 0;
+        border-top: 1px solid var(--line);
+    }
+
+    .zoom-level {
+        min-width: 0;
+        padding: 0;
+        font-size: var(--text-small);
+    }
+
+    .history-controls--sheet,
+    .step-controls {
+        left: auto;
+        right: calc(var(--space-3) + env(safe-area-inset-right, 0px));
+        top: var(--space-3);
+        bottom: auto;
+    }
+
+    .selection-bar,
+    .variables-strip {
+        left: var(--space-3);
+        right: calc(var(--touch) + 2 * var(--space-3) + env(safe-area-inset-right, 0px));
+        bottom: var(--space-3);
+    }
+
+    .selection-bar {
+        right: auto;
+    }
+
+    .sheet .footer {
+        padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+        padding-right: calc(var(--touch) + 3 * var(--space-3) + env(safe-area-inset-right, 0px));
     }
 }
 
