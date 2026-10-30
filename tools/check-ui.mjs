@@ -233,9 +233,20 @@ async function checkDiagram(page, checks, viewport, engineName) {
     const fitted = await page.locator('#diagram svg.diagram').boundingBox();
     const sheet = await page.evaluate(() => {
         const node = document.getElementById('sheet');
-        return { width: node.clientWidth, height: node.clientHeight };
+        return { width: node.clientWidth, height: node.clientHeight, scrollWidth: node.scrollWidth, scrollLeft: node.scrollLeft, scrollTop: node.scrollTop };
     });
-    checks.ok(fitted.width <= sheet.width + 1 && fitted.height <= sheet.height + 1, 'Adatta allo schermo: il diagramma entra tutto');
+    if (viewport.phone) {
+        // Sul telefono "Adatta alla larghezza" (M-05): largo quanto il foglio, al massimo al 100%,
+        // dall'alto. L'esempio è largo 800 px: a 360 px lo zoom è circa 41%, contro il 21% di prima.
+        const percent = parseInt(await zoomLabel(page), 10);
+        checks.ok((await page.getAttribute('#zoom-fit', 'aria-label')) === 'Adatta alla larghezza', 'sul telefono il comando si chiama "Adatta alla larghezza"');
+        checks.ok(percent >= 35 && percent <= 100, `Adatta alla larghezza: zoom tra 35% e 100% (${percent}%)`);
+        checks.ok(sheet.scrollWidth <= sheet.width + 1 && fitted.width >= sheet.width - 3 * 20, `Adatta alla larghezza: il diagramma è largo quanto il foglio (${Math.round(fitted.width)} su ${sheet.width} px)`);
+        checks.ok(fitted.height > sheet.height && sheet.scrollTop === 0, 'Adatta alla larghezza: si parte dall\'alto e si scorre in verticale');
+    } else {
+        checks.ok((await page.getAttribute('#zoom-fit', 'aria-label')) === 'Adatta allo schermo', 'sul computer il comando si chiama "Adatta allo schermo"');
+        checks.ok(fitted.width <= sheet.width + 1 && fitted.height <= sheet.height + 1, 'Adatta allo schermo: il diagramma entra tutto');
+    }
     await page.click('#zoom-reset');
     checks.ok(await zoomLabel(page) === '100%', 'il pulsante della percentuale riporta al 100%');
     if (!viewport.phone) {

@@ -16,7 +16,7 @@ OnoFlow si apre all'indirizzo [mrgear10.github.io/OnoFlow](https://mrgear10.gith
   - **Modifica:** Nuova funzione, Annulla, Ripeti.
   - **Progetto:** tema chiaro o scuro, Documentazione, Informazioni.
 
-Sul computer diagramma e console stanno affiancati. **Sul telefono** stanno in due schede in basso, **Diagramma** e **Console**: all'avvio dell'esecuzione si passa da soli alla console.
+Sul computer diagramma e console stanno affiancati. **Sul telefono** stanno in due schede in basso, **Diagramma** e **Console** (con il telefono in orizzontale, una colonna di icone a sinistra): all'avvio dell'esecuzione si passa da soli alla console. Sul telefono la barra in alto mostra solo i comandi che servono: da fermo **Esegui** e **Passo**, durante l'esecuzione **Ferma** e **Pausa** negli stessi posti.
 
 ## Il primo programma
 
@@ -78,7 +78,7 @@ In alternativa, con un blocco selezionato, **Inserisci dopo** aggiunge un blocco
 ### Zoom e spostamento nel foglio
 
 - Due dita per ingrandire e per spostarsi sul telefono; Ctrl + rotella o i pulsanti **−** e **+** sul computer.
-- Il pulsante con la percentuale torna al 100%; **Adatta allo schermo** mostra tutto il diagramma.
+- Il pulsante con la percentuale torna al 100%; **Adatta allo schermo** mostra tutto il diagramma. Sul telefono il comando si chiama **Adatta alla larghezza**: il diagramma prende la larghezza dello schermo e si scorre in verticale.
 - Con il foglio selezionato funzionano anche i tasti `+`, `-` e `0`.
 
 ## Eseguire
@@ -94,7 +94,7 @@ In alternativa, con un blocco selezionato, **Inserisci dopo** aggiunge un blocco
 - **Passo** (o **F10**, o Menu → Esecuzione → **Esegui passo a passo**) esegue un blocco alla volta. Il blocco evidenziato in giallo è il **prossimo** che verrà eseguito.
 - Il **pannello delle variabili** mostra il valore di ogni variabile: sul computer in cima alla console, sul telefono in una striscia sotto il diagramma, che si allarga con un tocco. Il valore cambiato nell'ultimo passo è sottolineato.
 - **Riprendi** continua senza fermarsi; **Ferma** termina.
-- Sul telefono, durante il passo a passo, il pulsante **Passo** sta in basso a sinistra del foglio.
+- Sul telefono, durante il passo a passo, il pulsante **Passo** sta in basso a sinistra del foglio (in orizzontale, in alto a destra).
 
 ## Aprire e salvare
 

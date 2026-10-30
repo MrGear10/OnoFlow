@@ -2,7 +2,7 @@
  * OnoFlow — scorrimento e zoom del diagramma (FR-MOB-06, FR-MOB-21, FR-MOB-03, passo 7).
  *
  * Dipendenze: js/namespace.js.
- * Definisce: OnoFlow.DiagramViewport.{create, clampZoom, fitZoom, gridFactor, MIN_ZOOM, MAX_ZOOM}
+ * Definisce: OnoFlow.DiagramViewport.{create, clampZoom, fitZoom, fitWidthZoom, gridFactor, MIN_ZOOM, MAX_ZOOM}
  *
  * Lo scorrimento è quello nativo del foglio (con il dito, la rotella, la barra): resta fluido
  * anche sui telefoni lenti (NFR-PERF-04). Lo zoom cambia la misura dell'SVG, del margine e dei
@@ -10,12 +10,12 @@
  *   - due dita sul foglio (eventi touch, con preventDefault: Safari ignora user-scalable=no);
  *   - gesti di Safari (gesturestart/gesturechange) e Ctrl + rotella o pizzico sul touchpad;
  *   - tasti + − 0 con il foglio a fuoco;
- *   - comandi Riduci, 100%, Ingrandisci, Adatta allo schermo (li collega app.js).
+ *   - comandi Riduci, 100%, Ingrandisci, Adatta allo schermo o alla larghezza (li collega app.js).
  * Il punto sotto le dita, o sotto il puntatore, resta fermo mentre si ingrandisce.
  * Un diagramma si apre sempre al 100% e lo zoom non si memorizza (DEC-057).
  *
  *     create(scroller, { content, onChange(zoom) }) → {
- *         attach(view), zoom(), setZoom(z, ancora?), zoomBy(fattore, ancora?), reset(), fit(),
+ *         attach(view), zoom(), setZoom(z, ancora?), zoomBy(fattore, ancora?), reset(), fit({ width }?),
  *         reveal(box, { quiet }) → true se il foglio è visibile e il blocco è stato inquadrato,
  *         pointAt(evento) → punto del disegno in pixel al 100% (per hitTest del renderer)
  *     }
@@ -39,6 +39,13 @@
     function fitZoom(content, available) {
         var zoom = Math.min(available.width / content.width, available.height / content.height);
         return clampZoom(Math.min(zoom, 2));
+    }
+
+    /* Zoom che porta la larghezza del contenuto a quella disponibile, mai oltre il 100%: su uno
+       schermo stretto il diagramma intero diventerebbe illeggibile, così si scorre in verticale
+       (M-05). */
+    function fitWidthZoom(content, available) {
+        return clampZoom(Math.min(available.width / content.width, 1));
     }
 
     /* Ogni quanti quadretti si disegna una riga del foglio, a questo zoom. */
@@ -117,25 +124,31 @@
             setZoom(zoom * factor, anchor);
         }
 
-        /* Spazio occupato dai margini del foglio, che crescono con lo zoom. */
-        function paddingAt100() {
+        /* Spazio occupato dai margini del foglio, allo zoom attuale. */
+        function paddingNow() {
             var style = scroller.ownerDocument.defaultView.getComputedStyle(content);
             return {
-                width: (parseFloat(style.paddingLeft) + parseFloat(style.paddingRight)) / zoom,
-                height: (parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)) / zoom
+                width: parseFloat(style.paddingLeft) + parseFloat(style.paddingRight),
+                height: parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)
             };
         }
 
-        function fit() {
+        /* width: solo in larghezza (telefono), altrimenti tutto il diagramma. I margini crescono
+           con lo zoom solo in parte (sul telefono una parte è fissa): lo zoom si ricalcola con i
+           margini che ne risultano finché non cambia più, in pochi giri. */
+        function fit(fitOptions) {
             if (!view || scroller.clientWidth === 0) {
                 return;
             }
-            var padding = paddingAt100();
-            zoom = fitZoom(
-                { width: view.size.width + padding.width, height: view.size.height + padding.height },
-                { width: scroller.clientWidth, height: scroller.clientHeight }
-            );
-            apply();
+            var fitter = fitOptions && fitOptions.width ? fitWidthZoom : fitZoom;
+            for (var round = 0; round < 4; round++) {
+                var padding = paddingNow();
+                zoom = fitter(view.size, {
+                    width: scroller.clientWidth - padding.width,
+                    height: scroller.clientHeight - padding.height
+                });
+                apply();
+            }
             scroller.scrollLeft = 0;
             scroller.scrollTop = 0;
         }
@@ -287,6 +300,7 @@
         create: create,
         clampZoom: clampZoom,
         fitZoom: fitZoom,
+        fitWidthZoom: fitWidthZoom,
         gridFactor: gridFactor,
         MIN_ZOOM: MIN_ZOOM,
         MAX_ZOOM: MAX_ZOOM

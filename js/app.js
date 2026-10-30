@@ -960,7 +960,17 @@
         zoomButtons.out.addEventListener('click', function () { sheetView.zoomOut(); });
         zoomButtons['in'].addEventListener('click', function () { sheetView.zoomIn(); });
         zoomButtons.reset.addEventListener('click', function () { sheetView.setZoom(1); });
-        zoomButtons.fit.addEventListener('click', function () { sheetView.fit(); });
+        zoomButtons.fit.addEventListener('click', function () { sheetView.fit({ width: narrow.matches }); });
+        // Sul telefono "Adatta" lavora in larghezza (M-05): il nome lo dice.
+        function updateFitLabel() {
+            var key = narrow.matches ? 'ui.zoom.fitWidth' : 'ui.zoom.fit';
+            zoomButtons.fit.setAttribute('data-i18n-label', key);
+            zoomButtons.fit.setAttribute('data-i18n-title', key);
+            zoomButtons.fit.setAttribute('aria-label', t(key));
+            zoomButtons.fit.setAttribute('title', t(key));
+        }
+        updateFitLabel();
+        narrow.addEventListener('change', updateFitLabel);
         large.addEventListener('change', function () {
             if (state.program) {
                 measurer.reset();

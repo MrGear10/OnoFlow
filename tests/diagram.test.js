@@ -441,6 +441,12 @@
             assert.equal(Viewport.clampZoom(1.5), 1.5);
         });
 
+        T.test('adatta alla larghezza (telefono): conta solo la larghezza, al massimo al 100%', function (assert) {
+            assert.equal(Viewport.fitWidthZoom({ width: 1000, height: 5000 }, { width: 500, height: 300 }), 0.5, 'l\'altezza non conta');
+            assert.equal(Viewport.fitWidthZoom({ width: 200, height: 100 }, { width: 500, height: 300 }), 1, 'mai oltre il 100%');
+            assert.equal(Viewport.fitWidthZoom({ width: 100000, height: 100 }, { width: 100, height: 100 }), Viewport.MIN_ZOOM);
+        });
+
         T.test('adatta allo schermo: entra tutto, al massimo al 200%', function (assert) {
             assert.equal(Viewport.fitZoom({ width: 1000, height: 500 }, { width: 500, height: 500 }), 0.5, 'limita la larghezza');
             assert.equal(Viewport.fitZoom({ width: 100, height: 1000 }, { width: 500, height: 500 }), 0.5, 'limita l\'altezza');

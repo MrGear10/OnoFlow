@@ -300,6 +300,7 @@
             'ui.zoom.out': 'Riduci',
             'ui.zoom.in': 'Ingrandisci',
             'ui.zoom.fit': 'Adatta allo schermo',
+            'ui.zoom.fitWidth': 'Adatta alla larghezza',
             'ui.zoom.percent': '{percent}%',
             'ui.zoom.reset': 'Zoom al {percent}%: tornare al 100%',
 
