@@ -1315,8 +1315,28 @@
             variablesPane.hidden = false;
             variablesStrip.hidden = false;
             paneView.show(snapshot);
-            stripView.show(snapshot);
-            byId('variables-strip-summary').textContent = VariablesView.summary(snapshot, t, formatValue);
+            showSummary(VariablesView.summaryParts(snapshot, t, formatValue, stripView.show(snapshot)));
+        }
+
+        /* Riassunto della striscia chiusa: prima ciò che è cambiato, sottolineato come nel pannello (M-06). */
+        function showSummary(parts) {
+            var node = byId('variables-strip-summary');
+            node.textContent = '';
+            parts.forEach(function (part, index) {
+                if (index > 0) {
+                    node.appendChild(document.createTextNode(' · '));
+                }
+                var span = document.createElement('span');
+                span.textContent = part.text;
+                if (part.changed) {
+                    span.className = 'is-changed';
+                    var mark = document.createElement('span');
+                    mark.className = 'visually-hidden';
+                    mark.textContent = ' (' + t('ui.variablesPanel.changed') + ')';
+                    span.appendChild(mark);
+                }
+                node.appendChild(span);
+            });
         }
 
         /* Il programma è cambiato o riparte: le variabili di prima non valgono più. */

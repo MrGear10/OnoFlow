@@ -200,5 +200,24 @@
             assert.equal(VariablesView.summary(snapshot, t, formatValue), 'n = 7 · s = "ok" · v = [1; 2; 3; 4; 5; …]');
             assert.equal(VariablesView.summary(null, t, formatValue), 'Nessuna variabile dichiarata finora.');
         });
+
+        T.test('riassunto: prima le cambiate, poi quelle con un valore, poi le vuote (M-06)', function (assert) {
+            var snapshot = { functionName: 'Main', variables: [
+                variable('n', 'Integer', undefined), variable('max', 'Integer', 3), variable('min', 'Integer', undefined),
+                variable('dim', 'Integer', 0), array('v', 'Integer', [undefined, undefined])
+            ] };
+            assert.equal(VariablesView.summary(snapshot, t, formatValue, ['dim']), 'dim = 0 · max = 3 · n = nessun valore · min = nessun valore · v = [nessun valore; nessun valore]');
+            assert.deepEqual(VariablesView.summaryParts(snapshot, t, formatValue, ['dim', 'n']).map(function (part) { return part.changed; }),
+                [true, true, false, false, false], 'cambiate segnate, in ordine di dichiarazione');
+            assert.equal(VariablesView.summaryParts(snapshot, t, formatValue, ['dim', 'n'])[0].text, 'n = nessun valore', 'tra le cambiate resta l\'ordine di dichiarazione');
+            assert.equal(VariablesView.summary(snapshot, t, formatValue), 'max = 3 · dim = 0 · n = nessun valore · min = nessun valore · v = [nessun valore; nessun valore]', 'senza cambiate: prima i valori');
+        });
+
+        T.test('show restituisce i nomi delle variabili cambiate', function (assert) {
+            var panel = view();
+            assert.deepEqual(panel.show({ functionName: 'Main', variables: [variable('a', 'Integer', 1), variable('b', 'Integer', 2)] }), [], 'la prima fotografia non ha cambiate');
+            assert.deepEqual(panel.show({ functionName: 'Main', variables: [variable('a', 'Integer', 1), variable('b', 'Integer', 5)] }), ['b']);
+            assert.deepEqual(panel.show(null), [], 'senza fotografia, nessuna');
+        });
     });
 })();

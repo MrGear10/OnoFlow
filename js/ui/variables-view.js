@@ -2,7 +2,7 @@
  * OnoFlow — pannello delle variabili (passo 15, FR-RUN-06, D-05, DEC-075).
  *
  * Dipendenze: js/namespace.js.
- * Definisce: OnoFlow.VariablesView.{create, summary, MAX_ELEMENTS}
+ * Definisce: OnoFlow.VariablesView.{create, summary, summaryParts, MAX_ELEMENTS}
  *
  * Mostra le variabili della chiamata in corso, come le fotografa l'interprete:
  *     { functionName, variables: [{ name, type, array, value, elements }] }
@@ -12,8 +12,11 @@
  * rispetto alla fotografia precedente della stessa funzione è segnato (is-changed).
  *
  *     create(container, { t, formatValue(valore tipizzato), formatFull(numero) })
- *         → { show(fotografia | null), reset(), element }
- *     summary(fotografia, t, formatValue) → "n = 7 · i = 2" (striscia del telefono)
+ *         → { show(fotografia | null) → nomi cambiati, reset(), element }
+ *     summaryParts(fotografia, t, formatValue, cambiate?) → [{ text: "n = 7", changed }]
+ *         (striscia del telefono, M-06): prima le variabili cambiate nell'ultimo passo, poi
+ *         quelle con un valore, poi quelle senza; in ogni gruppo l'ordine di dichiarazione.
+ *     summary(…) → "n = 7 · i = 2", lo stesso in una riga di testo
  */
 (function (OnoFlow) {
     'use strict';
@@ -41,20 +44,42 @@
         return a === b || (a !== a && b !== b); // NaN non dovrebbe esserci, ma non è "cambiato"
     }
 
-    function summary(snapshot, t, formatValue) {
-        if (!snapshot || snapshot.variables.length === 0) {
-            return t('ui.variablesPanel.empty');
+    function hasValue(variable) {
+        if (!variable.array) {
+            return variable.value !== undefined && variable.value !== null;
         }
-        return snapshot.variables.map(function (variable) {
+        return variable.elements.some(function (value) { return value !== undefined && value !== null; });
+    }
+
+    function summaryParts(snapshot, t, formatValue, changed) {
+        if (!snapshot || snapshot.variables.length === 0) {
+            return [{ text: t('ui.variablesPanel.empty'), changed: false }];
+        }
+        var names = changed || [];
+        function rank(variable) {
+            return names.indexOf(variable.name) !== -1 ? 0 : hasValue(variable) ? 1 : 2;
+        }
+        // Ordinamento stabile a mano: in ogni gruppo resta l'ordine di dichiarazione.
+        var ordered = [0, 1, 2].reduce(function (list, group) {
+            return list.concat(snapshot.variables.filter(function (variable) { return rank(variable) === group; }));
+        }, []);
+        return ordered.map(function (variable) {
+            var text;
             if (variable.array) {
                 var shown = [];
                 for (var i = 0; i < Math.min(variable.elements.length, 5); i++) {
                     shown.push(valueText(variable.type, variable.elements[i], t, formatValue));
                 }
-                return variable.name + ' = [' + shown.join('; ') + (variable.elements.length > 5 ? '; …' : '') + ']';
+                text = variable.name + ' = [' + shown.join('; ') + (variable.elements.length > 5 ? '; …' : '') + ']';
+            } else {
+                text = variable.name + ' = ' + valueText(variable.type, variable.value, t, formatValue);
             }
-            return variable.name + ' = ' + valueText(variable.type, variable.value, t, formatValue);
-        }).join(' · ');
+            return { text: text, changed: rank(variable) === 0 };
+        });
+    }
+
+    function summary(snapshot, t, formatValue, changed) {
+        return summaryParts(snapshot, t, formatValue, changed).map(function (part) { return part.text; }).join(' · ');
     }
 
     function create(container, options) {
@@ -120,9 +145,10 @@
 
         function show(snapshot) {
             root.textContent = '';
+            var changedNames = [];
             if (!snapshot) {
                 previous = null;
-                return;
+                return changedNames;
             }
             if (previous && previous.functionName !== snapshot.functionName) {
                 previous = null; // un'altra funzione: niente da confrontare
@@ -134,6 +160,9 @@
                 var list = element('ul', 'variables-list');
                 snapshot.variables.forEach(function (variable) {
                     var changes = changedSince(variable);
+                    if (changes.variable) {
+                        changedNames.push(variable.name);
+                    }
                     var row = element('li', 'variable' + (changes.variable ? ' is-changed' : ''));
                     row.setAttribute('data-name', variable.name);
                     row.appendChild(element('span', 'variable-name', variable.name));
@@ -151,6 +180,7 @@
             var byName = Object.create(null);
             snapshot.variables.forEach(function (variable) { byName[variable.name] = variable; });
             previous = { functionName: snapshot.functionName, byName: byName };
+            return changedNames;
         }
 
         return {
@@ -160,5 +190,5 @@
         };
     }
 
-    OnoFlow.VariablesView = { create: create, summary: summary, MAX_ELEMENTS: MAX_ELEMENTS };
+    OnoFlow.VariablesView = { create: create, summary: summary, summaryParts: summaryParts, MAX_ELEMENTS: MAX_ELEMENTS };
 })(window.OnoFlow);

@@ -1359,7 +1359,8 @@ button.diagram-error-entry:active {
 
 /* Cambiata nell'ultimo passo: sottolineata col gesso (il giallo è solo del blocco in esecuzione). */
 .variable.is-changed .variable-value,
-.variable-elements .is-changed .variable-element {
+.variable-elements .is-changed .variable-element,
+.variables-strip-summary .is-changed {
     text-decoration: underline;
     text-decoration-thickness: 2px;
     text-underline-offset: 3px;

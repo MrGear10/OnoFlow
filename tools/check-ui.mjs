@@ -1462,6 +1462,24 @@ async function checkLandscape(browser, engineName) {
             checks.ok(state.bar <= 64 && state.statusWidth <= 24, `${label}: nel passo a passo lo stato è un segno nella stessa riga (${state.bar} px, segno ${state.statusWidth} px)`);
             checks.ok(state.free >= 250, `${label}: fascia libera nel passo a passo ${state.free} px`);
             checks.ok(await page.isVisible('#step-sheet') && await page.isVisible('#stop'), `${label}: Passo sul foglio e Ferma nella barra`);
+            // Riassunto delle variabili (M-06): dopo «dim = 0» la variabile appena cambiata viene prima.
+            const running = () => page.evaluate(() => {
+                const node = document.querySelector('#diagram .is-running');
+                return node ? node.getAttribute('data-id') : null;
+            });
+            for (let i = 0; i < 4; i++) {
+                const before = await running();
+                await page.tap('#step-sheet');
+                await page.waitForFunction((id) => {
+                    const node = document.querySelector('#diagram .is-running');
+                    return node && node.getAttribute('data-id') !== id;
+                }, before);
+            }
+            const summary = await page.evaluate(() => {
+                const first = document.querySelector('#variables-strip-summary > span');
+                return { text: document.getElementById('variables-strip-summary').textContent, changed: Boolean(first && first.classList.contains('is-changed')) };
+            });
+            checks.ok(summary.text.startsWith('dim = 0') && summary.changed, `${label}: il riassunto comincia con la variabile cambiata, sottolineata (${summary.text})`);
             await page.tap('#tab-console');
             checks.ok(await page.isVisible('#panel-console') && !(await page.isVisible('#panel-diagram')), `${label}: la scheda Console dalla colonna`);
             await page.tap('#tab-diagram');
