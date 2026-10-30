@@ -1493,6 +1493,71 @@ async function checkLandscape(browser, engineName) {
     return checks;
 }
 
+/* La barra della selezione non copre il blocco selezionato né la freccia sotto (M-07): a 360 × 740
+   ogni blocco di Main dell'esempio, toccato, resta sopra la barra con mezzo quadretto di freccia
+   e non sale sotto il bordo alto del foglio. */
+async function checkSelectionClear(browser, engineName) {
+    const checks = new Checks(`${engineName} selezione`);
+    const context = await browser.newContext({
+        viewport: { width: 360, height: 740 }, hasTouch: true, isMobile: engineName === 'chromium', reducedMotion: 'reduce'
+    });
+    const page = await context.newPage();
+    try {
+        await page.goto(URL);
+        await page.waitForSelector('#diagram .dg-block--terminal');
+        await chooseExample(page);
+        const ids = await page.evaluate(() => Array.from(document.querySelectorAll('#diagram .is-selectable'))
+            .map((node) => node.getAttribute('data-id')).slice(0, 14));
+        const wrong = [];
+        let selected = 0;
+        for (const id of ids) {
+            const block = page.locator(`#diagram [data-id="${id}"]`).first();
+            // Il blocco in basso, dove la barra della selezione lo coprirebbe (sopra i comandi dello
+            // zoom); poi un tocco al centro della sua parte visibile.
+            // Il foglio si fa scorrere a mano: Firefox non lo fa con scrollIntoView su un <g> (DEC-069).
+            const point = await block.evaluate((node) => {
+                const sheetNode = document.getElementById('sheet');
+                const sheet = sheetNode.getBoundingClientRect();
+                let box = node.getBoundingClientRect();
+                sheetNode.scrollLeft += (box.left + box.width / 2) - (sheet.left + sheet.width / 2);
+                sheetNode.scrollTop += (box.top + box.height / 2) - (sheet.bottom - 130);
+                box = node.getBoundingClientRect();
+                const left = Math.max(box.left, sheet.left);
+                const right = Math.min(box.right, sheet.right);
+                return { x: (left + right) / 2, y: box.top + box.height / 2 };
+            });
+            await page.touchscreen.tap(point.x, point.y);
+            await page.waitForTimeout(400); // più vicini, due tocchi diventano un doppio tocco (modifica)
+            const state = await page.evaluate((nodeId) => {
+                const box = document.querySelector(`#diagram [data-id="${nodeId}"]`).getBoundingClientRect();
+                const bar = document.getElementById('selection-bar');
+                const sheet = document.getElementById('sheet').getBoundingClientRect();
+                const square = parseFloat(getComputedStyle(document.getElementById('sheet-content')).paddingTop);
+                return {
+                    selected: document.querySelector(`#diagram [data-id="${nodeId}"]`).classList.contains('is-selected'),
+                    clear: box.bottom + square / 2 <= bar.getBoundingClientRect().top + 0.5,
+                    below: box.top >= sheet.top - 0.5,
+                    visible: !bar.hidden
+                };
+            }, id);
+            if (!state.selected || !state.visible) {
+                continue; // un tocco finito su un + o fuori dal blocco: si verifica solo la selezione
+            }
+            if (!state.clear || !state.below) {
+                wrong.push(`${id}${state.clear ? '' : ' coperto'}${state.below ? '' : ' sotto la barra superiore'}`);
+            }
+            selected++;
+        }
+        checks.ok(selected >= 10, `blocchi selezionati al tocco: ${selected} su ${ids.length}`);
+        checks.ok(wrong.length === 0, `blocchi selezionati sopra la barra della selezione${wrong.length ? ': ' + wrong.join(', ') : ''}`);
+    } catch (error) {
+        checks.ok(false, `verifica interrotta: ${error.message.split('\n')[0]}`);
+    } finally {
+        await context.close();
+    }
+    return checks;
+}
+
 async function checkViewport(browser, engineName, viewport, screenshotsDir) {
     const checks = new Checks(`${engineName} ${viewport.name}`);
     const context = await browser.newContext({
@@ -1590,6 +1655,7 @@ async function main() {
             const runs = VIEWPORTS.map((viewport) => [viewport.name, () => checkViewport(browser, engineName, viewport, options.screenshots)]);
             runs.push(['barra stretta', () => checkBarWidths(browser, engineName)]);
             runs.push(['orizzontale', () => checkLandscape(browser, engineName)]);
+            runs.push(['selezione', () => checkSelectionClear(browser, engineName)]);
             for (const [, run] of runs.filter(([name]) => name.includes(options.only))) {
                 const checks = await run();
                 if (checks.failures.length === 0) {

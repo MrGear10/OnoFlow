@@ -391,6 +391,7 @@
         // --- Editor: inserimento (passo 9, DEC-063) ---------------------------------
 
         function select(nodeId) {
+            var changed = nodeId !== state.selectedId;
             state.selectedId = nodeId;
             state.diagram.setSelected(nodeId);
             selectionBar.hidden = !nodeId || isActive();
@@ -399,6 +400,31 @@
             // Una funzione non si sposta: si sposta un blocco (FR-EDIT-12).
             var selectedNode = nodeId ? Model.findById(state.program, nodeId) : null;
             moveButton.disabled = !selectedNode || isFunction(selectedNode.node);
+            if (changed && !selectionBar.hidden && narrow.matches) {
+                clearOfSelectionBar(nodeId);
+            }
+        }
+
+        /* Sul telefono la barra della selezione copriva il blocco sotto quello selezionato, e la freccia
+           con il + su cui si vuole toccare (M-07): il foglio scorre quanto basta perché il blocco e
+           mezzo quadretto di freccia sotto restino sopra la barra, senza che il blocco salga oltre
+           il bordo alto del foglio. */
+        var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        function clearOfSelectionBar(nodeId) {
+            var group = blockGroup(nodeId);
+            if (!group) {
+                return;
+            }
+            var box = group.getBoundingClientRect();
+            var frame = sheet.getBoundingClientRect();
+            // Il margine alto del contenuto è un quadretto allo zoom attuale.
+            var square = parseFloat(getComputedStyle(byId('sheet-content')).paddingTop);
+            var overlap = box.bottom + square - selectionBar.getBoundingClientRect().top;
+            var room = box.top - frame.top - square / 2;
+            var distance = Math.min(overlap, room);
+            if (overlap > 0 && distance > 0) {
+                sheet.scrollBy({ top: distance, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+            }
         }
 
         function blockGroup(nodeId) {
