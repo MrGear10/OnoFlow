@@ -1274,12 +1274,14 @@ button.diagram-error-entry:active {
     justify-content: center;
 }
 
-/* Con la sola icona il barrato orizzontale si confonde con la freccia: qui è in diagonale. */
+/* Con la sola icona un barrato sopra il disegno lo rende illeggibile (Annulla barrato sembrava
+   un'altra icona): l'icona resta tenue e intera, e la barra attraversa il riquadro, da un angolo all'altro
+   (M-03). */
 .history-button:disabled::after {
-    left: 22%;
-    right: 22%;
-    transform: rotate(-40deg);
-    height: 1.5px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    transform: rotate(-45deg) scaleX(1.3);
 }
 
 /* Su telefoni e finestre strette Annulla e Ripeti stanno sul foglio, in basso a sinistra. */
@@ -1985,10 +1987,44 @@ button.diagram-error-entry:active {
 
 /* Barra stretta: con tutte le etichette (e «Riprendi» al posto di «Pausa») i comandi non stanno
    in una riga accanto al marchio e al menu, e la barra andava su tre o quattro righe (M-02).
-   Pausa e Ferma restano visibili, con la sola icona; Passo, durante l'esecuzione, sta nel foglio. */
+   I comandi cambiano con lo stato (M-03, D-M1): da fermo Esegui e Passo, durante l'esecuzione
+   Ferma e Pausa negli stessi due posti. Il comando che non vale non c'è, invece di restare
+   barrato; tiene però la sua larghezza, così i posti non si spostano mai. Passo, durante
+   l'esecuzione, sta nel foglio (DEC-074). */
 @media (max-width: 40rem) {
-    #step {
-        display: none;
+    .run-controls {
+        display: grid;
+        grid-template-columns: auto auto;
+    }
+
+    #run,
+    #stop {
+        grid-area: 1 / 1;
+    }
+
+    #step,
+    #pause {
+        grid-area: 1 / 2;
+    }
+
+    #stop,
+    #pause,
+    .app[data-run-state="running"] #run,
+    .app[data-run-state="paused"] #run,
+    .app[data-run-state="waitingInput"] #run,
+    .app[data-run-state="running"] #step,
+    .app[data-run-state="paused"] #step,
+    .app[data-run-state="waitingInput"] #step {
+        visibility: hidden;
+    }
+
+    .app[data-run-state="running"] #stop,
+    .app[data-run-state="paused"] #stop,
+    .app[data-run-state="waitingInput"] #stop,
+    .app[data-run-state="running"] #pause,
+    .app[data-run-state="paused"] #pause,
+    .app[data-run-state="waitingInput"] #pause {
+        visibility: visible;
     }
 
     .app[data-run-state="running"] .step-controls,
@@ -2003,8 +2039,8 @@ button.diagram-error-entry:active {
         display: none;
     }
 
-    #pause .button-label,
-    #stop .button-label {
+    #step .button-label,
+    #pause .button-label {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -2013,18 +2049,22 @@ button.diagram-error-entry:active {
         white-space: nowrap;
     }
 
-    #pause,
-    #stop {
+    #step,
+    #pause {
+        width: var(--touch);
         padding: 0;
     }
 
-    /* Con la sola icona il barrato orizzontale si confonde con il disegno: qui è in diagonale. */
-    #pause:disabled::after,
-    #stop:disabled::after {
-        left: 22%;
-        right: 22%;
-        transform: rotate(-40deg);
-        height: 1.5px;
+    #stop {
+        padding: 0 var(--space-3) 0 var(--space-2);
+    }
+
+    /* Pausa senza testo, spenta mentre si attende un valore: barrata come Annulla e Ripeti. */
+    #pause:disabled::after {
+        left: 0;
+        right: 0;
+        height: 1px;
+        transform: rotate(-45deg) scaleX(1.3);
     }
 }
 

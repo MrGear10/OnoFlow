@@ -1114,6 +1114,7 @@
         function updateControls() {
             var current = schedulerState();
             var active = isActive();
+            var focused = document.activeElement;
             runButton.disabled = active;
             stopButton.disabled = !active;
             // Pausa non ha effetto mentre si attende un valore (§11.1).
@@ -1139,6 +1140,21 @@
             app.setAttribute('data-run-state', runStateName(current));
             statusLabel.textContent = statusText();
             statusLabel.hidden = statusLabel.textContent === '';
+            keepRunFocus(focused);
+        }
+
+        /* Sul telefono un comando dell'esecuzione sparisce quando cambia lo stato (M-03): il focus
+           passa a quello che ne prende il posto, invece di perdersi. */
+        var runPartners = [[runButton, stopButton], [byId('step'), pauseButton]];
+        function keepRunFocus(focused) {
+            runPartners.forEach(function (pair) {
+                var index = pair.indexOf(focused);
+                var other = pair[1 - index];
+                if (index !== -1 && getComputedStyle(focused).visibility === 'hidden'
+                    && getComputedStyle(other).visibility !== 'hidden' && !other.disabled) {
+                    other.focus();
+                }
+            });
         }
 
         /* Blocco dell'errore: inquadrato subito se il foglio si vede, altrimenti al ritorno (FR-MOB-03). */

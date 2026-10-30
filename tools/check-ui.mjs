@@ -1215,14 +1215,28 @@ async function checkStep(page, checks, viewport) {
         .includes(document.getElementById('status').textContent.trim()));
     await chooseExample(page, 'pari-dispari');
     await leaveUnsaved(page, press);
+    // Barra del telefono (M-03): da fermo Esegui e Passo, durante l'esecuzione Ferma e Pausa negli
+    // stessi posti; il comando che non vale non c'è.
+    const runSlots = () => page.evaluate(() => ['#run', '#step', '#pause', '#stop'].map((selector) => {
+        const button = document.querySelector(selector);
+        return getComputedStyle(button).visibility === 'hidden' ? null : Math.round(button.getBoundingClientRect().x);
+    }));
+    const idleSlots = await runSlots();
     if (phoneBar) {
-        checks.ok(!(await page.isVisible('#step')), 'sul telefono Passo non è nella barra');
-        await page.click('#menu-button');
-        await page.click('#cmd-step');
-    } else {
-        await press('#step');
+        checks.ok(idleSlots[0] !== null && idleSlots[1] !== null && idleSlots[2] === null && idleSlots[3] === null,
+            `sul telefono, da fermo, solo Esegui e Passo: ${JSON.stringify(idleSlots)}`);
     }
+    await press('#step');
     await settled();
+    if (phoneBar) {
+        const slots = await runSlots();
+        checks.ok(slots[0] === null && slots[1] === null && slots[3] === idleSlots[0] && slots[2] === idleSlots[1],
+            `nel passo a passo Ferma e Pausa al posto di Esegui e Passo: ${JSON.stringify(slots)}`);
+        checks.ok((await page.locator('#stop').boundingBox()).width >= 44 && (await page.textContent('#stop')).trim() === 'Ferma',
+            'Ferma con la sua etichetta');
+    } else {
+        checks.ok(!(await runSlots()).includes(null), 'sul computer i quattro comandi restano tutti');
+    }
     checks.ok((await status()) === 'Passo a passo', `passo-passo avviato: ${await status()}`);
     checks.ok((await highlighted()) === 'Integer n', `fermo prima del primo blocco: ${await highlighted()}`);
     if (viewport.phone) {
@@ -1290,20 +1304,34 @@ async function checkStep(page, checks, viewport) {
     checks.ok((await page.getAttribute('#variables-pane', 'hidden')) === null, 'i valori finali restano nel pannello della console');
 
     // Riprendi torna all'esecuzione continua; Ferma.
-    if (!viewport.phone) {
+    if (viewport.phone) {
+        await press('#step');
+        await settled();
+        await press(step);
+        await settled();
+    } else {
         await page.focus('#sheet');
         await page.keyboard.press('F10');
         await settled();
         checks.ok((await status()) === 'Passo a passo' && (await highlighted()) === 'Integer n', 'F10 avvia il passo-passo');
         await page.keyboard.press('F10');
         await settled();
-        checks.ok((await highlighted()) === 'Output "Scrivi un numero intero"', 'F10 fa un passo');
-        checks.ok((await page.textContent('#pause-label')).trim() === 'Riprendi', 'in pausa: Riprendi');
-        await page.click('#pause');
-        await page.locator('.console-field').waitFor();
-        checks.ok((await status()) === 'In attesa di un valore', 'Riprendi continua senza fermarsi fino all\'input');
-        await page.click('#stop');
-        checks.ok((await status()) === 'Fermato', 'Ferma');
+    }
+    checks.ok((await highlighted()) === 'Output "Scrivi un numero intero"', viewport.phone ? 'di nuovo un passo' : 'F10 fa un passo');
+    checks.ok((await page.textContent('#pause-label')).trim() === 'Riprendi', 'in pausa: Riprendi');
+    await press('#pause');
+    await page.locator('.console-field').waitFor();
+    checks.ok((await status()) === 'In attesa di un valore', 'Riprendi continua senza fermarsi fino all\'input');
+    if (phoneBar) {
+        checks.ok(await page.isVisible('#pause') && await page.isDisabled('#pause'), 'in attesa del valore Pausa resta al suo posto, spenta');
+        await press('#tab-diagram');
+    }
+    await press('#stop');
+    checks.ok((await status()) === 'Fermato', 'Ferma');
+    if (phoneBar) {
+        checks.ok(JSON.stringify(await runSlots()) === JSON.stringify(idleSlots), 'dopo Ferma tornano Esegui e Passo, negli stessi posti');
+    }
+    if (!viewport.phone) {
         // Una modifica cambia il programma: le variabili di prima spariscono.
         checks.ok(await page.isVisible('#variables-pane'), 'dopo Ferma le variabili restano');
         // Una cancellazione, che non passa dai campi della finestra di modifica.
@@ -1358,6 +1386,18 @@ async function checkBarWidths(browser, engineName) {
             checks.ok(wrong.length === 0, `${state}: barra su due righe (${expected} px) da 360 a 895 px${wrong.length ? ' — ' + wrong.join('; ') : ''}`);
             await page.setViewportSize({ width: 360, height: 700 });
         }
+        // Da tastiera il focus passa al comando che prende il posto di quello sparito (M-03).
+        const focused = () => page.evaluate(() => document.activeElement.id);
+        await page.click('#stop');
+        await page.waitForFunction(() => document.getElementById('status').textContent.trim() === 'Fermato');
+        await page.focus('#step');
+        await page.keyboard.press('Enter');
+        await page.waitForFunction(() => document.getElementById('status').textContent.trim() === 'Passo a passo');
+        checks.ok((await focused()) === 'pause', `Passo con Invio: il focus va su Pausa (${await focused()})`);
+        await page.focus('#stop');
+        await page.keyboard.press('Enter');
+        await page.waitForFunction(() => document.getElementById('status').textContent.trim() === 'Fermato');
+        checks.ok((await focused()) === 'run', `Ferma con Invio: il focus va su Esegui (${await focused()})`);
     } finally {
         await context.close();
     }
