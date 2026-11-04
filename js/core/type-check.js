@@ -20,8 +20,9 @@
  *   - D-06: un nome sconosciuto che differisce solo per le maiuscole da una variabile, da
  *     true/false o da una funzione ha il suggerimento (params.suggestion, reason 'case').
  *
- *     create(program) → { functionErrors(funzione), blockErrors(blocco, funzione) }
- *         ognuno → [{ code, params, nodeId, field, position }]
+ *     create(program) → { functionErrors(funzione), blockErrors(blocco, funzione),
+ *                         expressionType(nodo, funzione), symbols(funzione) }
+ *         i primi due → [{ code, params, nodeId, field, position }]
  */
 (function (OnoFlow) {
     'use strict';
@@ -464,7 +465,28 @@
             return [];
         }
 
-        return { blockErrors: blockErrors, functionErrors: functionErrors };
+        /*
+         * Tipo di un'espressione nella funzione (per i generatori di codice, fase 3): 'Integer',
+         * 'Real', 'String', 'Boolean', 'Number' (Integer ^ Integer), oppure null se l'espressione
+         * non ha un valore o contiene un errore.
+         */
+        function expressionType(node, programFunction) {
+            try {
+                return new Context(programFunction).type(node);
+            } catch (error) {
+                if (error instanceof Problem) {
+                    return null;
+                }
+                throw error;
+            }
+        }
+
+        /* Nomi della funzione: { nome: { type, array } } (parametri e dichiarazioni). */
+        function symbols(programFunction) {
+            return symbolsOf(programFunction);
+        }
+
+        return { blockErrors: blockErrors, functionErrors: functionErrors, expressionType: expressionType, symbols: symbols };
     }
 
     OnoFlow.TypeCheck = { create: create, suggestionFor: suggestionFor };
