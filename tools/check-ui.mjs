@@ -51,6 +51,7 @@
  *     rinomina con le chiamate e Annulla, cancellazione e Annulla, file salvato (FR-EDIT-11);
  *   - spostamento: Sposta, + spenti attorno al blocco, un + nel ramo Vero, Annulla, Non spostare,
  *     Esc (FR-EDIT-12, D-03);
+ *   - pannello Codice: C++ e Python, Scarica, Copia, errori, modifica accanto (passo 22);
  *   - tema chiaro o scuro: pulsante nella barra o voce del menu, ?tema=, contro il sistema (DEC-080);
  *   - documentazione: pagina aggiornata rispetto ai documenti, escape, ancore, indice, tema,
  *     telefono; collegamenti dall'app con il tema scelto (DEC-081).
@@ -1053,6 +1054,54 @@ async function checkFunctions(page, checks, viewport) {
     checks.ok(await noHorizontalScroll(page), 'nessuno scorrimento orizzontale con le funzioni');
 }
 
+/* Pannello Codice (fase 3, passo 22): C++ e Python, Scarica, Copia, errori, Chiudi; sul computer
+   lascia il posto alla finestra di modifica e torna quando la si chiude. */
+async function checkCode(page, checks, viewport) {
+    const press = (selector) => viewport.phone ? page.tap(selector) : page.click(selector);
+    await page.click('#menu-button');
+    await page.click('[data-example="pari-dispari"]');
+    await leaveUnsaved(page, press);
+    await page.waitForSelector('#diagram [data-id]');
+    await page.click('#menu-button');
+    await press('#cmd-code');
+    const panel = page.locator('.code-view');
+    checks.ok(await panel.isVisible(), 'Menu → Codice apre il pannello');
+    checks.ok((await page.getAttribute('.code-tab[data-language="cpp"]', 'aria-selected')) === 'true', 'si apre sul C++');
+    const text = () => page.textContent('.code-text');
+    checks.ok((await text()).includes('int main() {') && (await text()).includes('n % 2 == 0'), 'il codice C++ del diagramma');
+    if (viewport.phone) {
+        const box = await panel.boundingBox();
+        checks.ok(box.x <= 0 && box.y <= 0 && box.width >= viewport.width && box.height >= viewport.height - 1, 'sul telefono il codice è a tutto schermo');
+    } else {
+        checks.ok(await page.isVisible('#diagram'), 'sul computer il diagramma resta accanto al codice');
+    }
+    checks.ok(await noHorizontalScroll(page), 'pannello del codice: nessuno scorrimento orizzontale della pagina');
+    await press('.code-tab[data-language="python"]');
+    checks.ok((await text()).includes('def main():') && (await text()).includes('resto(n, 2) == 0'), 'la scheda Python');
+    const [file] = await Promise.all([page.waitForEvent('download'), press('.code-download')]);
+    checks.ok(file.suggestedFilename() === 'pari_dispari.py', `Scarica: ${file.suggestedFilename()}`);
+    await press('.code-copy');
+    await page.waitForFunction(() => document.querySelector('.code-status').textContent !== '');
+    checks.ok((await page.textContent('.code-status')).length > 0, `Copia dice com'è andata: ${await page.textContent('.code-status')}`);
+    if (!viewport.phone) {
+        // La finestra di modifica prende il posto del codice; chiusa, il codice torna aggiornato.
+        await page.locator('#diagram .dg-block--if').first().dblclick();
+        checks.ok(await page.isVisible('.block-editor') && !(await panel.isVisible()), 'la modifica prende il posto del codice');
+        await page.locator('.block-editor .edit-input').first().fill('n mod 3 == 0');
+        await page.click('.edit-done');
+        checks.ok(await panel.isVisible() && (await text()).includes('resto(n, 3) == 0'), 'chiusa la modifica, il codice torna aggiornato');
+        // Un errore nel diagramma: niente codice, la spiegazione.
+        await page.locator('#diagram .dg-block--if').first().dblclick();
+        await page.locator('.block-editor .edit-input').first().fill('n mod');
+        await page.click('.edit-done');
+        checks.ok(await page.isVisible('.code-problem') && !(await page.isVisible('.code-text')) && await page.isDisabled('.code-copy'),
+            'con un errore nel diagramma il pannello lo spiega, senza codice');
+        await page.keyboard.press('Control+Z');
+    }
+    await press('.code-close');
+    checks.ok(!(await panel.isVisible()), 'Chiudi chiude il pannello');
+}
+
 /* Spostamento dei blocchi: Sposta, poi un + (FR-EDIT-12, D-03, passo 19). */
 async function checkMove(page, checks, viewport) {
     const press = pressInSheet(page, viewport);
@@ -1617,6 +1666,7 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
         await checkCallComment(page, checks, viewport);
         await checkFunctions(page, checks, viewport);
         await checkMove(page, checks, viewport);
+        await checkCode(page, checks, viewport);
         await checkTheme(page, checks, viewport, browser);
         await checkDocs(page, checks, viewport);
         if (!viewport.phone) {

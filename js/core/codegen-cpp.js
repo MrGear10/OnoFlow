@@ -19,7 +19,8 @@
  *     non porta con sé la lunghezza: se la funzione usa Size, riceve anche lunghezza_<nome>.
  *   - Le dichiarazioni restano dove sono; quelle dentro un if o un ciclo salgono in cima alla
  *     funzione, perché in OnoFlow una variabile vale in tutta la funzione.
- * Le funzioni di aiuto compaiono solo se il programma le usa.
+ * Le funzioni di aiuto compaiono solo se il programma le usa, in fondo al file, con i prototipi in
+ * cima: chi legge trova subito il programma del diagramma.
  */
 (function (OnoFlow) {
     'use strict';
@@ -831,10 +832,17 @@
             out.line('// questa misura fissa: va aumentata se servono più elementi.');
             out.line('const int MAX_ELEMENTI = ' + MAX_ELEMENTS + ';');
         }
-        HELPER_ORDER.filter(function (helper) { return used[helper]; }).forEach(function (helper) {
+        // Prima il programma del diagramma, poi le funzioni di aiuto: chi legge trova subito il suo
+        // codice. In C++ una funzione va dichiarata prima dell'uso: in cima ci sono i prototipi.
+        var helpers = HELPER_ORDER.filter(function (helper) { return used[helper]; });
+        if (helpers.length) {
             out.blank();
-            HELPERS[helper].lines.forEach(function (line) { out.line(line); });
-        });
+            out.line('// Funzioni di aiuto, scritte in fondo al file: fanno come OnoFlow dove il C++ fa diversamente.');
+            helpers.forEach(function (helper) {
+                var lines = HELPERS[helper].lines;
+                out.line(lines.filter(function (line) { return line.indexOf('//') !== 0; })[0].replace(/ \{$/, ';'));
+            });
+        }
         if (needsPrototypes) {
             out.blank();
             others.forEach(function (programFunction) { out.line(signature(programFunction) + ';'); });
@@ -842,6 +850,14 @@
         bodies.forEach(function (lines) {
             out.blank();
             lines.forEach(function (line) { out.lines.push(line); });
+        });
+        if (helpers.length) {
+            out.blank();
+            out.line('// --- Funzioni di aiuto ---');
+        }
+        helpers.forEach(function (helper) {
+            out.blank();
+            HELPERS[helper].lines.forEach(function (line) { out.line(line); });
         });
         return out.text();
     }

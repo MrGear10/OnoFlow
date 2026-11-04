@@ -13,6 +13,7 @@
  *     testo / formatta   i numeri come li stampa OnoFlow: due decimali, virgola (D-08, §6.10)
  *     resto              mod con il segno del dividendo, come in C++ (FR-GEN-03, §6.4)
  *     leggi_*            l'input con le regole della console (§6.11)
+ * Le funzioni di aiuto stanno in fondo, dopo il programma del diagramma e prima di main().
  * Le divisioni sono già reali in Python (/), la potenza è **, che come ^ lega a destra e più
  * del meno unario (-2 ** 2 vale -4, come in OnoFlow).
  *
@@ -516,16 +517,23 @@
                 out.line('from decimal import Decimal, ROUND_HALF_UP');
             }
         }
-        HELPER_ORDER.filter(function (helper) { return used[helper]; }).forEach(function (helper) {
-            out.blank();
-            out.blank();
-            out.lines.push('');
-            HELPERS[helper].forEach(function (line) { out.line(line); });
-        });
+        // Prima il programma del diagramma, poi le funzioni di aiuto: chi legge trova subito il suo
+        // codice. In Python si possono scrivere dopo main, purché prima della chiamata main().
         bodies.forEach(function (lines) {
             out.blank();
             out.lines.push('');
             lines.forEach(function (line) { out.lines.push(line); });
+        });
+        var helpers = HELPER_ORDER.filter(function (helper) { return used[helper]; });
+        if (helpers.length) {
+            out.blank();
+            out.lines.push('');
+            out.line('# --- Funzioni di aiuto: fanno come OnoFlow dove Python fa diversamente ---');
+        }
+        helpers.forEach(function (helper) {
+            out.blank();
+            out.lines.push('');
+            HELPERS[helper].forEach(function (line) { out.line(line); });
         });
         if (main) {
             out.blank();

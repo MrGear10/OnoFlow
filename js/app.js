@@ -45,6 +45,9 @@
     var BlockEditor = OnoFlow.BlockEditor;
     var History = OnoFlow.History;
     var VariablesView = OnoFlow.VariablesView;
+    var CodeView = OnoFlow.CodeView;
+    var CODE_GENERATORS = { cpp: OnoFlow.CodegenCpp, python: OnoFlow.CodegenPython };
+    var CODE_EXTENSIONS = { cpp: '.cpp', python: '.py' };
     var Theme = OnoFlow.Theme;
 
     var DEFAULT_EXTENSION = '.fprg';
@@ -149,6 +152,7 @@
             'new': byId('cmd-new'),
             open: byId('cmd-open'),
             save: byId('cmd-save'),
+            code: byId('cmd-code'),
             undo: byId('cmd-undo'),
             redo: byId('cmd-redo')
         };
@@ -386,6 +390,7 @@
             if (state.moving) {
                 showMoving();
             }
+            updateCode();
         }
 
         // --- Editor: inserimento (passo 9, DEC-063) ---------------------------------
@@ -490,6 +495,10 @@
             onClose: function () {
                 commitEdit();
                 app.classList.remove('is-editing');
+                if (state.codeAfterEdit) {
+                    state.codeAfterEdit = false;
+                    openCode({ focus: false });
+                }
                 window.clearTimeout(sessionTimer);
                 storeSessionCopy();
                 var group = state.selectedId ? blockGroup(state.selectedId) : null;
@@ -502,6 +511,11 @@
         function openEditor(nodeId) {
             if (isActive() || !canOpenEditor(nodeId)) {
                 return;
+            }
+            // Finestra di modifica e codice stanno nello stesso posto: il codice torna alla chiusura.
+            if (codeView.isOpen()) {
+                state.codeAfterEdit = true;
+                codeView.close();
             }
             blockMenu.close({ restoreFocus: false });
             commitEdit(); // un altro blocco mentre la finestra è aperta: il primo è un passo a sé
@@ -1043,6 +1057,7 @@
             updateFileState();
             updateControls();
             storeSessionCopy();
+            updateCode();
         }
 
         function newProgram() {
@@ -1109,6 +1124,94 @@
             updateFileState();
             storeSessionCopy();
         }
+
+        // --- Codice C++ e Python (fase 3, passo 22, DEC-093) -----------------------------
+
+        /* Nome del file del codice: quello del diagramma, senza .fprg (somma.fprg → somma.cpp). */
+        function codeFileName(language) {
+            return normalizeFileName(fileNameField.value).replace(/\.fprg$/i, '') + CODE_EXTENSIONS[language];
+        }
+
+        /* Il codice del linguaggio scelto, rifatto a ogni modifica mentre il pannello è aperto. */
+        function updateCode() {
+            if (!codeView || !codeView.isOpen() || !state.program) {
+                return;
+            }
+            if (state.staticErrors.length) {
+                codeView.showProblem(t('ui.code.invalid'));
+                return;
+            }
+            var language = codeView.language();
+            var title = normalizeFileName(fileNameField.value).replace(/\.fprg$/i, '');
+            codeView.showCode(CODE_GENERATORS[language].generate(state.program, { title: title }));
+        }
+
+        function openCode(options) {
+            if (blockEditor.isOpen()) {
+                blockEditor.close();
+            }
+            blockMenu.close({ restoreFocus: false });
+            app.classList.add('is-coding');
+            codeView.open({ focus: options.focus });
+            updateCode();
+        }
+
+        /* Copia negli appunti; dove l'API non c'è (file:// in alcuni browser), con una selezione. */
+        function copyText(text, done) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(fallbackCopy(text)); });
+                return;
+            }
+            done(fallbackCopy(text));
+        }
+
+        function fallbackCopy(text) {
+            var area = document.createElement('textarea');
+            area.value = text;
+            area.setAttribute('readonly', '');
+            area.className = 'visually-hidden';
+            document.body.appendChild(area);
+            area.select();
+            var ok = false;
+            try {
+                ok = document.execCommand('copy');
+            } catch (error) {
+                ok = false;
+            }
+            document.body.removeChild(area);
+            return ok;
+        }
+
+        function downloadText(text, name, type) {
+            var blob = new Blob([text], { type: type });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = name;
+            link.hidden = true;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.setTimeout(function () { URL.revokeObjectURL(link.href); }, 10000);
+        }
+
+        var codeView = CodeView.create(byId('work'), {
+            t: t,
+            onLanguage: updateCode,
+            onCopy: function (language, text) {
+                copyText(text, function (ok) { codeView.copied(ok); });
+            },
+            onDownload: function (language, text) {
+                // text/plain: su iOS il file arriva come testo con il suo nome (come il .fprg, FR-MOB-20).
+                downloadText(text, codeFileName(language), 'text/plain');
+            },
+            onClose: function () {
+                app.classList.remove('is-coding');
+                commands.code.focus({ preventScroll: true });
+                if (document.activeElement !== commands.code) {
+                    menuButton.focus({ preventScroll: true });
+                }
+            }
+        });
 
         // --- Esecuzione ------------------------------------------------------------
 
@@ -1522,6 +1625,10 @@
         commands.save.addEventListener('click', function () {
             closeMenu();
             save();
+        });
+        commands.code.addEventListener('click', function () {
+            closeMenu();
+            openCode({ focus: true });
         });
         byId('cmd-docs').addEventListener('click', function () {
             closeMenu(); // la documentazione si apre in un'altra scheda: qui il menu si chiude
