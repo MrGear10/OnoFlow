@@ -294,8 +294,9 @@ async function checkRuntimeReveal(page, checks, viewport) {
     await page.setInputFiles('#file-input', { name: 'errore.fprg', mimeType: 'application/octet-stream', buffer: Buffer.from(text) });
     await page.waitForSelector('#diagram [data-id]');
     await page.click('#run');
-    await page.waitForSelector('.console-note--error');
-    if (viewport.phone) {
+    // Con errori trovati prima di eseguire, sul telefono si resta sul diagramma (R-09).
+    await page.waitForSelector('.console-note--error', { state: 'attached' });
+    if (viewport.phone && await page.isVisible('#tab-diagram') && !(await page.isVisible('#panel-diagram'))) {
         await page.click('#tab-diagram');
     }
     const ring = await page.locator('#diagram .dg-ring').boundingBox();
@@ -483,6 +484,7 @@ async function checkBuildAndRun(page, checks, viewport) {
     await press('[data-kind="output"]');
     // Errore mentre si scrive, poi corretto; il simbolo * dalla barra.
     await typeInto('.edit-input >> nth=0', 'n 2,5');
+    await page.locator('.edit-error .pen-wave').waitFor({ state: 'visible' }).catch(() => {});
     checks.ok(await page.isVisible('.edit-error .pen-wave'), 'errore mentre si scrive, con l\'onda');
     await typeInto('.edit-input >> nth=0', 'n ');
     await page.locator('.edit-input').first().press('End');
@@ -903,6 +905,7 @@ async function checkStaticAnalysis(page, checks, viewport) {
     await page.locator('.block-editor [id$="-variable"]').fill('b');
     await page.locator('.block-editor [id$="-expression"]').fill('True');
     const error = page.locator('.block-editor [id$="-expression-error"]');
+    await error.waitFor({ state: 'visible' }); // un errore nuovo compare dopo una pausa nello scrivere (R-09)
     checks.ok(await error.isVisible() && (await error.textContent()).includes('Forse si intendeva «true»'),
         `mentre si scrive: ${(await error.textContent()).trim()}`);
     checks.ok(await page.locator('.block-editor [id$="-variable-error"]').isHidden(), 'l\'errore sta solo sotto il suo campo');
@@ -944,6 +947,7 @@ async function checkCallComment(page, checks, viewport) {
     await press('.block-menu [data-kind="call"]');
     await page.locator('.block-editor [id$="-expression"]').fill('Saluta()');
     const error = page.locator('.block-editor [id$="-expression-error"]');
+    await error.waitFor({ state: 'visible' });
     checks.ok(await error.isVisible() && (await error.textContent()).includes('Saluta'), `una funzione che non esiste: ${(await error.textContent()).trim()}`);
     await page.locator('.block-editor [id$="-expression"]').fill('ToString(1)');
     checks.ok(await error.isHidden(), 'con una funzione esistente l\'errore sparisce');
@@ -1113,7 +1117,7 @@ async function checkTheme(page, checks, viewport, browser) {
         await page.click('#cmd-theme');
     }
     checks.ok((await page.getAttribute('html', 'data-theme')) === 'dark' && (await paper()) !== lightPaper, `tema scuro: il foglio cambia colore (${await paper()})`);
-    checks.ok((await page.getAttribute('meta[name="theme-color"]', 'content')) === '#1a1f29', 'anche la barra del browser');
+    checks.ok((await page.getAttribute('meta[name="theme-color"]', 'content')) === '#1a1d23', 'anche la barra del browser');
     await page.click('#menu-button');
     checks.ok((await page.textContent('#cmd-theme')).trim() === 'Tema chiaro', 'poi il menu propone il tema chiaro');
     await page.click('#cmd-theme');
@@ -1150,7 +1154,7 @@ async function checkDocs(page, checks, viewport) {
     // Dall'app: in un'altra scheda, con il tema scelto.
     checks.ok((await page.getAttribute('#cmd-docs', 'target')) === '_blank', 'Menu → Documentazione si apre in un\'altra scheda');
     checks.ok(await page.isVisible('#footer-docs') || (await page.locator('#footer-docs').count()) === 1, 'la riga in fondo al foglio porta alla documentazione');
-    if (viewport.width >= 1024) {
+    if (viewport.width >= 1152) { // da 72rem (R-08)
         checks.ok(await page.isVisible('#docs-link'), 'nella barra il pulsante della documentazione');
     }
     await page.click('#menu-button');
@@ -1204,7 +1208,7 @@ async function checkDocs(page, checks, viewport) {
     await docs.close();
 
     // Andata e ritorno con le schede vere: Torna all'app chiude la documentazione, l'app resta com'era.
-    if (viewport.width >= 1024) {
+    if (viewport.width >= 1152) {
         const name = await page.inputValue('#file-name');
         const [opened] = await Promise.all([page.context().waitForEvent('page'), page.click('#docs-link')]);
         await opened.waitForLoadState();
@@ -1374,7 +1378,10 @@ async function checkBarWidths(browser, engineName) {
             .map((button) => button.getBoundingClientRect());
         return {
             height: Math.round(box('.bar').height),
-            sameRow: box('#menu-button').top === box('#run').top,
+            // Il primo comando dell'esecuzione che si vede: sopra i 40rem, durante l'esecuzione, Esegui
+            // lascia il posto a Ferma (R-08).
+            sameRow: box('#menu-button').top === Array.from(document.querySelectorAll('.run-controls .button'))
+                .find((button) => button.getClientRects().length > 0).getBoundingClientRect().top,
             small: buttons.some((button) => button.width < 44 || button.height < 44),
             scroll: document.documentElement.scrollWidth > document.documentElement.clientWidth
         };

@@ -152,7 +152,7 @@ a {
     flex: none;
     font-size: var(--text-title);
     font-weight: 700;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
     color: var(--ink);
 }
 
@@ -160,7 +160,7 @@ a {
     display: flex;
     align-items: center;
     gap: var(--space-4);
-    flex: 0 1 34rem;
+    flex: 0 1 auto;
     min-width: 0;
 }
 
@@ -168,7 +168,7 @@ a {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    flex: 0 1 20rem;
+    flex: 0 1 auto;
     min-width: 0;
 }
 
@@ -176,9 +176,9 @@ a {
     width: 100%;
     min-width: 0;
     min-height: var(--touch);
-    padding: 0 var(--space-2);
-    background: var(--paper);
-    border: 1px solid var(--chrome-line);
+    padding: 0 var(--space-3);
+    background: var(--canvas);
+    border: 1px solid var(--line);
     border-radius: var(--radius);
     font-family: var(--font-code);
     font-size: 16px;
@@ -191,12 +191,21 @@ a {
     position: relative;
     display: flex;
     flex: 1 1 auto;
+    width: 18rem; /* larghezza voluta; si stringe fino al minimo quando manca spazio */
     min-width: 0;
 }
 
 .file-name:focus-visible {
-    outline: none;
+    outline: 2px solid var(--ink);
+    outline-offset: 1px;
     border-color: var(--ink);
+    background: var(--paper);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .file-name:hover {
+        border-color: var(--chrome-line);
+    }
 }
 
 /* "Non salvato": un segno pieno d'inchiostro, ben visibile anche sul telefono (§11.1). */
@@ -221,10 +230,12 @@ a {
 
 /* Stato dell'esecuzione: ogni stato un segno, come un cartello (FR-RUN-01). */
 .status {
-    flex: none;
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
+    /* Un blocco che si accorcia con i puntini, invece di sovrapporsi a ciò che gli sta accanto. */
+    flex: 0 0.1 auto; /* si accorcia per ultimo: prima si stringe il nome del file */
+    min-width: 1.5rem;
+    max-width: 22rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-size: var(--text-small);
     font-weight: 600;
     white-space: nowrap;
@@ -232,10 +243,13 @@ a {
 
 .status::before {
     content: "";
-    flex: none;
+    display: inline-block;
+    vertical-align: -0.125rem;
+    margin-right: 0.5em; /* in em: sparisce con il solo segno (font-size 0) */
     width: 0.875rem;
     height: 0.875rem;
     border: 1px solid var(--text);
+    border-radius: 3px;
 }
 
 [data-run-state="running"] .status::before {
@@ -296,8 +310,8 @@ a {
     min-width: var(--touch);
     min-height: var(--touch);
     padding: 0 var(--space-3);
-    background: transparent;
-    border: 1px solid var(--ink);
+    background: var(--tonal);
+    border: 1px solid transparent;
     border-radius: var(--radius);
     color: var(--ink);
     font-weight: 600;
@@ -305,6 +319,7 @@ a {
     cursor: pointer;
     transition: background-color var(--duration-press) var(--ease-out),
         color var(--duration-press) var(--ease-out),
+        opacity var(--duration-press) var(--ease-out),
         transform var(--duration-press) var(--ease-out);
 }
 
@@ -317,12 +332,19 @@ a {
     fill: currentColor;
 }
 
-#stop .icon rect {
+#stop .icon rect,
+#pause .icon-resume path {
     fill: currentColor;
 }
 
+/* Pausa e Riprendi: in pausa l'icona è quella del riprendere, non due barre piene (R-07). */
+#pause[aria-pressed="true"] .icon-pause,
+#pause:not([aria-pressed="true"]) .icon-resume {
+    display: none;
+}
+
 .button--quiet {
-    border-color: transparent;
+    background: transparent;
 }
 
 .button--small {
@@ -331,70 +353,38 @@ a {
     font-size: var(--text-small);
 }
 
-.button:active:not(:disabled),
+.button:active:not(:disabled) {
+    background: var(--tonal-strong);
+    transform: scale(0.97);
+}
+
+.button--primary:active:not(:disabled),
 .button[aria-pressed="true"] {
     background: var(--ink);
     color: var(--on-ink);
 }
 
-.button:active:not(:disabled) {
-    transform: scale(0.97);
-}
-
+/* Focus da tastiera: un anello d'inchiostro staccato dal comando (R-04). */
 .button:focus-visible {
-    outline: none;
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
 }
 
-.file-field:focus-within::before,
-.console-input:focus-within::before {
-    inset: -4px;
-}
-
-.slate .console-input:focus-within::before {
-    border-color: var(--chalk-yellow);
-}
-
-/* Focus: due parentesi quadre tracciate attorno al comando o al campo. I campi di testo non
-   hanno ::before: le parentesi vanno sul contenitore. */
-.button:focus-visible::before,
-.file-field:focus-within::before,
-.console-input:focus-within::before {
-    content: "";
-    position: absolute;
-    inset: -5px;
-    border: 2px solid var(--ink);
-    border-radius: 2px;
-    -webkit-mask-image: linear-gradient(90deg, #000 0.5rem, transparent 0.5rem, transparent calc(100% - 0.5rem), #000 calc(100% - 0.5rem));
-    mask-image: linear-gradient(90deg, #000 0.5rem, transparent 0.5rem, transparent calc(100% - 0.5rem), #000 calc(100% - 0.5rem));
-    pointer-events: none;
-}
-
-/* Disabilitato: il comando è barrato, come un'indicazione che non vale. */
+/* Non disponibile: il comando si spegne, senza fondo (R-04). */
 .button:disabled {
     cursor: not-allowed;
     color: var(--text-muted);
-    border-color: var(--line);
     background: transparent;
-}
-
-.button:disabled::after {
-    content: "";
-    position: absolute;
-    left: var(--space-2);
-    right: var(--space-2);
-    top: 50%;
-    height: 1px;
-    background: currentColor;
-    pointer-events: none;
-}
-
-.button--quiet:disabled {
-    border-color: transparent;
+    opacity: 0.5;
 }
 
 @media (hover: hover) and (pointer: fine) {
     .button:hover:not(:disabled):not(.button--primary):not(.button--chalk):not([aria-pressed="true"]) {
-        background: var(--info-soft);
+        background: var(--tonal-strong);
+    }
+
+    .button--quiet:hover:not(:disabled) {
+        background: var(--tonal) !important;
     }
 
     .button--primary:hover:not(:disabled) {
@@ -415,15 +405,17 @@ a {
     max-height: calc(var(--viewport-height, 100dvh) - var(--bar-height) - var(--space-6));
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: var(--space-2) 0;
+    padding: var(--space-2);
     background: var(--paper);
-    border: 1px solid var(--text);
-    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-menu);
 }
 
 .menu-heading {
-    padding: var(--space-2) var(--space-4) var(--space-1);
+    padding: var(--space-2) var(--space-3) var(--space-1);
     font-size: var(--text-small);
+    font-weight: 600;
     color: var(--text-muted);
 }
 
@@ -436,14 +428,31 @@ a {
 .menu-item {
     display: flex;
     align-items: center;
+    gap: var(--space-4);
     width: 100%;
     min-height: var(--touch);
-    padding: 0 var(--space-4);
+    padding: 0 var(--space-3);
     background: none;
     border: 0;
+    border-radius: var(--radius);
     text-align: left;
     color: var(--text);
     cursor: pointer;
+}
+
+/* Scorciatoia da tastiera accanto alla voce (R-09); solo dove c'è una tastiera. */
+.menu-shortcut {
+    margin-left: auto;
+    font-family: var(--font-ui);
+    font-size: var(--text-small);
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+@media not ((hover: hover) and (pointer: fine)) {
+    .menu-shortcut {
+        display: none;
+    }
 }
 
 a.menu-item {
@@ -451,25 +460,24 @@ a.menu-item {
 }
 
 .menu-item:focus-visible {
-    outline: none;
-    background: var(--info-soft);
-    box-shadow: inset 2px 0 0 var(--ink), inset -2px 0 0 var(--ink);
+    outline: 2px solid var(--ink);
+    outline-offset: -2px;
+    background: var(--tonal);
 }
 
 .menu-item:active:not(:disabled) {
-    background: var(--ink);
-    color: var(--on-ink);
+    background: var(--tonal-strong);
 }
 
 .menu-item:disabled {
     color: var(--text-muted);
-    text-decoration: line-through;
+    opacity: 0.55;
     cursor: not-allowed;
 }
 
 @media (hover: hover) and (pointer: fine) {
     .menu-item:hover:not(:disabled) {
-        background: var(--info-soft);
+        background: var(--tonal);
     }
 }
 
@@ -532,22 +540,19 @@ a.menu-item {
 .sheet {
     --zoom: 1;
     --grid-zoom: 1;
-    --margin-line: calc(2 * var(--square) * var(--zoom));
+    --margin-line: calc(var(--square) * var(--zoom)); /* rientro sinistro del disegno */
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: auto;
     overscroll-behavior: contain;
-    background-color: var(--paper);
-    /* Quadretti e margine rosso del quaderno: il foglio è la superficie del diagramma. */
-    background-image:
-        linear-gradient(90deg, transparent var(--margin-line), var(--paper-margin) var(--margin-line), var(--paper-margin) calc(var(--margin-line) + 1px), transparent calc(var(--margin-line) + 1px)),
-        linear-gradient(var(--paper-grid) 1px, transparent 1px),
-        linear-gradient(90deg, var(--paper-grid) 1px, transparent 1px);
-    /* Lo zoom fa crescere anche i quadretti; quando sono troppo fitti se ne disegna uno ogni 2 o 4. */
-    background-size: 100% 100%, calc(var(--square) * var(--grid-zoom)) calc(var(--square) * var(--grid-zoom)), calc(var(--square) * var(--grid-zoom)) calc(var(--square) * var(--grid-zoom));
-    background-repeat: no-repeat, repeat, repeat;
+    background-color: var(--canvas);
+    /* Tela con una griglia di puntini appena accennata (R-02): un puntino a ogni incrocio. */
+    background-image: radial-gradient(circle at 1px 1px, var(--canvas-dot) 1px, transparent 1.5px);
+    /* Lo zoom fa crescere anche la griglia; quando è troppo fitta se ne disegna un puntino ogni 2 o 4. */
+    background-size: calc(var(--square) * var(--grid-zoom)) calc(var(--square) * var(--grid-zoom));
+    background-repeat: repeat;
     background-attachment: local;
     scrollbar-color: var(--ink-soft) transparent;
     /* Un dito scorre il foglio; il pizzico lo gestisce diagram-viewport.js, mai la pagina. */
@@ -883,8 +888,9 @@ button.diagram-error-entry:active {
     width: min(25rem, calc(100% - 2 * var(--space-3)));
     padding: var(--space-2) var(--space-3) var(--space-3);
     background: var(--paper);
-    border: 1px solid var(--text);
-    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-menu);
 }
 
 /* Sul telefono: pannello in basso, a tutta larghezza. */
@@ -895,7 +901,7 @@ button.diagram-error-entry:active {
     width: auto;
     padding: var(--space-2) var(--space-2) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
     border-width: 1px 0 0;
-    border-radius: 0;
+    border-radius: 16px 16px 0 0;
 }
 
 .block-menu--sheet .block-menu-title {
@@ -944,19 +950,18 @@ button.diagram-error-entry:active {
 }
 
 .block-menu-item:focus-visible {
-    border-color: var(--ink);
-    outline: none;
-    box-shadow: inset 2px 0 0 var(--ink), inset -2px 0 0 var(--ink);
+    outline: 2px solid var(--ink);
+    outline-offset: -2px;
+    background: var(--tonal);
 }
 
 .block-menu-item:active {
-    background: var(--ink);
-    color: var(--on-ink);
+    background: var(--tonal-strong);
 }
 
 @media (hover: hover) and (pointer: fine) {
     .block-menu-item:hover {
-        background: var(--info-soft);
+        background: var(--tonal);
     }
 }
 
@@ -998,7 +1003,7 @@ button.diagram-error-entry:active {
     gap: var(--space-3);
     padding: var(--space-2) var(--gutter);
     border-bottom: 1px solid var(--line);
-    background: var(--chrome);
+    background: var(--paper);
 }
 
 .edit-icon .block-icon {
@@ -1042,10 +1047,10 @@ button.diagram-error-entry:active {
 .edit-select {
     width: 100%;
     min-height: var(--touch);
-    padding: 0 var(--space-2);
-    background: var(--paper);
+    padding: 0 var(--space-3);
+    background: var(--canvas);
     color: var(--text);
-    border: 1px solid var(--chrome-line);
+    border: 1px solid var(--line);
     border-radius: var(--radius);
     font-family: var(--font-code);
     font-size: max(16px, var(--text-content));
@@ -1065,7 +1070,8 @@ button.diagram-error-entry:active {
 .edit-select:focus {
     outline: none;
     border-color: var(--ink);
-    box-shadow: inset 0 0 0 1px var(--ink);
+    background: var(--paper);
+    box-shadow: 0 0 0 3px var(--tonal-strong);
 }
 
 .edit-input[aria-invalid="true"] {
@@ -1138,17 +1144,25 @@ button.diagram-error-entry:active {
 .edit-symbols {
     flex: none;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr));
-    gap: 1px;
-    padding: 1px;
-    background: var(--line);
-    border-top: 1px solid var(--chrome-line);
+    /* Dodici tasti in due righe uguali, o in una sola dove c'è posto (R-09). */
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: var(--space-1);
+    padding: var(--space-2);
+    background: var(--canvas);
+    border-top: 1px solid var(--line);
+}
+
+@media (min-width: 90rem) {
+    .edit-symbols {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
 }
 
 .edit-symbol {
     min-height: var(--touch);
-    background: var(--chrome);
-    border: 0;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
     color: var(--ink);
     font-family: var(--font-code);
     font-size: 1.125rem;
@@ -1157,13 +1171,18 @@ button.diagram-error-entry:active {
 }
 
 .edit-symbol:active {
-    background: var(--ink);
-    color: var(--on-ink);
+    background: var(--tonal-strong);
 }
 
 .edit-symbol:focus-visible {
     outline: 2px solid var(--ink);
-    outline-offset: -3px;
+    outline-offset: 1px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .edit-symbol:hover {
+        background: var(--tonal);
+    }
 }
 
 /* Parametri di una funzione (passo 18): nome, tipo, array e Togli su una riga. */
@@ -1219,14 +1238,41 @@ button.diagram-error-entry:active {
 
 /* --- Barra della selezione (B3) ----------------------------------------------------- */
 
+/* Comandi che galleggiano sulla tela: una superficie con un'ombra leggera (R-04). */
+.dock {
+    display: contents;
+}
+
+.pane--diagram {
+    --float-height: calc(var(--touch) + 2 * var(--space-1) + 2px); /* altezza di un gruppo galleggiante */
+}
+
+.selection-bar,
+.history-controls--sheet,
+.step-controls,
+.zoom {
+    padding: var(--space-1);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-float);
+}
+
+.selection-bar .button,
+.history-controls--sheet .button,
+.step-controls .button,
+.zoom .button {
+    background: transparent;
+}
+
 .selection-bar {
     position: absolute;
     left: calc(var(--space-3) + env(safe-area-inset-left, 0px));
     bottom: var(--space-3);
     display: flex;
-    gap: var(--space-2);
-    background: var(--paper);
-    border-radius: var(--radius);
+    flex-wrap: wrap;
+    max-width: calc(100% - 2 * var(--space-3));
+    gap: var(--space-1);
 }
 
 .selection-bar[hidden] {
@@ -1274,24 +1320,12 @@ button.diagram-error-entry:active {
     justify-content: center;
 }
 
-/* Con la sola icona un barrato sopra il disegno lo rende illeggibile (Annulla barrato sembrava
-   un'altra icona): l'icona resta tenue e intera, e la barra attraversa il riquadro, da un angolo all'altro
-   (M-03). */
-.history-button:disabled::after {
-    left: 0;
-    right: 0;
-    height: 1px;
-    transform: rotate(-45deg) scaleX(1.3);
-}
-
 /* Su telefoni e finestre strette Annulla e Ripeti stanno sul foglio, in basso a sinistra. */
 .history-controls--sheet {
     display: none;
     position: absolute;
     left: calc(var(--space-3) + env(safe-area-inset-left, 0px));
     bottom: var(--space-3);
-    background: var(--paper);
-    border-radius: var(--radius);
 }
 
 /* --- Pannello delle variabili (FR-RUN-06, DEC-075) ------------------------------------ */
@@ -1299,7 +1333,7 @@ button.diagram-error-entry:active {
 /* Sul computer in cima alla console: la stessa lavagna, con il gesso. */
 .variables-pane {
     flex: none;
-    max-height: 40%;
+    max-height: 45%;
     overflow: auto;
     overscroll-behavior: contain;
     padding: var(--space-3) var(--square);
@@ -1307,6 +1341,8 @@ button.diagram-error-entry:active {
     color: var(--chalk);
     border-bottom: 1px solid var(--slate-line);
     font-family: var(--font-code);
+    /* Il passo-passo si legge da fondo aula come la console (R-08, regola della distanza). */
+    font-size: var(--text-content);
 }
 
 .variables-pane[hidden],
@@ -1317,7 +1353,7 @@ button.diagram-error-entry:active {
 .variables-title {
     margin: 0 0 var(--space-2);
     font-family: var(--font-ui);
-    font-size: 0.8125rem;
+    font-size: var(--text-body);
     font-weight: 600;
     color: var(--chalk-muted);
 }
@@ -1325,12 +1361,13 @@ button.diagram-error-entry:active {
 .variables-empty {
     margin: 0;
     font-family: var(--font-ui);
-    font-size: 0.875rem;
+    font-size: var(--text-body);
 }
 
 .variables-list {
     display: grid;
     grid-template-columns: max-content max-content minmax(0, 1fr);
+    align-items: baseline;
     column-gap: var(--space-4);
     row-gap: var(--space-1);
     margin: 0;
@@ -1348,8 +1385,8 @@ button.diagram-error-entry:active {
 
 .variable-type {
     font-family: var(--font-ui);
-    font-size: 0.8125rem;
-    opacity: 0.8;
+    font-size: 0.8em;
+    color: var(--chalk-muted);
 }
 
 .variable-value,
@@ -1368,8 +1405,8 @@ button.diagram-error-entry:active {
 
 .variable-full {
     display: block;
-    font-size: 0.75rem;
-    opacity: 0.75;
+    font-size: 0.8em;
+    color: var(--chalk-muted);
 }
 
 .variable-elements {
@@ -1383,8 +1420,8 @@ button.diagram-error-entry:active {
 
 .variable-index {
     margin-right: var(--space-1);
-    font-size: 0.75rem;
-    opacity: 0.7;
+    font-size: 0.8em;
+    color: var(--chalk-muted);
 }
 
 .variable-index::after {
@@ -1397,12 +1434,13 @@ button.diagram-error-entry:active {
     position: absolute;
     left: calc(var(--space-3) + env(safe-area-inset-left, 0px));
     right: calc(var(--space-3) + env(safe-area-inset-right, 0px));
-    bottom: calc(var(--touch) + 2 * var(--space-3));
+    bottom: calc(var(--float-height) + var(--space-3) + var(--space-2));
     max-height: 55%;
     flex-direction: column;
     background: var(--slate);
     color: var(--chalk);
-    border-radius: var(--radius);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-float);
     font-family: var(--font-code);
 }
 
@@ -1416,7 +1454,7 @@ button.diagram-error-entry:active {
     border: 0;
     color: inherit;
     font: inherit;
-    font-size: 0.875rem;
+    font-size: var(--text-body);
     text-align: left;
     cursor: pointer;
 }
@@ -1451,21 +1489,108 @@ button.diagram-error-entry:active {
     position: absolute;
     left: calc(var(--space-3) + env(safe-area-inset-left, 0px));
     bottom: var(--space-3);
-    background: var(--paper);
-    border-radius: var(--radius);
 }
 
 /* Sotto i 64rem nella barra mancherebbe spazio per il nome del file (B2). */
 @media (max-width: 63.99rem) {
-    .history-controls--bar,
-    .docs-button,
-    .theme-button {
-        display: none; /* tema e documentazione restano nel menu */
+    .history-controls--bar {
+        display: none;
     }
 
     .history-controls--sheet {
         display: flex;
     }
+
+    /* Il Menu con la sola icona: il nome resta per i lettori di schermo. */
+    .menu-button {
+        width: var(--touch);
+        padding: 0;
+    }
+
+    .menu-button-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+}
+
+/* Proiettori a 1024 e 1280 px (R-08): sotto i 72rem tema e documentazione restano solo nel menu;
+   durante l'esecuzione Annulla e Ripeti, che non valgono, lasciano il posto. Così la barra sta in
+   una riga e il Menu non esce dallo schermo. */
+@media (max-width: 71.99rem) {
+    .docs-button,
+    .theme-button {
+        display: none;
+    }
+}
+
+.app[data-run-state="running"] .history-controls--bar,
+.app[data-run-state="paused"] .history-controls--bar,
+.app[data-run-state="waitingInput"] .history-controls--bar {
+    display: none;
+}
+
+/* Un solo comando principale per stato (R-04, R-08): durante l'esecuzione Esegui lascia il posto a
+   Ferma, e Passo compare solo quando vale, nella pausa. Sotto i 40rem i posti fissi sono quelli
+   della regola più avanti (M-03). */
+@media (min-width: 40.01rem) {
+    .app[data-run-state="running"] #run,
+    .app[data-run-state="paused"] #run,
+    .app[data-run-state="waitingInput"] #run,
+    .app[data-run-state="running"] #step,
+    .app[data-run-state="waitingInput"] #step,
+    .app:not([data-run-state="running"]):not([data-run-state="paused"]):not([data-run-state="waitingInput"]) #pause,
+    .app:not([data-run-state="running"]):not([data-run-state="paused"]):not([data-run-state="waitingInput"]) #stop {
+        display: none; /* da fermo Pausa e Ferma non valgono */
+    }
+}
+
+@media (min-width: 56rem) {
+    .file-field {
+        min-width: 10rem;
+    }
+
+    /* Il nome con il punto di «Non salvato» non scende sotto la sua larghezza minima: lo stato,
+       accanto, non viene coperto. */
+    .file {
+        min-width: 11rem;
+    }
+
+    .status,
+    .modified {
+        font-size: var(--text-body);
+    }
+}
+
+/* «Non salvato» è un punto accanto al nome finché lo spazio è poco (il testo resta per i lettori
+   di schermo e nel suggerimento): il posto va allo stato dell'esecuzione. */
+@media (max-width: 89.99rem) {
+    .modified {
+        gap: 0;
+        font-size: 0;
+    }
+}
+
+/* Tra 56 e 64rem lo spazio non basta per i testi più lunghi («Non eseguito: ci sono errori» con
+   «Non salvato»): restano i segni, come sul telefono. */
+@media (min-width: 56rem) and (max-width: 63.99rem) {
+    .status,
+    .modified {
+        gap: 0;
+        font-size: 0;
+    }
+
+    .file-group {
+        gap: var(--space-2);
+    }
+}
+
+/* Qualunque cosa contenga, la barra non allarga mai la pagina. */
+.app {
+    grid-template-columns: minmax(0, 1fr);
 }
 
 @media (max-width: 55.99rem) {
@@ -1486,12 +1611,12 @@ button.diagram-error-entry:active {
 /* Foglio stretto (telefono, finestra piccola): la barra della selezione sale sopra lo zoom. */
 @container (max-width: 44rem) {
     .selection-bar {
-        bottom: calc(var(--touch) + 2 * var(--space-3));
+        bottom: calc(var(--float-height) + var(--space-3) + var(--space-2));
     }
 
     /* La riga in fondo resta sopra le due file di comandi (prima della regola base nel file). */
     .sheet .footer {
-        padding-bottom: calc(2 * var(--touch) + 4 * var(--space-3) + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(2 * var(--float-height) + 3 * var(--space-3) + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -1500,18 +1625,7 @@ button.diagram-error-entry:active {
     right: calc(var(--space-3) + env(safe-area-inset-right, 0px));
     bottom: var(--space-3);
     display: flex;
-    background: var(--paper);
-    border: 1px solid var(--chrome-line);
-    border-radius: var(--radius);
-}
-
-.zoom .button {
-    border-color: transparent;
-    border-radius: 0;
-}
-
-.zoom .button + .button {
-    border-left: 1px solid var(--line);
+    gap: 2px;
 }
 
 .zoom-level {
@@ -1524,7 +1638,7 @@ button.diagram-error-entry:active {
     flex: none;
     /* Una riga piccola e tenue (DEC-065); in basso c'è posto per i comandi dello zoom. */
     padding: var(--space-2) var(--square) calc(var(--touch) + 3 * var(--space-3) + env(safe-area-inset-bottom, 0px)) calc(var(--margin-line) + var(--square));
-    background: var(--paper);
+    background: transparent;
     font-size: 0.75rem;
     line-height: 1.5;
     color: var(--text-muted);
@@ -1567,10 +1681,11 @@ button.diagram-error-entry:active {
     max-height: calc(100% - 2 * var(--space-3));
     overflow: auto;
     overscroll-behavior: contain;
-    padding: var(--space-2) var(--space-4) var(--space-4);
+    padding: var(--space-3) var(--space-4) var(--space-4);
     background: var(--paper);
-    border: 1px solid var(--text);
-    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-menu);
     color: var(--text);
 }
 
@@ -1645,6 +1760,44 @@ button.diagram-error-entry:active {
     outline-color: var(--chalk);
 }
 
+/* Il blocco che chiede il valore, fermo in cima alla console (R-07): solo dove il diagramma non
+   si vede accanto, e solo mentre si attende un valore. */
+.console-asking {
+    display: none;
+}
+
+@media (max-width: 55.99rem) {
+    .app[data-run-state="waitingInput"] .console-asking {
+        position: sticky;
+        top: calc(-1 * var(--space-4));
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin: calc(-1 * var(--space-4)) calc(-1 * var(--gutter)) var(--space-3);
+        padding: var(--space-2) var(--gutter);
+        background: var(--chalk-field);
+        border-bottom: 1px solid var(--slate-line);
+        font-family: var(--font-ui);
+        font-size: var(--text-body);
+        color: var(--chalk);
+    }
+}
+
+/* Lo stesso segno di «in esecuzione» della barra: il blocco è quello evidenziato nel diagramma. */
+.console-asking-sign {
+    flex: none;
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 3px;
+    background: var(--highlighter);
+}
+
+#console-asking-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
 .console-empty,
 .console-trimmed {
     font-family: var(--font-ui);
@@ -1681,8 +1834,8 @@ button.diagram-error-entry:active {
     padding: 0 var(--space-2);
     background: var(--chalk-field);
     border: 0;
-    border-bottom: 1px solid var(--chalk-yellow);
-    border-radius: 0;
+    border-bottom: 2px solid var(--chalk-yellow);
+    border-radius: 6px 6px 0 0;
     font-family: var(--font-code);
     font-size: max(16px, 1em);
     color: var(--chalk-yellow);
@@ -1695,7 +1848,8 @@ button.diagram-error-entry:active {
 }
 
 .console-field:focus-visible {
-    outline: none;
+    outline: 2px solid var(--chalk-yellow);
+    outline-offset: 2px;
 }
 
 .console-note {
@@ -1766,6 +1920,15 @@ button.diagram-error-entry:active {
     overflow-wrap: anywhere;
 }
 
+/* Dopo Ferma i valori sono già nel pannello in cima: una sola tabella (R-09). Sul telefono il
+   pannello non si vede dalla console, e la tabella della nota resta. */
+@media (min-width: 56rem) {
+    .variables-pane:not([hidden]) ~ .slate .console-note--stopped .console-caption,
+    .variables-pane:not([hidden]) ~ .slate .console-note--stopped .console-variables {
+        display: none;
+    }
+}
+
 .console-error-list {
     margin: var(--space-2) 0 0;
     padding-left: 1.5rem;
@@ -1791,7 +1954,7 @@ button.diagram-error-entry:active {
 }
 
 .button--chalk {
-    border-color: var(--chalk-muted);
+    background: var(--chalk-field);
     color: var(--chalk);
     font-family: var(--font-ui);
 }
@@ -1801,13 +1964,13 @@ button.diagram-error-entry:active {
     color: var(--slate);
 }
 
-.button--chalk:focus-visible::before {
-    border-color: var(--chalk);
+.button--chalk:focus-visible {
+    outline-color: var(--chalk);
 }
 
 @media (hover: hover) and (pointer: fine) {
     .button--chalk:hover:not(:disabled) {
-        background: var(--chalk-field);
+        background: var(--slate-line);
     }
 }
 
@@ -1823,27 +1986,29 @@ button.diagram-error-entry:active {
     align-items: center;
     justify-content: center;
     gap: var(--space-2);
-    min-height: var(--tabs-height);
+    min-height: calc(var(--tabs-height) - 2 * var(--space-2));
+    margin: var(--space-2) var(--space-1);
     padding: 0 var(--space-3);
     background: none;
     border: 0;
-    border-top: 2px solid transparent;
+    border-radius: var(--radius-panel);
     color: var(--text-muted);
     font-weight: 600;
     cursor: pointer;
+    transition: background-color var(--duration-press) var(--ease-out), color var(--duration-press) var(--ease-out);
 }
 
 .tab[aria-selected="true"] {
     color: var(--ink);
-    border-top-color: var(--ink);
+    background: var(--tonal);
 }
 
 .tab:active {
-    background: var(--info-soft);
+    background: var(--tonal-strong);
 }
 
 .tab:focus-visible {
-    outline-offset: -4px;
+    outline-offset: -2px;
 }
 
 /* Segno sulla scheda Console: qualcosa di nuovo (inchiostro) o un errore (penna). */
@@ -1885,8 +2050,8 @@ button.diagram-error-entry:active {
         grid-template-columns: 1fr 1fr;
         background: var(--chrome);
         border-top: 1px solid var(--chrome-line);
-        padding-left: env(safe-area-inset-left, 0px);
-        padding-right: env(safe-area-inset-right, 0px);
+        padding-left: calc(var(--space-2) + env(safe-area-inset-left, 0px));
+        padding-right: calc(var(--space-2) + env(safe-area-inset-right, 0px));
         padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
@@ -1968,7 +2133,7 @@ button.diagram-error-entry:active {
     .selection-bar {
         left: auto;
         right: calc(var(--space-3) + env(safe-area-inset-right, 0px));
-        bottom: calc(var(--touch) + 2 * var(--space-3));
+        bottom: calc(var(--float-height) + var(--space-3) + var(--space-2));
     }
 
     .sheet-content {
@@ -1983,6 +2148,64 @@ button.diagram-error-entry:active {
 
     .slate {
         padding: var(--space-4) var(--gutter);
+    }
+}
+
+/* Telefono in verticale (R-07): i comandi del foglio sono un'unica base in basso, su una superficie
+   piena, e il foglio finisce sopra di essa: niente copre più il diagramma. Prima riga, quando c'è,
+   la barra della selezione o la striscia delle variabili; sotto Annulla e Ripeti (o Passo) a
+   sinistra e lo zoom a destra. In orizzontale restano sulla tela (M-04): l'altezza è poca. */
+@media (max-width: 55.99rem) and (orientation: portrait), (max-width: 55.99rem) and (min-height: 30.01rem) {
+    .dock {
+        flex: none;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) max(var(--space-3), env(safe-area-inset-right, 0px)) var(--space-2) max(var(--space-3), env(safe-area-inset-left, 0px));
+        background: var(--paper);
+        border-top: 1px solid var(--line);
+    }
+
+    .dock > * {
+        position: static;
+        padding: 0;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .selection-bar,
+    .variables-strip {
+        order: -1;
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .selection-bar {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: var(--space-2);
+        max-width: none;
+    }
+
+    .selection-bar .button {
+        background: var(--tonal);
+    }
+
+    .variables-strip {
+        max-height: 45vh;
+        max-height: 45dvh;
+        padding: 0;
+        box-shadow: none;
+    }
+
+    .zoom {
+        margin-left: auto;
+    }
+
+    /* Nulla sopra il foglio: la riga in fondo non deve più lasciare posto ai comandi. */
+    .sheet .footer {
+        padding-bottom: var(--space-4);
     }
 }
 
@@ -2061,12 +2284,16 @@ button.diagram-error-entry:active {
         padding: 0 var(--space-3) 0 var(--space-2);
     }
 
-    /* Pausa senza testo, spenta mentre si attende un valore: barrata come Annulla e Ripeti. */
-    #pause:disabled::after {
-        left: 0;
-        right: 0;
-        height: 1px;
-        transform: rotate(-45deg) scaleX(1.3);
+    /* Il nome del file non si accorcia più a «p..» (R-07): stato e «Non salvato» restano come
+       segni accanto al nome, il testo resta per i lettori di schermo. */
+    .status,
+    .modified {
+        gap: 0;
+        font-size: 0;
+    }
+
+    .file-group {
+        gap: var(--space-2);
     }
 }
 
@@ -2108,13 +2335,8 @@ button.diagram-error-entry:active {
     .tab {
         width: var(--touch);
         min-height: var(--touch);
+        margin: 0;
         padding: 0;
-        border-top: 0;
-        border-left: 2px solid transparent;
-    }
-
-    .tab[aria-selected="true"] {
-        border-left-color: var(--ink);
     }
 
     .tab span {
@@ -2150,11 +2372,6 @@ button.diagram-error-entry:active {
 
     .zoom {
         flex-direction: column;
-    }
-
-    .zoom .button + .button {
-        border-left: 0;
-        border-top: 1px solid var(--line);
     }
 
     .zoom-level {
@@ -2196,9 +2413,9 @@ button.diagram-error-entry:active {
     }
 }
 
-/* Telefoni stretti: quattro pulsanti con il testo non stanno in 360 px nella barra della selezione:
-   Modifica, Sposta ed Elimina restano con l'icona. */
-@media (max-width: 27.5rem) {
+/* Telefoni: quattro pulsanti con il testo stanno in una riga solo da circa 35rem: sotto, Modifica,
+   Sposta ed Elimina restano con l'icona (il nome resta per i lettori di schermo). */
+@media (max-width: 35rem) {
     .selection-delete .button-label,
     .selection-edit .button-label,
     .selection-move .button-label {

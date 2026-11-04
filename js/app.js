@@ -473,6 +473,7 @@
 
         var blockEditor = BlockEditor.create(byId('work'), {
             t: t,
+            errorDelay: 800, // un errore nuovo dopo una pausa nello scrivere (R-09)
             formatError: formatError,
             onChange: afterFieldChange,
             // Errori dell'analisi statica di un campo, già calcolati da afterFieldChange (passo 16).
@@ -1175,6 +1176,7 @@
             });
             app.setAttribute('data-run-state', runStateName(current));
             statusLabel.textContent = statusText();
+            statusLabel.title = statusLabel.textContent; // intero anche quando è accorciato
             statusLabel.hidden = statusLabel.textContent === '';
             keepRunFocus(focused);
         }
@@ -1182,12 +1184,14 @@
         /* Sul telefono un comando dell'esecuzione sparisce quando cambia lo stato (M-03): il focus
            passa a quello che ne prende il posto, invece di perdersi. */
         var runPartners = [[runButton, stopButton], [byId('step'), pauseButton]];
+        function shown(element) {
+            return element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden';
+        }
         function keepRunFocus(focused) {
             runPartners.forEach(function (pair) {
                 var index = pair.indexOf(focused);
                 var other = pair[1 - index];
-                if (index !== -1 && getComputedStyle(focused).visibility === 'hidden'
-                    && getComputedStyle(other).visibility !== 'hidden' && !other.disabled) {
+                if (index !== -1 && !shown(focused) && shown(other) && !other.disabled) {
                     other.focus();
                 }
             });
@@ -1209,6 +1213,11 @@
             } else if (outcome.status === 'invalid') {
                 consoleView.showInvalid(outcome.errors);
                 showErrors(outcome.errors, false);
+                // Sul telefono si resta sul diagramma: gli errori sono già segnati lì, con l'elenco
+                // sopra il foglio; la console li ripeterebbe soli (R-09).
+                if (narrow.matches) {
+                    showTab('diagram');
+                }
                 markForReveal(outcome.errors[0].nodeId);
                 badgeConsole('error');
             } else if (outcome.error.code === 'ERR_STOPPED') {
@@ -1275,6 +1284,8 @@
                     }
                 },
                 onInput: function (event) {
+                    // Sul telefono il diagramma è nell'altra scheda: sopra il campo, il blocco che chiede il valore (R-07).
+                    byId('console-asking-text').textContent = t('ui.console.asking', { block: describeBlock(event.nodeId) || '' });
                     setRunning(event.nodeId);
                     revealNode(event.nodeId, { quiet: true });
                     consoleView.requestInput(event);

@@ -1,40 +1,45 @@
 /*
  * OnoFlow — valori del sistema visivo (§11.2, DEC-051).
  *
- * Quaderno a quadretti e lavagna, sobri; ogni stato ha un segno con un solo significato:
- *   inchiostro blu   i blocchi e i comandi;
- *   penna rossa      solo gli errori;
+ * Stile moderno e pulito (revisione R-01…R-05 in DESIGN.md): tela chiara a puntini, console
+ * grafite, cornice leggera. Ogni stato ha un segno con un solo significato:
+ *   blu              i blocchi e i comandi;
+ *   rosso            solo gli errori;
  *   evidenziatore    solo il blocco in esecuzione;
- *   gesso giallo     solo i valori digitati nella console.
- * Linee a un pixel, niente gradienti, ombre o rilievi. Solo font di sistema (NFR-PRIV-02).
+ *   giallo           solo i valori digitati nella console.
+ * Niente gradienti decorativi; ombre leggere solo per ciò che sta sopra la tela. Solo font di
+ * sistema (NFR-PRIV-02).
  * Tema chiaro e scuro secondo il sistema (NFR-ACC-02), oppure scelto dal menu (data-theme sull'html, DEC-080).
  */
 :root {
     color-scheme: light dark;
 
-    /* Foglio (zona del diagramma) */
+    /* Tela del diagramma: chiara, con una griglia di puntini appena accennata (R-02). */
+    --canvas: #f5f6f8;
+    --canvas-dot: #c4cad5;
+    /* Superfici: barra, menu, pannelli, campi, Inizio e Fine. */
     --paper: #ffffff;
-    --paper-grid: #e3e9f1;
-    --paper-margin: #e7a9a9;
-    --ink: #1c3594;
-    --ink-soft: #4d5f9c;
-    --text: #15171c;
-    --text-muted: #555a66;
+    --ink: #2239b5;
+    --ink-soft: #5d6aa8;
+    --text: #14161b;
+    --text-muted: #5a6070;
 
     /* Barra e pannelli */
-    --chrome: #f4f5f7;
-    --chrome-line: #c9ced8;
-    --line: #d5dae3;
+    --chrome: #ffffff;
+    --chrome-line: #dfe2e8;
+    --line: #e6e8ed;
     --on-ink: #ffffff;
+    --tonal: #edf0fb;          /* fondo dei comandi secondari */
+    --tonal-strong: #dfe5f8;   /* loro hover */
 
     /* Stati */
     --pen: #c0141c;
-    --pen-soft: #fbe9e9;
+    --pen-soft: #fcebeb;
     --highlighter: #fff06b;
-    --on-highlighter: #15171c;
+    --on-highlighter: #14161b;
     --warning: #8a5a00;
     --warning-soft: #fdf3dc;
-    --info-soft: #e8edf9;
+    --info-soft: #edf0fb;
 
     /* Tinte dei blocchi, una per tipo (DEC-057): tenui, mai gialle o rosse (regola del segno unico) */
     --block-declare: #e8ecff;
@@ -45,14 +50,14 @@
     --block-loop: #cdf7ff;
     --block-call: #e9eff6;
 
-    /* Lavagna (console) */
-    --slate: #213a33;
-    --slate-line: #3c5a50;
-    --chalk: #eef0e8;
-    --chalk-muted: #b4c3b9;
-    --chalk-yellow: #f3d75f;
-    --chalk-pen: #ff9d93;
-    --chalk-field: #2b4840;
+    /* Console: grafite, scura in entrambi i temi (R-03) */
+    --slate: #1d2027;
+    --slate-line: #333844;
+    --chalk: #eceef2;
+    --chalk-muted: #a3a9b5;
+    --chalk-yellow: #f2cf5b;
+    --chalk-pen: #ff8f86;
+    --chalk-field: #2a2e37;
 
     /* Tipografia */
     --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, sans-serif;
@@ -63,7 +68,7 @@
     --text-title: 1.25rem;
     --leading: 1.45;
 
-    /* Spazi: il quadretto è l'unità */
+    /* Spazi: il passo della griglia è l'unità del foglio */
     --square: 1.25rem;
     --space-1: 0.25rem;
     --space-2: 0.5rem;
@@ -72,9 +77,14 @@
     --space-6: 1.5rem;
     --gutter: 1rem;
     --touch: 2.75rem;           /* 44 px: area di tocco minima (FR-MOB-04) */
-    --radius: 4px;
+    --radius: 8px;              /* pulsanti e campi (R-04) */
+    --radius-panel: 12px;       /* menu e pannelli che si sovrappongono */
     --bar-height: 3.5rem;
     --tabs-height: 3.5rem;
+
+    /* Ombra leggera solo per ciò che sta sopra la tela (menu, comandi del foglio) */
+    --shadow-float: 0 1px 2px rgba(16, 22, 36, 0.08), 0 4px 14px rgba(16, 22, 36, 0.1);
+    --shadow-menu: 0 2px 4px rgba(16, 22, 36, 0.08), 0 12px 32px rgba(16, 22, 36, 0.16);
 
     /* Movimento */
     --duration-press: 100ms;
@@ -82,30 +92,32 @@
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Tema scuro: quello del sistema, salvo una scelta dal menu (data-theme, DEC-080). */
+/* Tema scuro: quello del sistema, salvo una scelta dal menu (data-theme, DEC-080).
+   I valori sono ripetuti per [data-theme="dark"]: tenerli uguali. */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-        /* Foglio scuro: carta blu notte, inchiostro chiaro; i segni restano gli stessi. */
-        --paper: #12161e;
-        --paper-grid: #1f2633;
-        --paper-margin: #6a2f35;
-        --ink: #a8bfff;
-        --ink-soft: #8394c4;
-        --text: #eef1f6;
-        --text-muted: #a3abb9;
+        --canvas: #121418;
+        --canvas-dot: #2d323c;
+        --paper: #1a1d23;
+        --ink: #a4b6ff;
+        --ink-soft: #8390c4;
+        --text: #eceef3;
+        --text-muted: #a1a8b5;
 
-        --chrome: #1a1f29;
-        --chrome-line: #353d4c;
-        --line: #2c3442;
-        --on-ink: #10131a;
+        --chrome: #1a1d23;
+        --chrome-line: #2c313b;
+        --line: #282c35;
+        --on-ink: #11131a;
+        --tonal: #242a3a;
+        --tonal-strong: #2e3550;
 
         --pen: #ff7b73;
-        --pen-soft: #3a1b1d;
+        --pen-soft: #3a1d1f;
         --highlighter: #f5e15a;
-        --on-highlighter: #12161e;
+        --on-highlighter: #121418;
         --warning: #f1c46b;
         --warning-soft: #33290f;
-        --info-soft: #1d2638;
+        --info-soft: #242a3a;
 
         --block-declare: #292b46;
         --block-assign: #192f46;
@@ -115,41 +127,45 @@
         --block-loop: #03343c;
         --block-call: #282f35;
 
-        /* Lavagna più scura del foglio, separata da una linea */
-        --slate: #172a24;
-        --slate-line: #335046;
-        --chalk: #e9ece4;
-        --chalk-muted: #a9b9ae;
-        --chalk-yellow: #f3d75f;
-        --chalk-pen: #ff9d93;
-        --chalk-field: #213a33;
+        /* Console più scura della tela, separata da una linea */
+        --slate: #0e1013;
+        --slate-line: #262a31;
+        --chalk: #eceef2;
+        --chalk-muted: #a3a9b5;
+        --chalk-yellow: #f2cf5b;
+        --chalk-pen: #ff8f86;
+        --chalk-field: #1c1f25;
+
+        --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.35);
+        --shadow-menu: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.5);
     }
 }
 
 /* Scelto a mano dal menu, vale anche con il sistema chiaro. */
 :root[data-theme="dark"] {
     color-scheme: dark;
-    /* Foglio scuro: carta blu notte, inchiostro chiaro; i segni restano gli stessi. */
-    --paper: #12161e;
-    --paper-grid: #1f2633;
-    --paper-margin: #6a2f35;
-    --ink: #a8bfff;
-    --ink-soft: #8394c4;
-    --text: #eef1f6;
-    --text-muted: #a3abb9;
+    --canvas: #121418;
+    --canvas-dot: #2d323c;
+    --paper: #1a1d23;
+    --ink: #a4b6ff;
+    --ink-soft: #8390c4;
+    --text: #eceef3;
+    --text-muted: #a1a8b5;
 
-    --chrome: #1a1f29;
-    --chrome-line: #353d4c;
-    --line: #2c3442;
-    --on-ink: #10131a;
+    --chrome: #1a1d23;
+    --chrome-line: #2c313b;
+    --line: #282c35;
+    --on-ink: #11131a;
+    --tonal: #242a3a;
+    --tonal-strong: #2e3550;
 
     --pen: #ff7b73;
-    --pen-soft: #3a1b1d;
+    --pen-soft: #3a1d1f;
     --highlighter: #f5e15a;
-    --on-highlighter: #12161e;
+    --on-highlighter: #121418;
     --warning: #f1c46b;
     --warning-soft: #33290f;
-    --info-soft: #1d2638;
+    --info-soft: #242a3a;
 
     --block-declare: #292b46;
     --block-assign: #192f46;
@@ -159,14 +175,17 @@
     --block-loop: #03343c;
     --block-call: #282f35;
 
-    /* Lavagna più scura del foglio, separata da una linea */
-    --slate: #172a24;
-    --slate-line: #335046;
-    --chalk: #e9ece4;
-    --chalk-muted: #a9b9ae;
-    --chalk-yellow: #f3d75f;
-    --chalk-pen: #ff9d93;
-    --chalk-field: #213a33;
+    /* Console più scura della tela, separata da una linea */
+    --slate: #0e1013;
+    --slate-line: #262a31;
+    --chalk: #eceef2;
+    --chalk-muted: #a3a9b5;
+    --chalk-yellow: #f2cf5b;
+    --chalk-pen: #ff8f86;
+    --chalk-field: #1c1f25;
+
+    --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.35);
+    --shadow-menu: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
 :root[data-theme="light"] {

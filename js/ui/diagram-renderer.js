@@ -145,6 +145,8 @@
         var h = item.height;
         var k = item.inset;
         var parts = [];
+        // Angoli appena arrotondati per i rettangoli (R-04): la forma resta quella classica.
+        var corner = round(Math.min(h * 0.16, 7));
         switch (item.shape) {
             case 'terminal':
                 parts.push(svgElement('rect', { x: x, y: y, width: w, height: h, rx: h / 2 }, 'dg-shape'));
@@ -162,11 +164,11 @@
                 break;
             case 'declare':
                 // Simbolo della memoria interna: una riga in alto e una a sinistra.
-                parts.push(svgElement('rect', { x: x, y: y, width: w, height: h }, 'dg-shape'));
+                parts.push(svgElement('rect', { x: x, y: y, width: w, height: h, rx: Math.min(corner, 4) }, 'dg-shape'));
                 parts.push(svgElement('path', { d: 'M' + round(x) + ',' + round(y + k * 0.6) + 'h' + round(w) + 'M' + round(x + k * 0.6) + ',' + round(y) + 'v' + round(h) }, 'dg-detail'));
                 break;
             case 'call':
-                parts.push(svgElement('rect', { x: x, y: y, width: w, height: h }, 'dg-shape'));
+                parts.push(svgElement('rect', { x: x, y: y, width: w, height: h, rx: corner }, 'dg-shape'));
                 parts.push(svgElement('path', { d: 'M' + round(x + k) + ',' + round(y) + 'v' + round(h) + 'M' + round(x + w - k) + ',' + round(y) + 'v' + round(h) }, 'dg-detail'));
                 break;
             case 'comment':
@@ -174,7 +176,7 @@
                 parts.push(svgElement('polyline', { points: pointsText([[x + k, y], [x, y], [x, y + h], [x + k, y + h]]) }, 'dg-detail'));
                 break;
             default:
-                parts.push(svgElement('rect', { x: x, y: y, width: w, height: h }, 'dg-shape'));
+                parts.push(svgElement('rect', { x: x, y: y, width: w, height: h, rx: corner }, 'dg-shape'));
         }
         return parts;
     }

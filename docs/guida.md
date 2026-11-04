@@ -6,17 +6,17 @@ OnoFlow si apre all'indirizzo [mrgear10.github.io/OnoFlow](https://mrgear10.gith
 
 ## La schermata
 
-- **Barra in alto:** il nome del file (si può cambiare scrivendoci sopra), il segno **Non salvato** quando ci sono modifiche, lo stato dell'esecuzione, i pulsanti **Esegui**, **Passo**, **Pausa** e **Ferma**, e il **Menu**. Sugli schermi larghi ci sono anche Annulla, Ripeti, il tema chiaro o scuro e il libro della documentazione.
-- **Diagramma:** il foglio a quadretti con i blocchi. In basso ci sono i comandi dello zoom e, sugli schermi stretti, Annulla e Ripeti.
-- **Console:** la lavagna dove compaiono l'output del programma e le richieste di input.
+- **Barra in alto:** il nome del file (si può cambiare scrivendoci sopra), il segno **Non salvato** quando ci sono modifiche (un punto accanto al nome, se lo spazio è poco), lo stato dell'esecuzione, i comandi dell'esecuzione e il **Menu**. Da fermo i comandi sono **Esegui** e **Passo**; durante l'esecuzione **Pausa** (o **Riprendi**) e **Ferma**. Sugli schermi larghi ci sono anche Annulla, Ripeti, il tema chiaro o scuro e il libro della documentazione.
+- **Diagramma:** il foglio con i blocchi, su una griglia di puntini. In basso ci sono i comandi dello zoom e, sugli schermi stretti, Annulla e Ripeti.
+- **Console:** il riquadro scuro dove compaiono l'output del programma e le richieste di input.
 - **Menu:** cinque sezioni.
   - **File:** Nuovo, Apri…, Salva.
   - **Esempi:** diagrammi pronti da aprire.
-  - **Esecuzione:** Esegui passo a passo.
-  - **Modifica:** Nuova funzione, Annulla, Ripeti.
+  - **Esecuzione:** Esegui passo a passo (anche con F10).
+  - **Modifica:** Nuova funzione, Annulla (Ctrl + Z), Ripeti (Ctrl + Y).
   - **Progetto:** tema chiaro o scuro, Documentazione, Informazioni.
 
-Sul computer diagramma e console stanno affiancati. **Sul telefono** stanno in due schede in basso, **Diagramma** e **Console** (con il telefono in orizzontale, una colonna di icone a sinistra): all'avvio dell'esecuzione si passa da soli alla console. Sul telefono la barra in alto mostra solo i comandi che servono: da fermo **Esegui** e **Passo**, durante l'esecuzione **Ferma** e **Pausa** negli stessi posti.
+Sul computer diagramma e console stanno affiancati. **Sul telefono** stanno in due schede in basso, **Diagramma** e **Console** (con il telefono in orizzontale, una colonna di icone a sinistra): all'avvio dell'esecuzione si passa da soli alla console. Sul telefono i comandi del foglio (selezione, Annulla e Ripeti, zoom) stanno in una base in basso, che non copre il diagramma; i comandi dell'esecuzione nella barra in alto occupano sempre gli stessi due posti.
 
 ## Il primo programma
 
@@ -57,7 +57,7 @@ In alternativa, con un blocco selezionato, **Inserisci dopo** aggiunge un blocco
 - **Un tocco** (o un clic) su un blocco lo seleziona: compare la barra con **Inserisci dopo**, **Modifica**, **Sposta** ed **Elimina**.
 - **Un secondo tocco**, un doppio clic, **Modifica** o Invio aprono la finestra di modifica.
 - Le modifiche valgono **mentre si scrive**: il diagramma si aggiorna subito. **Fatto** (o Esc) chiude la finestra. Per tornare indietro c'è Annulla.
-- Se un campo contiene un errore, sotto compare il messaggio con il punto esatto sottolineato da un'onda rossa.
+- Se un campo contiene un errore, sotto compare il messaggio con il punto esatto sottolineato da un'onda rossa. Un'espressione lasciata a metà (come `n +`, o una parentesi non ancora chiusa) si segnala solo dopo una breve pausa nello scrivere.
 - Sul telefono la finestra occupa tutto lo schermo e ha in fondo una **barra dei simboli** (`"`, `&`, `[ ]`, operatori…), comoda perché sulla tastiera del telefono quei segni sono nascosti.
 
 ### Spostare, eliminare, annullare
@@ -84,7 +84,7 @@ In alternativa, con un blocco selezionato, **Inserisci dopo** aggiunge un blocco
 ## Eseguire
 
 - **Esegui** avvia il programma. Se il diagramma contiene errori non parte: gli errori sono numerati sopra il foglio e segnati in rosso sui blocchi; un tocco su un errore porta al suo blocco.
-- Quando il programma chiede un valore, nella console compare un campo con il tipo atteso: si scrive il valore e si preme Invio. Se il valore non va bene (per esempio `2,5` per un `Integer`), la console lo spiega e lo chiede di nuovo.
+- Quando il programma chiede un valore, nella console compare un campo con il tipo atteso: si scrive il valore e si preme Invio. Sul telefono, in cima alla console, una riga dice quale blocco chiede il valore. Se il valore non va bene (per esempio `2,5` per un `Integer`), la console lo spiega e lo chiede di nuovo.
 - **Pausa** e **Riprendi** fermano e fanno ripartire l'esecuzione; **Ferma** la interrompe del tutto.
 - Dopo **5 secondi** di esecuzione l'app mette in pausa e chiede se **Continua** o **Ferma**: di solito è un ciclo che non finisce.
 - Se l'esecuzione si ferma per un errore, nella console compaiono il messaggio, il blocco e i valori delle variabili in quel momento; **Mostra nel diagramma** porta al blocco.
@@ -92,9 +92,9 @@ In alternativa, con un blocco selezionato, **Inserisci dopo** aggiunge un blocco
 ### Passo a passo
 
 - **Passo** (o **F10**, o Menu → Esecuzione → **Esegui passo a passo**) esegue un blocco alla volta. Il blocco evidenziato in giallo è il **prossimo** che verrà eseguito.
-- Il **pannello delle variabili** mostra il valore di ogni variabile: sul computer in cima alla console, sul telefono in una striscia sotto il diagramma, che si allarga con un tocco. Il valore cambiato nell'ultimo passo è sottolineato.
+- Il **pannello delle variabili** mostra il valore di ogni variabile: sul computer in cima alla console, sul telefono in una striscia nella base sotto il diagramma, che si allarga con un tocco. Il valore cambiato nell'ultimo passo è sottolineato.
 - **Riprendi** continua senza fermarsi; **Ferma** termina.
-- Sul telefono, durante il passo a passo, il pulsante **Passo** sta in basso a sinistra del foglio (in orizzontale, in alto a destra).
+- Sul telefono, durante il passo a passo, il pulsante **Passo** sta nella base in basso, a sinistra (in orizzontale, in alto a destra).
 
 ## Aprire e salvare
 

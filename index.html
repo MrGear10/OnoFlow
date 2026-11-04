@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="color-scheme" content="light dark">
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f5f7">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1f29">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1d23">
     <title>OnoFlow</title>
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/base.css">
@@ -19,7 +19,7 @@
                 <div class="file">
                     <label class="visually-hidden" for="file-name" data-i18n="ui.fileName.label"></label>
                     <span class="file-field"><input class="file-name" id="file-name" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done"></span>
-                    <span class="modified" id="modified" data-i18n="ui.modified" hidden></span>
+                    <span class="modified" id="modified" data-i18n="ui.modified" data-i18n-title="ui.modified" hidden></span>
                 </div>
                 <p class="status" id="status" role="status" hidden></p>
             </div>
@@ -48,7 +48,8 @@
                     <span class="button-label" data-i18n="ui.step"></span>
                 </button>
                 <button class="button" id="pause" type="button" aria-pressed="false" disabled>
-                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4.5v11M13 4.5v11"/></svg>
+                    <svg class="icon icon-pause" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4.5v11M13 4.5v11"/></svg>
+                    <svg class="icon icon-resume" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5v11l9-5.5z"/></svg>
                     <span class="button-label" id="pause-label" data-i18n="ui.pause"></span>
                 </button>
                 <button class="button" id="stop" type="button" disabled>
@@ -69,11 +70,11 @@
                     <p class="menu-heading" data-i18n="ui.menu.examples"></p>
                     <div id="examples-list" role="group"></div>
                     <p class="menu-heading" data-i18n="ui.menu.run"></p>
-                    <button class="menu-item" id="cmd-step" type="button" role="menuitem" data-i18n="ui.runStep"></button>
+                    <button class="menu-item" id="cmd-step" type="button" role="menuitem" aria-keyshortcuts="F10"><span data-i18n="ui.runStep"></span><kbd class="menu-shortcut" aria-hidden="true">F10</kbd></button>
                     <p class="menu-heading" data-i18n="ui.menu.edit"></p>
                     <button class="menu-item" id="cmd-new-function" type="button" role="menuitem" data-i18n="ui.newFunction"></button>
-                    <button class="menu-item" id="cmd-undo" type="button" role="menuitem" data-i18n="ui.undo" disabled></button>
-                    <button class="menu-item" id="cmd-redo" type="button" role="menuitem" data-i18n="ui.redo" disabled></button>
+                    <button class="menu-item" id="cmd-undo" type="button" role="menuitem" aria-keyshortcuts="Control+Z" disabled><span data-i18n="ui.undo"></span><kbd class="menu-shortcut" aria-hidden="true">Ctrl+Z</kbd></button>
+                    <button class="menu-item" id="cmd-redo" type="button" role="menuitem" aria-keyshortcuts="Control+Y" disabled><span data-i18n="ui.redo"></span><kbd class="menu-shortcut" aria-hidden="true">Ctrl+Y</kbd></button>
                     <p class="menu-heading" data-i18n="ui.menu.about"></p>
                     <button class="menu-item" id="cmd-theme" type="button" role="menuitem"></button>
                     <a class="menu-item" id="cmd-docs" href="documentazione.html" target="_blank" rel="noopener" role="menuitem" data-docs-link data-i18n="ui.docs.open"></a>
@@ -112,56 +113,60 @@
                 <p data-i18n="ui.info.license"></p>
                 <p><a href="documentazione.html" target="_blank" rel="noopener" data-docs-link data-i18n="ui.docs.full"></a></p>
             </section>
-            <div class="selection-bar" id="selection-bar" role="group" data-i18n-label="ui.selection.label" hidden>
-                <button class="button selection-edit" id="edit-block" type="button" data-i18n-title="ui.selection.edit">
-                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16l1-4 8.5-8.5 3 3L8 15z"/><path d="M11.5 5.5l3 3"/></svg>
-                    <span class="button-label" data-i18n="ui.selection.edit"></span>
-                </button>
-                <button class="button selection-insert" id="insert-after" type="button">
-                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="M7 10h6M10 7v6"/></svg>
-                    <span data-i18n="ui.selection.insertAfter"></span>
-                </button>
-                <button class="button selection-move" id="move-block" type="button" data-i18n-title="ui.selection.move">
-                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5v15M2.5 10h15M7.5 5L10 2.5 12.5 5M7.5 15l2.5 2.5 2.5-2.5M5 7.5L2.5 10 5 12.5M15 7.5l2.5 2.5-2.5 2.5"/></svg>
-                    <span class="button-label" data-i18n="ui.selection.move"></span>
-                </button>
-                <button class="button selection-delete" id="delete-block" type="button">
-                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 6V4h4v2M6 6l1 10h6l1-10M9 9v4M11 9v4"/></svg>
-                    <span class="button-label" data-i18n="ui.selection.delete"></span>
-                </button>
-            </div>
-            <div class="history-controls history-controls--sheet" role="group" data-i18n-label="ui.history.label">
-                <button class="button history-button" id="undo-sheet" type="button" data-i18n-label="ui.undo" data-i18n-title="ui.undo.title" disabled>
-                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8h8.5a4 4 0 0 1 0 8H9"/></svg>
-                </button>
-                <button class="button history-button" id="redo-sheet" type="button" data-i18n-label="ui.redo" data-i18n-title="ui.redo.title" disabled>
-                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M13 4.5L16.5 8 13 11.5"/><path d="M16.5 8H8a4 4 0 0 0 0 8h3"/></svg>
-                </button>
-            </div>
-            <section class="variables-strip" id="variables-strip" data-i18n-label="ui.variablesPanel.label" hidden>
-                <button class="variables-strip-toggle" id="variables-strip-toggle" type="button" aria-expanded="false" aria-controls="variables-strip-body">
-                    <span class="variables-strip-summary" id="variables-strip-summary"></span>
-                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 12.5L10 8l4.5 4.5"/></svg>
-                </button>
-                <div class="variables-strip-body" id="variables-strip-body" hidden></div>
-            </section>
-            <div class="step-controls">
-                <button class="button step-sheet" id="step-sheet" type="button" data-i18n-title="ui.step.title">
-                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4.5v11l7.5-5.5z"/><path d="M15.5 4.5v11"/></svg>
-                    <span data-i18n="ui.step"></span>
-                </button>
-            </div>
-            <div class="zoom" role="group" data-i18n-label="ui.zoom.label">
-                <button class="button zoom-button" id="zoom-out" type="button" data-i18n-label="ui.zoom.out" data-i18n-title="ui.zoom.out">
-                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10"/></svg>
-                </button>
-                <button class="button zoom-level" id="zoom-reset" type="button"></button>
-                <button class="button zoom-button" id="zoom-in" type="button" data-i18n-label="ui.zoom.in" data-i18n-title="ui.zoom.in">
-                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10M10 5v10"/></svg>
-                </button>
-                <button class="button zoom-button" id="zoom-fit" type="button" data-i18n-label="ui.zoom.fit" data-i18n-title="ui.zoom.fit">
-                    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 7.5v-4h4M12.5 3.5h4v4M16.5 12.5v4h-4M7.5 16.5h-4v-4"/></svg>
-                </button>
+            <!-- Comandi del foglio: sul computer galleggiano sulla tela; sul telefono in verticale
+                 formano un'unica base in basso, che non copre il diagramma (R-07). -->
+            <div class="dock" id="dock">
+                <div class="selection-bar" id="selection-bar" role="group" data-i18n-label="ui.selection.label" hidden>
+                    <button class="button selection-edit" id="edit-block" type="button" data-i18n-title="ui.selection.edit">
+                        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16l1-4 8.5-8.5 3 3L8 15z"/><path d="M11.5 5.5l3 3"/></svg>
+                        <span class="button-label" data-i18n="ui.selection.edit"></span>
+                    </button>
+                    <button class="button selection-insert" id="insert-after" type="button">
+                        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="M7 10h6M10 7v6"/></svg>
+                        <span data-i18n="ui.selection.insertAfter"></span>
+                    </button>
+                    <button class="button selection-move" id="move-block" type="button" data-i18n-title="ui.selection.move">
+                        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5v15M2.5 10h15M7.5 5L10 2.5 12.5 5M7.5 15l2.5 2.5 2.5-2.5M5 7.5L2.5 10 5 12.5M15 7.5l2.5 2.5-2.5 2.5"/></svg>
+                        <span class="button-label" data-i18n="ui.selection.move"></span>
+                    </button>
+                    <button class="button selection-delete" id="delete-block" type="button">
+                        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 6V4h4v2M6 6l1 10h6l1-10M9 9v4M11 9v4"/></svg>
+                        <span class="button-label" data-i18n="ui.selection.delete"></span>
+                    </button>
+                </div>
+                <div class="history-controls history-controls--sheet" role="group" data-i18n-label="ui.history.label">
+                    <button class="button history-button" id="undo-sheet" type="button" data-i18n-label="ui.undo" data-i18n-title="ui.undo.title" disabled>
+                        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8h8.5a4 4 0 0 1 0 8H9"/></svg>
+                    </button>
+                    <button class="button history-button" id="redo-sheet" type="button" data-i18n-label="ui.redo" data-i18n-title="ui.redo.title" disabled>
+                        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M13 4.5L16.5 8 13 11.5"/><path d="M16.5 8H8a4 4 0 0 0 0 8h3"/></svg>
+                    </button>
+                </div>
+                <section class="variables-strip" id="variables-strip" data-i18n-label="ui.variablesPanel.label" hidden>
+                    <button class="variables-strip-toggle" id="variables-strip-toggle" type="button" aria-expanded="false" aria-controls="variables-strip-body">
+                        <span class="variables-strip-summary" id="variables-strip-summary"></span>
+                        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 12.5L10 8l4.5 4.5"/></svg>
+                    </button>
+                    <div class="variables-strip-body" id="variables-strip-body" hidden></div>
+                </section>
+                <div class="step-controls">
+                    <button class="button step-sheet" id="step-sheet" type="button" data-i18n-title="ui.step.title">
+                        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4.5v11l7.5-5.5z"/><path d="M15.5 4.5v11"/></svg>
+                        <span data-i18n="ui.step"></span>
+                    </button>
+                </div>
+                <div class="zoom" role="group" data-i18n-label="ui.zoom.label">
+                    <button class="button zoom-button" id="zoom-out" type="button" data-i18n-label="ui.zoom.out" data-i18n-title="ui.zoom.out">
+                        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10"/></svg>
+                    </button>
+                    <button class="button zoom-level" id="zoom-reset" type="button"></button>
+                    <button class="button zoom-button" id="zoom-in" type="button" data-i18n-label="ui.zoom.in" data-i18n-title="ui.zoom.in">
+                        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10M10 5v10"/></svg>
+                    </button>
+                    <button class="button zoom-button" id="zoom-fit" type="button" data-i18n-label="ui.zoom.fit" data-i18n-title="ui.zoom.fit">
+                        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 7.5v-4h4M12.5 3.5h4v4M16.5 12.5v4h-4M7.5 16.5h-4v-4"/></svg>
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -170,6 +175,7 @@
                 <div id="variables-pane-body"></div>
             </section>
             <div class="slate" id="console-scroll">
+                <p class="console-asking" id="console-asking"><span class="console-asking-sign" aria-hidden="true"></span><span id="console-asking-text"></span></p>
                 <p class="console-trimmed" id="console-trimmed" data-i18n="ui.console.trimmed" hidden></p>
                 <p class="console-empty" id="console-empty" data-i18n="ui.console.empty"></p>
                 <div class="console-log" id="console-log" role="log" aria-live="polite" data-i18n-label="ui.tab.console"></div>

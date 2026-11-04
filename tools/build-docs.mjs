@@ -102,6 +102,27 @@ function cells(line) {
 
 const LIST_ITEM = /^(\s*)([-*]|\d+\.)\s+(.*)$/;
 
+/* Forme dei blocchi per la tabella della guida: le stesse del diagramma, in piccolo (36 × 20). */
+function blockShape(kind, shape, detail) {
+    return '<svg class="block-shape block-shape--' + kind + '" viewBox="0 0 36 20" aria-hidden="true">' + shape +
+        (detail ? '<path class="block-shape-detail" d="' + detail + '"/>' : '') + '</svg>';
+}
+const RECT = '<rect x="1" y="1" width="34" height="18" rx="3"/>';
+const PARALLELOGRAM = '<polygon points="7,1 35,1 29,19 1,19"/>';
+const HEXAGON = '<polygon points="6,1 30,1 35,10 30,19 6,19 1,10"/>';
+const BLOCK_SHAPES = {
+    'Dichiarazione': blockShape('declare', RECT, 'M1 5h34M5 1v18'),
+    'Assegnazione': blockShape('assign', RECT),
+    'Input': blockShape('input', PARALLELOGRAM),
+    'Output': blockShape('output', PARALLELOGRAM),
+    'If': blockShape('if', '<polygon points="18,1 35,10 18,19 1,10"/>'),
+    'While': blockShape('loop', HEXAGON),
+    'Do': blockShape('loop', HEXAGON),
+    'For': blockShape('loop', HEXAGON),
+    'Chiamata': blockShape('call', RECT, 'M6 1v18M30 1v18'),
+    'Commento': blockShape('comment', '<rect class="block-shape-open" x="1" y="1" width="34" height="18"/>', 'M7 1H1v18h6')
+};
+
 /* Elenchi annidati per rientro; una riga rientrata senza segno continua la voce. */
 function renderList(lines) {
     const root = { children: [], indent: -1, ordered: false };
@@ -116,7 +137,8 @@ function renderList(lines) {
             return;
         }
         const indent = match[1].length;
-        while (stack.length > 1 && indent <= stack[stack.length - 1].indent) {
+        // Un elenco annidato raccoglie le voci con il suo rientro; si chiude a un rientro minore.
+        while (stack.length > 1 && indent < stack[stack.length - 1].indent) {
             stack.pop();
         }
         let parent = stack[stack.length - 1];
@@ -178,8 +200,9 @@ export function renderMarkdown(source, docId, headings) {
             }
             used.add(id);
             headings.push({ level, text: heading[2].replace(/`/g, ''), id });
-            // Il titolo del documento è quello dell'indice: i titoli del file scendono di un livello.
-            const tag = 'h' + Math.min(level + 1, 6);
+            // Il titolo del documento (h1) è quello dell'indice e il «#» del file si toglie: i capitoli
+            // («##») sono h2, senza salti di livello.
+            const tag = 'h' + Math.min(Math.max(level, 2), 6);
             out.push('<' + tag + ' id="' + id + '">' + inline(heading[2]) + '<a class="anchor" href="#' + id + '" aria-label="Collegamento a questa sezione">#</a></' + tag + '>');
             i++;
             continue;
@@ -197,8 +220,11 @@ export function renderMarkdown(source, docId, headings) {
                 rows.push(cells(lines[i]));
                 i++;
             }
+            // Nella tabella dei blocchi, ogni nome ha accanto la sua forma, come nel diagramma (R-10).
+            const blocks = head[0] === 'Blocco';
+            const first = (cell) => (blocks && BLOCK_SHAPES[cell] ? BLOCK_SHAPES[cell] : '') + inline(cell);
             out.push('<div class="table-wrap"><table><thead><tr>' + head.map((cell) => '<th scope="col">' + inline(cell) + '</th>').join('') +
-                '</tr></thead><tbody>' + rows.map((row) => '<tr>' + row.map((cell) => '<td>' + inline(cell) + '</td>').join('') + '</tr>').join('') +
+                '</tr></thead><tbody>' + rows.map((row) => '<tr>' + row.map((cell, index) => '<td>' + (index === 0 ? first(cell) : inline(cell)) + '</td>').join('') + '</tr>').join('') +
                 '</tbody></table></div>');
             continue;
         }
@@ -237,13 +263,16 @@ export async function buildDocs() {
     const articles = [];
     const nav = [];
     for (const doc of DOCUMENTS) {
-        const source = await readFile(path.join(ROOT, doc.file), 'utf8');
+        // Il titolo del file («# OnoFlow — Guida d'uso») lascia il posto a quello dell'indice: uno solo (R-10).
+        const source = (await readFile(path.join(ROOT, doc.file), 'utf8')).replace(/^# [^\n]*\n+/, '');
         const headings = [];
         const body = doc.plain ? '<pre class="plain">' + escapeHtml(source.trim()) + '</pre>' : renderMarkdown(source, doc.id, headings);
         articles.push('<article class="doc" id="' + doc.id + '" aria-labelledby="' + doc.id + '-title">\n' +
-            '<p class="doc-source">' + escapeHtml(doc.file) + '</p>\n<h1 id="' + doc.id + '-title">' + escapeHtml(doc.title) + '</h1>\n' + body + '\n</article>');
-        // Nell'indice i titoli di secondo livello (## nel file), che sono i capitoli.
-        const chapters = headings.filter((heading) => heading.level === 2);
+            '<h1 id="' + doc.id + '-title">' + escapeHtml(doc.title) + '</h1>\n' + body + '\n</article>');
+        // Nell'indice i titoli di secondo livello (## nel file), che sono i capitoli; non quelli che
+        // ripetono il nome di un altro documento (la «Licenza» della presentazione).
+        const titles = DOCUMENTS.filter((other) => other !== doc).map((other) => other.title);
+        const chapters = headings.filter((heading) => heading.level === 2 && !titles.includes(heading.text));
         nav.push('<li class="nav-doc"><a class="nav-doc-link" href="#' + doc.id + '">' + escapeHtml(doc.title) + '</a>' +
             (chapters.length ? '<ul>' + chapters.map((heading) =>
                 '<li><a href="#' + heading.id + '">' + inline(heading.text) + '</a></li>').join('') + '</ul>' : '') + '</li>');
@@ -255,8 +284,8 @@ export async function buildDocs() {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="color-scheme" content="light dark">
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f5f7">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1f29">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1d23">
     <title>OnoFlow · Documentazione</title>
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/docs.css">

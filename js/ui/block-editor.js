@@ -177,6 +177,9 @@
             });
         }
 
+        // ms di pausa nello scrivere prima di segnalare un'espressione a metà (l'app passa 800; senza, subito).
+        var ERROR_DELAY = options.errorDelay || 0;
+        var UNFINISHED = ['ERR_SYNTAX_UNEXPECTED_END', 'ERR_SYNTAX_UNCLOSED', 'ERR_SYNTAX_UNTERMINATED_STRING'];
         /* Errore di un campo: messaggio della §8.4 e il testo con l'onda nel punto esatto. */
         function showFieldError(row, focused) {
             // Un campo di un blocco ha il suo errore di sintassi; il nome di una funzione o di un parametro no.
@@ -188,6 +191,22 @@
             }
             if (error && error.code === 'ERR_SYNTAX_EMPTY_EXPRESSION' && focused) {
                 error = null; // un campo vuoto si segnala quando lo si lascia, non mentre lo si scrive
+            }
+            // Un'espressione lasciata a metà («n +», una parentesi o un testo non ancora chiusi) è
+            // normale mentre si scrive: si segnala dopo una breve pausa, non a ogni tasto (R-09).
+            // Gli altri errori compaiono subito; se l'errore si vede già, segue subito il testo.
+            window.clearTimeout(row.pending);
+            if (ERROR_DELAY > 0 && error && focused && UNFINISHED.indexOf(error.code) !== -1
+                && row.error.hidden && !row.forceShow) {
+                row.input.setAttribute('aria-invalid', 'false');
+                row.pending = window.setTimeout(function () {
+                    if (block && rows.indexOf(row) !== -1) {
+                        row.forceShow = true;
+                        showFieldError(row, true);
+                        row.forceShow = false;
+                    }
+                }, ERROR_DELAY);
+                return;
             }
             row.error.textContent = '';
             row.error.hidden = !error;

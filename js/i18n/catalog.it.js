@@ -306,6 +306,7 @@
 
             'ui.console.empty': 'L\'output del programma compare qui. Per avviarlo: Esegui.',
             'ui.console.inputLabel': 'Valore {type} da inserire',
+            'ui.console.asking': 'Valore per il blocco {block}',
             'ui.console.done': 'Esecuzione terminata.',
             'ui.console.invalid': 'Il diagramma non si può eseguire: prima vanno corretti questi errori.',
             'ui.console.longRun': 'L\'esecuzione dura da 5 secondi ed è in pausa: potrebbe essere un ciclo che non finisce.',
