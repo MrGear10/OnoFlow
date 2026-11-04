@@ -10,7 +10,7 @@ OnoFlow si apre all'indirizzo [mrgear10.github.io/OnoFlow](https://mrgear10.gith
 - **Diagramma:** il foglio con i blocchi, su una griglia di puntini. In basso ci sono i comandi dello zoom e, sugli schermi stretti, Annulla e Ripeti.
 - **Console:** il riquadro accanto al diagramma (bianco nel tema chiaro, scuro nel tema scuro) dove compaiono l'output del programma e le richieste di input; i valori scritti si distinguono per colore e grassetto.
 - **Menu:** cinque sezioni.
-  - **File:** Nuovo, Apri…, Salva.
+  - **File:** Nuovo, Apri…, Salva, Codice C++ e Python.
   - **Esempi:** diagrammi pronti da aprire.
   - **Esecuzione:** Esegui passo a passo (anche con F10).
   - **Modifica:** Nuova funzione, Annulla (Ctrl + Z), Ripeti (Ctrl + Y).
@@ -104,6 +104,18 @@ In alternativa, con un blocco selezionato, **Inserisci dopo** aggiunge un blocco
 - Prima di aprire un altro diagramma con modifiche non salvate, una barra chiede se **Salva**, **Non salvare** o **Chiudi**.
 - Se la pagina si ricarica o il telefono chiude la scheda, il diagramma viene **ripristinato** all'apertura successiva della stessa scheda. È una rete di sicurezza, non un salvataggio: per conservare il lavoro serve **Salva**.
 
+## Il codice C++ e Python
+
+Menu → File → **Codice C++ e Python** mostra lo stesso programma del diagramma scritto in **C++** e in **Python**, per passare dal diagramma a un linguaggio vero. Sul computer il codice sta accanto al diagramma, al posto della console; sul telefono occupa tutto lo schermo. **Chiudi** (o Esc) torna alla console.
+
+- Le schede **C++** e **Python** scelgono il linguaggio. Il codice si aggiorna mentre si modifica il diagramma; se il diagramma contiene errori, al posto del codice c'è la spiegazione: prima vanno corretti.
+- **Copia** mette il codice negli appunti; **Scarica** salva il file `.cpp` o `.py` con il nome del diagramma.
+- Per un programma corretto, il codice fa **esattamente** ciò che fa OnoFlow, con lo stesso output: la divisione `/` dà sempre un numero con la virgola, `mod` tiene il segno del primo numero, i numeri si stampano con al massimo due decimali e la virgola, il `for` comprende l'ultimo valore. Dove C++ o Python fanno diversamente, in fondo al file c'è una piccola funzione di aiuto, con un commento che dice a cosa serve (per esempio `formatta` per stampare i numeri come OnoFlow).
+- I controlli che OnoFlow fa durante l'esecuzione (un numero troppo grande, una variabile letta prima di averle dato un valore) **non** sono nel codice: il codice è scritto come lo scriverebbe chi studia il linguaggio.
+- In **Python** le variabili nascono con il primo valore, quindi le dichiarazioni spariscono; restano gli array, che diventano liste. Il `do` diventa `while True` con un `break`.
+- In **C++** gli array hanno una misura fissa. Con una dimensione scritta come numero (`Integer voti[10]`) è quella; con una dimensione calcolata (`Integer numeri[n]`) è la costante `MAX_ELEMENTI` in cima al file, 1000, da aumentare se servono più elementi. Una funzione che usa `Size` su un array riceve anche la sua lunghezza.
+- Per provare il codice: Python 3 con `python3 nome.py`; C++ con un compilatore C++17, per esempio `g++ -std=c++17 nome.cpp -o nome`.
+
 ## Scrivere le espressioni
 
 ### Tipi
@@ -160,6 +172,7 @@ Un **array** è una fila di valori dello stesso tipo, numerati da 0: con `Intege
 
 - **Al proiettore:** **Adatta allo schermo** mostra tutto il diagramma; il passo a passo con il pannello delle variabili fa vedere alla classe cosa succede a ogni blocco.
 - **Tema fisso:** per avere sempre il tema chiaro (o scuro) sul computer dell'aula, si salva nei preferiti l'indirizzo con `?tema=chiaro` (o `?tema=scuro`), per esempio `https://mrgear10.github.io/OnoFlow/?tema=chiaro`. OnoFlow non ricorda le preferenze.
+- **Dal diagramma al codice:** il pannello **Codice C++ e Python** mostra lo stesso programma nei due linguaggi, accanto al diagramma; al proiettore si può far vedere a quale riga corrisponde ogni blocco.
 - **Esercizi:** si distribuiscono come file `.fprg`; gli studenti li aprono dal disco o dai download del telefono e li riconsegnano salvati. I file si aprono anche in Flowgorithm.
 - **Senza rete:** si scarica lo ZIP del repository, si estrae e si apre `index.html` con un doppio clic. Vedi [Presentazione](../README.md#come-si-usa).
 - **Privacy:** i file non lasciano il dispositivo e l'app non salva dati. Un file creato con Flowgorithm contiene però il nome utente e il nome del computer di chi l'ha creato, e OnoFlow non li toglie: vedi [Presentazione](../README.md#privacy).
@@ -169,6 +182,7 @@ Un **array** è una fila di valori dello stesso tipo, numerati da 0: con `Intege
 | Problema | Cosa fare |
 |---|---|
 | Esegui non parte | Ci sono errori nel diagramma: sono elencati sopra il foglio, un tocco porta al blocco. |
+| Il pannello Codice non mostra il codice | Il diagramma contiene errori: si correggono come per eseguire, poi il codice compare da solo. |
 | Il programma sembra bloccato | Probabilmente un ciclo che non finisce: dopo 5 secondi l'app chiede se continuare; **Ferma** lo interrompe. |
 | Il + non c'è | Durante l'esecuzione le frecce non hanno il +: prima serve **Ferma** o la fine del programma. |
 | Il file non si apre | Il messaggio spiega il motivo; il diagramma di prima resta aperto. OnoFlow apre solo file `.fprg`. |

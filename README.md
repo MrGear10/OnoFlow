@@ -14,6 +14,7 @@ OnoFlow serve a scuola: si costruisce un diagramma di flusso, lo si esegue con l
 - **Eseguire** il programma: l'output e gli input nella console; Pausa e Ferma anche con un ciclo infinito; gli errori segnati in rosso sul blocco, con un messaggio pensato per lo studente. Molti errori si vedono già prima di eseguire, mentre si scrive.
 - **Passo a passo:** un blocco alla volta, con il pannello delle variabili che mostra i valori a ogni passo.
 - **Salvare** il file `.fprg`: un file aperto si riscrive cambiando solo quello che si è modificato.
+- **Codice C++ e Python:** lo stesso programma scritto nei due linguaggi, con lo stesso output, da leggere accanto al diagramma, copiare o scaricare.
 - Sul **telefono** diagramma e console stanno in due schede; zoom con due dita.
 - Tema chiaro o scuro, che segue il sistema o si sceglie a mano.
 
@@ -47,6 +48,7 @@ Progettato da **MrGear10** e sviluppato con l'assistenza di **Claude (Anthropic)
   npx playwright install
   node run-tests.mjs --engines chromium,firefox   # i test di tests.html
   node check-ui.mjs                               # la pagina vera, su computer e telefono
+  node check-codegen.mjs                          # il codice generato, eseguito con python3 e g++
   ```
 
 - **Documentazione navigabile:** `documentazione.html`, generata dai documenti qui sotto con `node build-docs.mjs` (cartella `tools/`); si apre anche dall'app (pulsante con il libro, Menu → Progetto → Documentazione).
