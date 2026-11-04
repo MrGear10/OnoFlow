@@ -1,12 +1,13 @@
 /*
  * OnoFlow — valori del sistema visivo (§11.2, DEC-051).
  *
- * Stile moderno e pulito (revisione R-01…R-05 in DESIGN.md): tela chiara a puntini, console
- * grafite, cornice leggera. Ogni stato ha un segno con un solo significato:
- *   blu              i blocchi e i comandi;
+ * Stile moderno e pulito (revisione R-01…R-11 in DESIGN.md): tela chiara a puntini, console
+ * bianca nel tema chiaro e grafite nel tema scuro, cornice leggera. Ogni stato ha un segno con
+ * un solo significato:
+ *   verde (chiaro) / blu (scuro)   i blocchi e i comandi;
  *   rosso            solo gli errori;
  *   evidenziatore    solo il blocco in esecuzione;
- *   giallo           solo i valori digitati nella console.
+ *   giallo           solo i valori digitati nella console (nel tema chiaro: verde, in grassetto).
  * Niente gradienti decorativi; ombre leggere solo per ciò che sta sopra la tela. Solo font di
  * sistema (NFR-PRIV-02).
  * Tema chiaro e scuro secondo il sistema (NFR-ACC-02), oppure scelto dal menu (data-theme sull'html, DEC-080).
@@ -19,8 +20,8 @@
     --canvas-dot: #c4cad5;
     /* Superfici: barra, menu, pannelli, campi, Inizio e Fine. */
     --paper: #ffffff;
-    --ink: #2239b5;
-    --ink-soft: #5d6aa8;
+    --ink: #1d6954;            /* verde nel tema chiaro, scelto dall'autore (R-11); blu nel tema scuro */
+    --ink-soft: #3f7f6c;
     --text: #14161b;
     --text-muted: #5a6070;
 
@@ -29,8 +30,8 @@
     --chrome-line: #dfe2e8;
     --line: #e6e8ed;
     --on-ink: #ffffff;
-    --tonal: #edf0fb;          /* fondo dei comandi secondari */
-    --tonal-strong: #dfe5f8;   /* loro hover */
+    --tonal: #e8f2ee;          /* fondo dei comandi secondari */
+    --tonal-strong: #d3e8df;   /* loro hover */
 
     /* Stati */
     --pen: #c0141c;
@@ -39,7 +40,7 @@
     --on-highlighter: #14161b;
     --warning: #8a5a00;
     --warning-soft: #fdf3dc;
-    --info-soft: #edf0fb;
+    --info-soft: #e8f2ee;
 
     /* Tinte dei blocchi, una per tipo (DEC-057): tenui, mai gialle o rosse (regola del segno unico) */
     --block-declare: #e8ecff;
@@ -50,14 +51,15 @@
     --block-loop: #cdf7ff;
     --block-call: #e9eff6;
 
-    /* Console: grafite, scura in entrambi i temi (R-03) */
-    --slate: #1d2027;
-    --slate-line: #333844;
-    --chalk: #eceef2;
-    --chalk-muted: #a3a9b5;
-    --chalk-yellow: #f2cf5b;
-    --chalk-pen: #ff8f86;
-    --chalk-field: #2a2e37;
+    /* Console: bianca nel tema chiaro (R-11), grafite nel tema scuro (R-03). I nomi vengono
+       dalla lavagna: chalk = testo, chalk-yellow = valori digitati, chalk-pen = errori. */
+    --slate: #ffffff;
+    --slate-line: #e6e8ed;
+    --chalk: #14161b;
+    --chalk-muted: #5a6070;
+    --chalk-yellow: #1d6954;
+    --chalk-pen: #c0141c;
+    --chalk-field: #f2f4f6;
 
     /* Tipografia */
     --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, sans-serif;

@@ -8,7 +8,7 @@ OnoFlow si apre all'indirizzo [mrgear10.github.io/OnoFlow](https://mrgear10.gith
 
 - **Barra in alto:** il nome del file (si può cambiare scrivendoci sopra), il segno **Non salvato** quando ci sono modifiche (un punto accanto al nome, se lo spazio è poco), lo stato dell'esecuzione, i comandi dell'esecuzione e il **Menu**. Da fermo i comandi sono **Esegui** e **Passo**; durante l'esecuzione **Pausa** (o **Riprendi**) e **Ferma**. Sugli schermi larghi ci sono anche Annulla, Ripeti, il tema chiaro o scuro e il libro della documentazione.
 - **Diagramma:** il foglio con i blocchi, su una griglia di puntini. In basso ci sono i comandi dello zoom e, sugli schermi stretti, Annulla e Ripeti.
-- **Console:** il riquadro scuro dove compaiono l'output del programma e le richieste di input.
+- **Console:** il riquadro accanto al diagramma (bianco nel tema chiaro, scuro nel tema scuro) dove compaiono l'output del programma e le richieste di input; i valori scritti si distinguono per colore e grassetto.
 - **Menu:** cinque sezioni.
   - **File:** Nuovo, Apri…, Salva.
   - **Esempi:** diagrammi pronti da aprire.

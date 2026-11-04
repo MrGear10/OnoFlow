@@ -371,6 +371,7 @@ a {
     padding: var(--space-4);
     background: var(--slate);
     color: var(--chalk);
+    border: 1px solid var(--slate-line);
     border-radius: var(--radius-panel);
     font-family: var(--font-code);
     font-size: 0.875rem;
