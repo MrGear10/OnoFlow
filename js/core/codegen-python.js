@@ -353,6 +353,12 @@
                 }
                 case 'output': {
                     var ast = fields.expression.ast;
+                    if (ast.kind === 'literal' && ast.type === 'String' && ast.value === '') {
+                        if (block.newline) {
+                            out.line('print()');
+                        }
+                        break;
+                    }
                     var valueType = type(ast);
                     var shown = valueType === 'String' || valueType === 'Integer' ? expression(ast, 0) : asText(ast);
                     out.line('print(' + shown + (block.newline ? '' : ', end=""') + ')');

@@ -219,6 +219,32 @@ export const PROGRAMS = [
         }])
     },
     {
+        id: 'testi-e-blocchi',
+        inputs: [['5'], ['-2']],
+        text: fprg('testi-e-blocchi', [{
+            name: 'Main',
+            body: [
+                declare('n', 'Integer'),
+                declare('lettere', 'String', '3'),
+                input('n'),
+                output('"C:\\temp\\" & n'),
+                output('"Tab:" & ToChar(9) & "fine"'),
+                assign('lettere[0]', '"b"'),
+                assign('lettere[1]', '"a"'),
+                assign('lettere[2]', '"c"'),
+                output('Size(lettere) & " " & lettere[1] & lettere[0]'),
+                output('"b" > "a"'),
+                output('lettere[0] == "b"'),
+                comment('dichiarazione dentro un if: in OnoFlow vale in tutta la funzione'),
+                ifBlock('n > 0', [declare('doppio', 'Integer'), assign('doppio', 'n * 2'), output('"doppio " & doppio')],
+                    [declare('meta', 'Real'), assign('meta', 'n / 2'), output('"metà " & meta')]),
+                output('n * 1.5'),
+                output('"riga"'),
+                output('""')
+            ]
+        }])
+    },
+    {
         id: 'nomi-riservati',
         inputs: [['3']],
         text: fprg('nomi-riservati', [
