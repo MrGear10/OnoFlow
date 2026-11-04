@@ -287,6 +287,9 @@ export async function buildDocs() {
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1d23">
     <title>OnoFlow · Documentazione</title>
+    <link rel="icon" type="image/svg+xml" href="icons/onoflow.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/onoflow-32.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/docs.css">
 </head>
