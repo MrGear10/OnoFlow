@@ -1652,6 +1652,28 @@
             closeMenu();
             save();
         });
+        byId('save').addEventListener('click', function () {
+            closeMenu();
+            save();
+        });
+
+        /* Ctrl/Cmd + S salva e Ctrl/Cmd + O apre, anche dai campi di testo: il browser farebbe altro
+           (salvare la pagina, aprire un file nel browser). Apri non vale durante l'esecuzione. */
+        document.addEventListener('keydown', function (event) {
+            if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) {
+                return;
+            }
+            var key = event.key.toLowerCase();
+            if (key === 's') {
+                event.preventDefault();
+                commands.save.click();
+            } else if (key === 'o') {
+                event.preventDefault();
+                if (!commands.open.disabled) {
+                    commands.open.click();
+                }
+            }
+        });
         commands.code.addEventListener('click', function () {
             closeMenu();
             openCode({ focus: true });

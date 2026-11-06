@@ -197,6 +197,7 @@
             'ui.new': 'Nuovo',
             'ui.open': 'Apri…',
             'ui.save': 'Salva',
+            'ui.save.title': 'Salva (Ctrl + S)',
             'ui.code.open': 'Codice C++ e Python',
             'ui.code.title': 'Codice',
             'ui.code.languages': 'Linguaggio',

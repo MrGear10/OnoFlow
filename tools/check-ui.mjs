@@ -163,6 +163,18 @@ async function checkSave(page, checks) {
     const original = await page.evaluate(() => window.OnoFlow.Examples.byId('somma-massimo-minimo').text);
     const withoutSaved = (text) => text.replace(/<attribute name="saved" value="[^"]*"\/>/, '');
     checks.ok(withoutSaved(saved) === withoutSaved(original), 'testo salvato identico all\'esempio, salvo "saved" (FR-FILE-03)');
+    // Ctrl+S anche dal campo del nome, il pulsante Salva da 64rem, Ctrl+O apre il selettore (R-19).
+    await page.focus('#file-name');
+    const [byKey] = await Promise.all([page.waitForEvent('download'), page.keyboard.press('Control+s')]);
+    checks.ok(byKey.suggestedFilename() === 'prova salvataggio.fprg', `Ctrl+S dal campo del nome: ${byKey.suggestedFilename()}`);
+    if (await page.locator('#save').isVisible()) {
+        const [byButton] = await Promise.all([page.waitForEvent('download'), page.click('#save')]);
+        checks.ok(byButton.suggestedFilename() === 'prova salvataggio.fprg', `pulsante Salva: ${byButton.suggestedFilename()}`);
+    }
+    await page.locator('#file-name').blur();
+    const chooser = await Promise.all([page.waitForEvent('filechooser', { timeout: 3000 }), page.keyboard.press('Control+o')])
+        .then(() => true, () => false);
+    checks.ok(chooser, 'Ctrl+O apre il selettore dei file');
 }
 
 async function checkBadFile(page, checks) {
@@ -1475,6 +1487,39 @@ async function checkBarWidths(browser, engineName) {
     return checks;
 }
 
+/* Barra ferma (R-19): da fermo, durante l'esecuzione e alla fine i comandi non si spostano; in pausa
+   c'è un comando in più (Passo) e la barra si allarga a sinistra, ma il Menu resta fermo. */
+async function checkBarStable(browser, engineName) {
+    const checks = new Checks(`${engineName} barra ferma`);
+    const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: 'reduce' });
+    const page = await context.newPage();
+    const places = () => page.evaluate(() => ['.run-controls', '#menu-button', '#theme-toggle', '#docs-link', '#save']
+        .map((selector) => {
+            const box = document.querySelector(selector).getBoundingClientRect();
+            return box.width ? Math.round(box.left) + '+' + Math.round(box.width) : '-';
+        }).join(' '));
+    try {
+        await page.goto(URL);
+        await page.waitForSelector('#diagram .dg-block--terminal');
+        await chooseExample(page, 'pari-dispari');
+        for (const width of [1024, 1152, 1366, 1920]) {
+            await page.setViewportSize({ width, height: 768 });
+            const idle = await places();
+            await page.click('#run');
+            await page.locator('.console-field').waitFor();
+            const waiting = await places();
+            await page.locator('.console-field').fill('3');
+            await page.locator('.console-field').press('Enter');
+            await page.waitForFunction(() => document.getElementById('status').textContent.trim() === 'Terminato');
+            const done = await places();
+            checks.ok(idle === waiting && idle === done, `${width} px: stessi posti da fermo, in attesa e alla fine (${idle} / ${waiting} / ${done})`);
+        }
+    } finally {
+        await context.close();
+    }
+    return checks;
+}
+
 /* Telefono in orizzontale (M-04): barra su una riga, schede in colonna a sinistra, comandi del
    foglio ai lati; in mezzo al foglio resta una fascia libera alta almeno 250 px. */
 async function checkLandscape(browser, engineName) {
@@ -1712,6 +1757,7 @@ async function main() {
             const runs = VIEWPORTS.map((viewport) => [viewport.name, () => checkViewport(browser, engineName, viewport, options.screenshots)]);
             runs.push(['barra stretta', () => checkBarWidths(browser, engineName)]);
             runs.push(['orizzontale', () => checkLandscape(browser, engineName)]);
+            runs.push(['barra ferma', () => checkBarStable(browser, engineName)]);
             runs.push(['selezione', () => checkSelectionClear(browser, engineName)]);
             for (const [, run] of runs.filter(([name]) => name.includes(options.only))) {
                 const checks = await run();

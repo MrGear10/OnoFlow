@@ -17,7 +17,7 @@
 <div class="app" id="app" data-tab="diagram" data-run-state="idle" data-loading>
     <header class="bar">
         <div class="bar-row bar-row--main">
-            <span class="brand">OnoFlow</span>
+            <span class="brand"><img class="brand-logo" src="icons/onoflow.svg" alt="" width="24" height="24">OnoFlow</span>
             <div class="file-group">
                 <div class="file">
                     <label class="visually-hidden" for="file-name" data-i18n="ui.fileName.label"></label>
@@ -26,6 +26,9 @@
                 </div>
                 <p class="status" id="status" role="status" hidden></p>
             </div>
+            <button class="button save-button" id="save" type="button" aria-keyshortcuts="Control+S" data-i18n-label="ui.save" data-i18n-title="ui.save.title">
+                <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.5v9M6 9l4 3.5L14 9"/><path d="M4 13.5v2.5h12v-2.5"/></svg>
+            </button>
             <div class="history-controls history-controls--bar" role="group" data-i18n-label="ui.history.label">
                 <button class="button history-button" id="undo" type="button" data-i18n-label="ui.undo" data-i18n-title="ui.undo.title" disabled>
                     <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8h8.5a4 4 0 0 1 0 8H9"/></svg>
@@ -68,8 +71,8 @@
                 <div class="menu" id="menu" role="menu" data-i18n-label="ui.menu" hidden>
                     <p class="menu-heading" data-i18n="ui.menu.file"></p>
                     <button class="menu-item" id="cmd-new" type="button" role="menuitem" data-i18n="ui.new"></button>
-                    <button class="menu-item" id="cmd-open" type="button" role="menuitem" data-i18n="ui.open"></button>
-                    <button class="menu-item" id="cmd-save" type="button" role="menuitem" data-i18n="ui.save"></button>
+                    <button class="menu-item" id="cmd-open" type="button" role="menuitem" aria-keyshortcuts="Control+O"><span data-i18n="ui.open"></span><kbd class="menu-shortcut" aria-hidden="true">Ctrl+O</kbd></button>
+                    <button class="menu-item" id="cmd-save" type="button" role="menuitem" aria-keyshortcuts="Control+S"><span data-i18n="ui.save"></span><kbd class="menu-shortcut" aria-hidden="true">Ctrl+S</kbd></button>
                     <button class="menu-item" id="cmd-code" type="button" role="menuitem" data-i18n="ui.code.open"></button>
                     <p class="menu-heading" data-i18n="ui.menu.examples"></p>
                     <div id="examples-list" role="group"></div>

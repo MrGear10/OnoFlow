@@ -150,6 +150,9 @@ a {
 
 .brand {
     flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
     font-size: var(--text-title);
     font-weight: 700;
     letter-spacing: -0.02em;
@@ -228,7 +231,14 @@ a {
     background: currentColor;
 }
 
-/* Stato dell'esecuzione: ogni stato un segno, come un cartello (FR-RUN-01). */
+/* Logo (DEC-098) accanto al nome. */
+.brand-logo {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 5px;
+}
+
+/* Stato dell'esecuzione: ogni stato un punto (FR-RUN-01, R-19). */
 .status {
     /* Un blocco che si accorcia con i puntini, invece di sovrapporsi a ciò che gli sta accanto. */
     flex: 0 0.1 auto; /* si accorcia per ultimo: prima si stringe il nome del file */
@@ -244,14 +254,16 @@ a {
 .status::before {
     content: "";
     display: inline-block;
-    vertical-align: -0.125rem;
+    vertical-align: -0.0625rem;
     margin-right: 0.5em; /* in em: sparisce con il solo segno (font-size 0) */
-    width: 0.875rem;
-    height: 0.875rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    box-sizing: border-box;
     border: 1px solid var(--text);
-    border-radius: 3px;
+    border-radius: 50%;
 }
 
+/* In esecuzione: il giallo della freccia del debugger. */
 [data-run-state="running"] .status::before {
     background: var(--highlighter);
     border-color: var(--on-highlighter);
@@ -262,10 +274,11 @@ a {
     background: var(--paper);
 }
 
+/* In attesa di un valore: punto d'inchiostro con un anello tenue. */
 [data-run-state="waitingInput"] .status::before {
-    background: var(--slate);
-    border-color: var(--text);
-    border-bottom: 3px solid var(--chalk-yellow);
+    background: var(--ink);
+    border-color: var(--ink);
+    box-shadow: 0 0 0 3px var(--tonal-strong);
 }
 
 [data-run-state="finished-error"] .status,
@@ -280,7 +293,8 @@ a {
 }
 
 [data-run-state="finished-stopped"] .status::before {
-    border: 2px solid var(--text);
+    background: var(--text-muted);
+    border-color: var(--text-muted);
 }
 
 [data-run-state="finished-done"] .status::before {
@@ -1504,6 +1518,19 @@ button.diagram-error-entry:active {
     margin-left: var(--space-2);
 }
 
+/* Salva (R-19): con la sola icona, prima di Annulla e Ripeti; porta il margine automatico, così
+   non si sposta con la lunghezza dello stato. Solo da 64rem: sotto resta nel menu. */
+.save-button {
+    flex: none;
+    width: var(--touch);
+    padding: 0;
+    margin-left: auto;
+}
+
+.save-button + .history-controls--bar {
+    margin-left: 0;
+}
+
 /* Documentazione (DEC-081): un collegamento con l'aspetto di un pulsante, con il libro. */
 .docs-button {
     width: var(--touch);
@@ -1516,6 +1543,13 @@ button.diagram-error-entry:active {
     width: var(--touch);
     padding: 0;
     justify-content: center;
+}
+
+/* Tema e documentazione sono comandi secondari (R-19): senza fondo, nel grigio del testo tenue. */
+.docs-button,
+.theme-button {
+    background: transparent;
+    color: var(--text-muted);
 }
 
 .theme-button[data-target="light"] .theme-icon--moon,
@@ -1702,7 +1736,8 @@ button.diagram-error-entry:active {
 
 /* Sotto i 64rem nella barra mancherebbe spazio per il nome del file (B2). */
 @media (max-width: 63.99rem) {
-    .history-controls--bar {
+    .history-controls--bar,
+    .save-button {
         display: none;
     }
 
@@ -1736,16 +1771,30 @@ button.diagram-error-entry:active {
     }
 }
 
+/* Durante l'esecuzione Annulla e Ripeti non valgono: spariscono ma tengono il loro posto, che
+   porta il margine automatico; così i comandi non si spostano (R-19). */
 .app[data-run-state="running"] .history-controls--bar,
 .app[data-run-state="paused"] .history-controls--bar,
 .app[data-run-state="waitingInput"] .history-controls--bar {
-    display: none;
+    visibility: hidden;
 }
 
 /* Un solo comando principale per stato (R-04, R-08): durante l'esecuzione Esegui lascia il posto a
    Ferma, e Passo compare solo quando vale, nella pausa. Sotto i 40rem i posti fissi sono quelli
    della regola più avanti (M-03). */
 @media (min-width: 40.01rem) {
+    /* Posti di larghezza fissa: Esegui e Ferma, Passo e Pausa (o Riprendi) occupano lo stesso spazio,
+       quindi da fermo e durante l'esecuzione i comandi non spostano il resto della barra (R-19). */
+    #run,
+    #stop {
+        min-width: 7.25rem;
+    }
+
+    #step,
+    #pause {
+        min-width: 7.75rem;
+    }
+
     .app[data-run-state="running"] #run,
     .app[data-run-state="paused"] #run,
     .app[data-run-state="waitingInput"] #run,
@@ -2505,7 +2554,13 @@ button.diagram-error-entry:active {
     #step,
     #pause {
         width: var(--touch);
+        min-width: var(--touch); /* qui i posti fissi sono quelli della griglia */
         padding: 0;
+    }
+
+    #run,
+    #stop {
+        min-width: var(--touch);
     }
 
     #stop {
