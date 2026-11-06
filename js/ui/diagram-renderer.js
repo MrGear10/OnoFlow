@@ -9,7 +9,9 @@
  * modello in data-id (FR-VIEW-02). Gli stati sono segni con un solo significato (FR-VIEW-03):
  *   - freccia del debugger: un triangolo giallo a sinistra del blocco in esecuzione, che scorre
  *     da un blocco al successivo; il blocco tiene la sua tinta e ha il contorno più spesso;
- *   - penna rossa: cerchio attorno al blocco, numero dell'errore, onda nel punto esatto.
+ *   - penna rossa: cerchio attorno al blocco, numero dell'errore, onda nel punto esatto;
+ *   - ramo percorso: nel passo a passo, il ramo preso da un if si ripassa a penna, con
+ *     l'etichetta Vero o Falso in inchiostro.
  * I messaggi degli errori non stanno nel disegno ma nell'elenco sopra il foglio
  * (js/ui/diagram-errors.js), con lo stesso numero.
  *
@@ -23,7 +25,7 @@
  *     render(container, program, { t, measurer, editable(functionId), describeSlot(slot) })
  *         svuota container, disegna e restituisce
  *         { element, size: { width, height }, slots, setRunning(id | null), setErrors(errori),
- *           setSelected(id | null), setMoving(id | null, ammesso(punto)), hitTest(punto, raggio), slotBox(indice),
+ *           setSelected(id | null), setTaken({ ifId: 'then' | 'else' }, anima), setMoving(id | null, ammesso(punto)), hitTest(punto, raggio), slotBox(indice),
  *           nodeBox(id) → { x, y, width, height } | null, runningBox(id) (con la freccia del debugger), hasNode(id) }
  * punto e rettangoli sono in pixel al 100% rispetto all'angolo dell'SVG; hitTest restituisce
  * { slot: indice } o { block: id } o null.
@@ -225,8 +227,16 @@
         });
         marker.appendChild(svgElement('path', { d: 'M0,0L10,5L0,10z' }, 'dg-arrowhead'));
         defs.appendChild(marker);
+        // Punta del ramo percorso, in inchiostro.
+        var takenMarker = svgElement('marker', {
+            id: markerId + '-taken', viewBox: '0 0 10 10', refX: 10, refY: 5,
+            markerUnits: 'userSpaceOnUse', markerWidth: round(0.55 * s), markerHeight: round(0.55 * s), orient: 'auto'
+        });
+        takenMarker.appendChild(svgElement('path', { d: 'M0,0L10,5L0,10z' }, 'dg-arrowhead dg-arrowhead--taken'));
+        defs.appendChild(takenMarker);
         svg.appendChild(defs);
         var linesLayer = svgElement('g', {}, 'dg-lines');
+        var traceLayer = svgElement('g', {}, 'dg-trace');
         var shapesLayer = svgElement('g', {}, 'dg-shapes');
         var selectionLayer = svgElement('g', {}, 'dg-selection');
         var slotsLayer = svgElement('g', {}, 'dg-slots');
@@ -239,6 +249,7 @@
             points: pointsText([[-pointerWidth, -pointerHeight / 2], [0, 0], [-pointerWidth, pointerHeight / 2]])
         }));
         svg.appendChild(linesLayer);
+        svg.appendChild(traceLayer);
         svg.appendChild(shapesLayer);
         svg.appendChild(selectionLayer);
         svg.appendChild(slotsLayer);
@@ -253,6 +264,12 @@
 
         var groupsById = Object.create(null);
         var shapesById = Object.create(null);
+        var branches = Object.create(null);    // ifId + '\u0000' + ramo → { points, arrow, label }
+
+        function branchEntry(ifId, branch) {
+            var key = ifId + '\u0000' + branch;
+            return branches[key] || (branches[key] = { points: null, arrow: false, label: null });
+        }
 
         result.items.forEach(function (item) {
             if (item.type === 'line') {
@@ -270,6 +287,13 @@
                 }
                 label.textContent = item.text;
                 linesLayer.appendChild(label);
+                if (item.ifId) {
+                    branchEntry(item.ifId, item.branch).label = label;
+                }
+            } else if (item.type === 'branch') {
+                var entry = branchEntry(item.ifId, item.branch);
+                entry.points = item.points;
+                entry.arrow = item.arrow;
             } else if (item.type === 'title') {
                 var title = svgElement('text', { x: round(item.x), y: round(item.y), 'dominant-baseline': 'central' }, 'dg-title');
                 title.textContent = item.text;
@@ -436,6 +460,41 @@
             });
         }
 
+        var taken = Object.create(null);
+
+        /*
+         * Rami percorsi: { ifId: 'then' | 'else' }. Il tratto si ripassa a penna e l'etichetta
+         * va in inchiostro; con animate, i rami nuovi o cambiati si tracciano come con una penna.
+         */
+        function setTaken(map, animate) {
+            var previous = taken;
+            taken = Object.create(null);
+            traceLayer.textContent = '';
+            Object.keys(branches).forEach(function (key) {
+                if (branches[key].label) {
+                    branches[key].label.classList.remove('is-taken');
+                }
+            });
+            Object.keys(map || {}).forEach(function (ifId) {
+                var entry = branches[ifId + '\u0000' + map[ifId]];
+                if (!entry || !entry.points) {
+                    return;
+                }
+                taken[ifId] = map[ifId];
+                var trace = svgElement('polyline', { points: pointsText(entry.points), pathLength: 1 }, 'dg-taken');
+                if (entry.arrow) {
+                    trace.setAttribute('marker-end', 'url(#' + markerId + '-taken)');
+                }
+                if (animate && previous[ifId] !== map[ifId]) {
+                    trace.classList.add('is-drawing');
+                }
+                traceLayer.appendChild(trace);
+                if (entry.label) {
+                    entry.label.classList.add('is-taken');
+                }
+            });
+        }
+
         var selected = null;
 
         /* Selezione (B3): contorno d'inchiostro attorno al blocco; null la toglie. */
@@ -541,6 +600,7 @@
             setRunning: setRunning,
             setErrors: setErrors,
             setSelected: setSelected,
+            setTaken: setTaken,
             setMoving: setMoving,
             hitTest: hitTest,
             slotBox: slotBox,

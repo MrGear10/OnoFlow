@@ -321,6 +321,46 @@
             assert.isFalse(pointer.classList.contains('is-shown'));
         });
 
+        T.test('ramo percorso: quale ramo ha preso un if (Model.takenBranch)', function (assert) {
+            var yes = H.output('1');
+            var no = H.output('2');
+            var after = H.output('3');
+            var full = H.when('x > 0', [yes], [no]);
+            var onlyThen = H.when('x > 0', [H.output('4')], [H.comment('niente')]);
+            var program = H.program([H.declare(['x'], 'Integer'), full, onlyThen, after]);
+            assert.equal(Model.takenBranch(program, full.id, yes.id), 'then');
+            assert.equal(Model.takenBranch(program, full.id, no.id), 'else');
+            // Ramo Falso con un solo commento: si è preso se il blocco dopo non sta nel ramo Vero.
+            assert.equal(Model.takenBranch(program, onlyThen.id, after.id), 'else');
+            assert.equal(Model.takenBranch(program, yes.id, no.id), null);
+            var empty = H.when('x > 0', [], []);
+            assert.equal(Model.takenBranch(H.program([empty, after]), empty.id, after.id), null);
+        });
+
+        T.test('ramo percorso: tratto ripassato ed etichetta in inchiostro, poi si toglie', function (assert) {
+            var full = H.when('x > 0', [H.output('1')], []);
+            var drawn = draw(H.program([H.declare(['x'], 'Integer'), full]));
+            drawn.view.setTaken({ n: 'then' }, true); // un if che non c'è: niente
+            assert.equal(drawn.container.querySelectorAll('.dg-taken').length, 0);
+            drawn.view.setTaken({ [full.id]: 'else' }, true);
+            var traces = drawn.container.querySelectorAll('.dg-taken');
+            assert.equal(traces.length, 1);
+            assert.isTrue(traces[0].classList.contains('is-drawing'));
+            // Ramo Falso vuoto: il tratto arriva fino al punto d'incontro, senza punta.
+            assert.equal(traces[0].getAttribute('points').split(' ').length, 4);
+            assert.isFalse(traces[0].hasAttribute('marker-end'));
+            var taken = drawn.container.querySelectorAll('.dg-label.is-taken');
+            assert.equal(taken.length, 1);
+            assert.equal(taken[0].textContent, t('ui.diagram.else'));
+            // Stesso ramo: non si traccia di nuovo; ramo Vero: fino al primo blocco, con la punta.
+            drawn.view.setTaken({ [full.id]: 'else' }, true);
+            assert.isFalse(drawn.container.querySelector('.dg-taken').classList.contains('is-drawing'));
+            drawn.view.setTaken({ [full.id]: 'then' }, true);
+            assert.isTrue(drawn.container.querySelector('.dg-taken').hasAttribute('marker-end'));
+            drawn.view.setTaken({}, false);
+            assert.equal(drawn.container.querySelectorAll('.dg-taken, .dg-label.is-taken').length, 0);
+        });
+
         T.test('penna rossa: cerchio, numero e onda sotto il punto esatto; poi si toglie', function (assert) {
             var wrong = H.assign('x', 'a + 2,5');
             var program = H.program([wrong]);

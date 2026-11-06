@@ -756,6 +756,35 @@ button.diagram-error-entry:active {
     fill: var(--ink-soft);
 }
 
+/* Ramo percorso nel passo a passo: ripassato a penna, tracciato come con una penna. */
+.dg-taken {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 3;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.dg-taken.is-drawing {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: dg-trace 320ms var(--ease-out) forwards;
+}
+
+@keyframes dg-trace {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.dg-arrowhead--taken {
+    fill: var(--ink);
+}
+
+.dg-label.is-taken {
+    fill: var(--ink);
+}
+
 .dg-label {
     /* Vero e Falso si leggono da fondo aula: crescono con il contenuto, non con la cornice. */
     font-size: calc(0.8 * var(--text-content));
@@ -2642,5 +2671,10 @@ button.diagram-error-entry:active {
     *::before,
     *::after {
         transition-duration: 0.01ms !important;
+    }
+
+    .dg-taken.is-drawing {
+        animation: none;
+        stroke-dashoffset: 0;
     }
 }

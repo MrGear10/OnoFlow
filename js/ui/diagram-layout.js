@@ -15,8 +15,11 @@
  *
  *     layout(program, { t, measure, square, fontSize }) → {
  *         width, height,
- *         items: [ shape | line | label | junction | title ]  (la forma Inizio porta l'ID della funzione;
- *                 shape.inset è il rientro degli angoli, per disegnarla),
+ *         items: [ shape | line | label | junction | title | branch ]  (la forma Inizio porta l'ID della
+ *                 funzione; shape.inset è il rientro degli angoli, per disegnarla; branch non si disegna
+ *                 sempre: è il tratto di un ramo dell'if, { ifId, branch: 'then' | 'else', points },
+ *                 da ripassare quando l'esecuzione lo prende; le etichette Vero e Falso dell'if
+ *                 portano ifId e branch),
  *         nodes: { id: { x, y, width, height } },   rettangolo da inquadrare (funzioni: Inizio)
  *         slots: [ { functionId, ownerId, list, index, x, y1, y2 } ]  frecce dove si inserisce un blocco
  *     }
@@ -147,8 +150,20 @@
         }
 
         /* Scritta piccola; y è la linea di base, oppure il centro con baseline 'middle'. */
-        function label(text, x, y, anchor, baseline) {
-            items.push({ type: 'label', text: text, x: x, y: y, anchor: anchor, baseline: baseline || 'alphabetic' });
+        function label(text, x, y, anchor, baseline, extra) {
+            items.push(Object.assign({ type: 'label', text: text, x: x, y: y, anchor: anchor, baseline: baseline || 'alphabetic' }, extra));
+        }
+
+        /* Il ramo di un if fino al primo blocco; senza blocchi che si eseguono, fino al punto d'incontro. */
+        function branchPath(ifId, branch, blocks, tipX, branchX, middle, bottom, axis) {
+            var runs = blocks.some(function (child) { return child.kind !== 'comment'; });
+            var points = [[tipX, middle], [branchX, middle]];
+            if (runs) {
+                points.push([branchX, middle + ARROW]);
+            } else {
+                points.push([branchX, bottom], [axis, bottom]);
+            }
+            items.push({ type: 'branch', ifId: ifId, branch: branch, points: points, arrow: runs });
         }
 
         function remember(id, item) {
@@ -233,8 +248,10 @@
                     var xFalse = axis - leftAxis;
                     line([[axis + half, middle], [xTrue, middle]], false);
                     line([[axis - half, middle], [xFalse, middle]], false);
-                    label(labelThen, axis + half + LABEL_GAP, middle - LABEL_GAP, 'start');
-                    label(labelElse, axis - half - LABEL_GAP, middle - LABEL_GAP, 'end');
+                    label(labelThen, axis + half + LABEL_GAP, middle - LABEL_GAP, 'start', null, { ifId: block.id, branch: 'then' });
+                    label(labelElse, axis - half - LABEL_GAP, middle - LABEL_GAP, 'end', null, { ifId: block.id, branch: 'else' });
+                    branchPath(block.id, 'then', block.then, axis + half, xTrue, middle, bottom, axis);
+                    branchPath(block.id, 'else', block['else'], axis - half, xFalse, middle, bottom, axis);
                     whenTrue.place(xTrue, middle, false);
                     whenFalse.place(xFalse, middle, false);
                     // Il ramo più corto scende fino al punto in cui i due rami si riuniscono.

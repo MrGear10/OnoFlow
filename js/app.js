@@ -171,6 +171,7 @@
             diagram: null,          // disegno del programma aperto (DiagramRenderer)
             marked: { errors: [], runtime: false },
             runningId: null,
+            taken: Object.create(null),       // rami percorsi nel passo a passo: { ifId: 'then' | 'else' }
             selectedId: null,       // blocco selezionato (B3)
             insertSlot: null,       // punto in cui il menu dei blocchi inserirà
             undoBar: null,          // avviso "Annulla" dell'ultima cancellazione (DEC-067)
@@ -353,6 +354,14 @@
             state.diagram.setRunning(nodeId);
         }
 
+        /* Rami percorsi nel passo a passo: restano fino alla prossima esecuzione o modifica. */
+        function clearTaken() {
+            state.taken = Object.create(null);
+            if (state.diagram) {
+                state.diagram.setTaken(state.taken, false);
+            }
+        }
+
         /* Inquadra un blocco; false se il foglio non si vede (scheda Console sul telefono).
            options.running: con la freccia del debugger alla sua sinistra. */
         function revealNode(nodeId, options) {
@@ -391,6 +400,7 @@
             sheetView.attach(state.diagram);
             state.diagram.setErrors(state.marked.errors);
             state.diagram.setRunning(state.runningId);
+            state.diagram.setTaken(state.taken, false);
             state.diagram.setSelected(state.selectedId);
             if (state.moving) {
                 showMoving();
@@ -467,6 +477,7 @@
             state.document.markChanged();
             state.outcome = null;
             state.runningId = null;
+            state.taken = Object.create(null);
             state.staticErrors = StaticCheck.check(state.program);
             state.marked = { errors: [], runtime: false };
             updateFileState();
@@ -573,6 +584,7 @@
             hideVariables();
             state.outcome = null;
             state.runningId = null;
+            state.taken = Object.create(null);
             state.staticErrors = StaticCheck.check(state.program);
             state.marked = { errors: [], runtime: false };
             state.selectedId = focusId;
@@ -1040,6 +1052,7 @@
             state.program = program;
             state.outcome = null;
             state.runningId = null;
+            state.taken = Object.create(null);
             state.pendingReveal = null;
             state.selectedId = null;
             state.insertSlot = null;
@@ -1373,6 +1386,7 @@
             hideVariables();
             showStaticErrors();
             state.outcome = null;
+            clearTaken(); // i rami dell'esecuzione di prima si tolgono all'avvio
             state.pendingReveal = null;
             // All'avvio la console viene in primo piano (FR-MOB-02, D-11), tranne nel passo-passo.
             showTab(stepMode ? 'diagram' : 'console');
@@ -1385,6 +1399,13 @@
                 },
                 onStep: function (nodeId) {
                     consoleView.flush();
+                    // Passo a passo da un if al blocco successivo: si ripassa il ramo preso.
+                    var branch = state.scheduler && state.scheduler.stepping() && state.runningId ?
+                        Model.takenBranch(state.program, state.runningId, nodeId) : null;
+                    if (branch) {
+                        state.taken[state.runningId] = branch;
+                        state.diagram.setTaken(state.taken, true);
+                    }
                     setRunning(nodeId);
                     showVariables();
                     if (state.scheduler && state.scheduler.stepping()) {

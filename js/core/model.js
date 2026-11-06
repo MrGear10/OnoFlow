@@ -281,7 +281,39 @@
         return errors;
     }
 
+    /*
+     * Ramo di un if preso quando l'esecuzione passa dall'if (ifId) al blocco nextId: 'then',
+     * 'else', oppure null se non si può dire (non è un if, o i due rami non hanno blocchi
+     * che si eseguono). Un ramo senza blocchi eseguibili (vuoto o con soli commenti) è quello
+     * preso quando il blocco successivo non sta nell'altro ramo.
+     */
+    function takenBranch(program, ifId, nextId) {
+        var found = findById(program, ifId);
+        var next = findById(program, nextId);
+        if (!found || found.node.kind !== 'if' || !next) {
+            return null;
+        }
+        var block = found.node;
+        if (next.list === block.then) {
+            return 'then';
+        }
+        if (next.list === block['else']) {
+            return 'else';
+        }
+        var runs = function (list) {
+            return list.some(function (child) { return child.kind !== 'comment'; });
+        };
+        if (!runs(block.then) && runs(block['else'])) {
+            return 'then';
+        }
+        if (runs(block.then) && !runs(block['else'])) {
+            return 'else';
+        }
+        return null;
+    }
+
     OnoFlow.Model = {
+        takenBranch: takenBranch,
         TYPES: TYPES,
         FUNCTION_TYPES: FUNCTION_TYPES,
         DIRECTIONS: DIRECTIONS,
