@@ -56,4 +56,12 @@ Progettato da **MrGear10** e sviluppato con l'assistenza di **Claude (Anthropic)
 
 ## Licenza
 
-[MIT](LICENSE).
+Copyright (C) 2026 Giuseppe Calabrese (MrGear10)
+
+OnoFlow è distribuito sotto la [PolyForm Noncommercial License 1.0.0](LICENSE). Non è una licenza open source: il codice è pubblico, ma l'uso commerciale è riservato all'autore.
+
+- ✅ **Gratis** per scuole, docenti, studenti e per qualsiasi scopo non commerciale.
+- ✅ Si può **modificare e ridistribuire**, sempre per scopi non commerciali e mantenendo questa licenza e la riga `Required Notice` del file [LICENSE](LICENSE).
+- ❌ **Vendere** OnoFlow, includerlo in prodotti o servizi a pagamento o usarlo per altri scopi commerciali richiede una **licenza commerciale**: scrivere a mrgear10.dev@gmail.com.
+
+Le versioni pubblicate prima del 6 novembre 2026 erano distribuite sotto licenza MIT.
