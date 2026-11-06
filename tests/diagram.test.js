@@ -435,6 +435,21 @@
             assert.equal(drawn.container.querySelector('.diagram-empty').textContent, t('ui.diagram.empty'));
         });
 
+        T.test('tela più quieta: Vero e Falso sopra la selezione, + pieni solo col diagramma vuoto o in uno spostamento', function (assert) {
+            var choice = H.when('x > 0', [], []);
+            var drawn = draw(H.program([H.declare(['x'], 'Integer'), choice]));
+            var svg = drawn.container.querySelector('svg');
+            var layers = Array.prototype.map.call(svg.children, function (node) { return node.getAttribute('class'); });
+            assert.isTrue(layers.indexOf('dg-labels') > layers.indexOf('dg-selection'));
+            assert.equal(svg.querySelectorAll('.dg-labels .dg-label').length, 2);
+            assert.isFalse(svg.classList.contains('is-empty'));
+            drawn.view.setMoving(choice.id, function () { return true; });
+            assert.isTrue(svg.classList.contains('is-moving'));
+            drawn.view.setMoving(null);
+            assert.isFalse(svg.classList.contains('is-moving'));
+            assert.isTrue(draw(Model.createEmptyProgram()).container.querySelector('svg').classList.contains('is-empty'));
+        });
+
         T.test('il rettangolo di un blocco tiene conto del margine del disegno', function (assert) {
             var target = H.output('1');
             var drawn = draw(H.program([target]));

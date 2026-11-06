@@ -239,6 +239,8 @@
         var traceLayer = svgElement('g', {}, 'dg-trace');
         var shapesLayer = svgElement('g', {}, 'dg-shapes');
         var selectionLayer = svgElement('g', {}, 'dg-selection');
+        // Vero, Falso e «do» sopra il riquadro della selezione, con un alone del colore della tela (R-20).
+        var labelsLayer = svgElement('g', {}, 'dg-labels');
         var slotsLayer = svgElement('g', {}, 'dg-slots');
         var marksLayer = svgElement('g', {}, 'dg-marks');
         // Freccia del debugger: punta a destra, con la punta nell'origine; si sposta con transform.
@@ -252,6 +254,7 @@
         svg.appendChild(traceLayer);
         svg.appendChild(shapesLayer);
         svg.appendChild(selectionLayer);
+        svg.appendChild(labelsLayer);
         svg.appendChild(slotsLayer);
         svg.appendChild(pointer);
         svg.appendChild(marksLayer);
@@ -286,7 +289,7 @@
                     label.setAttribute('dominant-baseline', 'central');
                 }
                 label.textContent = item.text;
-                linesLayer.appendChild(label);
+                labelsLayer.appendChild(label);
                 if (item.ifId) {
                     branchEntry(item.ifId, item.branch).label = label;
                 }
@@ -350,6 +353,7 @@
         container.textContent = '';
         container.appendChild(svg);
         var onlyMain = program.functions.length === 1 && program.functions[0].body.length === 0;
+        svg.classList.toggle('is-empty', onlyMain); // i + restano pieni: sono l'unica cosa da fare
         if (onlyMain) {
             var empty = document.createElement('p');
             empty.className = 'diagram-empty';
@@ -526,6 +530,7 @@
                 moving.classList.remove('is-moving');
             }
             moving = nodeId && groupsById[nodeId] ? groupsById[nodeId] : null;
+            svg.classList.toggle('is-moving', Boolean(moving)); // i + dove può andare restano pieni
             disabledSlots = Object.create(null);
             if (moving) {
                 moving.classList.add('is-moving');

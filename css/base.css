@@ -806,6 +806,11 @@ button.diagram-error-entry:active {
     font-size: calc(0.8 * var(--text-content));
     font-weight: 600;
     fill: var(--text-muted);
+    /* Alone del colore della tela: si leggono anche sopra il riquadro della selezione (R-20). */
+    stroke: var(--canvas);
+    stroke-width: 4px;
+    stroke-linejoin: round;
+    paint-order: stroke;
 }
 
 .dg-title {
@@ -913,6 +918,20 @@ button.diagram-error-entry:active {
 
     .dg-slot:hover .dg-slot-plus {
         stroke: var(--ink);
+    }
+
+    /* Con il mouse i + sono tenui e piccoli a riposo e tornano pieni al passaggio e con il focus da
+       tastiera (R-20): il diagramma a riposo è più quieto. Pieni anche con il diagramma vuoto e
+       durante uno spostamento. Al tocco non cambia nulla. */
+    .diagram:not(.is-empty):not(.is-moving) .dg-slot:not(:hover):not(:focus-visible):not(:active) {
+        opacity: 0.45;
+        transform: scale(0.75);
+    }
+
+    .dg-slot {
+        transform-box: fill-box;
+        transform-origin: center;
+        transition: opacity var(--duration-state) var(--ease-out), transform var(--duration-state) var(--ease-out);
     }
 }
 
