@@ -299,6 +299,28 @@
             assert.equal(drawn.container.querySelectorAll('.is-running').length, 0);
         });
 
+        T.test('freccia del debugger: a sinistra del blocco in esecuzione, poi sparisce', function (assert) {
+            var first = H.output('1');
+            var second = H.output('2');
+            var drawn = draw(H.program([first, second]));
+            var pointer = drawn.container.querySelector('.dg-pointer');
+            assert.isFalse(pointer.classList.contains('is-shown'));
+            drawn.view.setRunning(first.id);
+            assert.isTrue(pointer.classList.contains('is-shown'));
+            var before = pointer.style.transform;
+            drawn.view.setRunning(second.id);
+            var after = pointer.style.transform;
+            assert.notEqual(before, after);
+            // La punta sta a sinistra del blocco, alla sua metà.
+            var box = drawn.view.nodeBox(second.id);
+            var numbers = after.match(/-?[\d.]+/g).map(Number);
+            var square = box.x - numbers[0]; // nodeBox è spostato del margine sinistro
+            assert.isTrue(numbers[0] < box.x);
+            assert.isTrue(square > 0);
+            drawn.view.setRunning(null);
+            assert.isFalse(pointer.classList.contains('is-shown'));
+        });
+
         T.test('penna rossa: cerchio, numero e onda sotto il punto esatto; poi si toglie', function (assert) {
             var wrong = H.assign('x', 'a + 2,5');
             var program = H.program([wrong]);

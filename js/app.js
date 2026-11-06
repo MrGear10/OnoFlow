@@ -353,9 +353,14 @@
             state.diagram.setRunning(nodeId);
         }
 
-        /* Inquadra un blocco; false se il foglio non si vede (scheda Console sul telefono). */
+        /* Inquadra un blocco; false se il foglio non si vede (scheda Console sul telefono).
+           options.running: con la freccia del debugger alla sua sinistra. */
         function revealNode(nodeId, options) {
-            return state.diagram ? sheetView.reveal(state.diagram.nodeBox(nodeId), options) : false;
+            if (!state.diagram) {
+                return false;
+            }
+            var box = options && options.running ? state.diagram.runningBox(nodeId) : state.diagram.nodeBox(nodeId);
+            return sheetView.reveal(box, options);
         }
 
         /* Nome di un punto di inserimento per i lettori di schermo e la tastiera. */
@@ -1383,14 +1388,14 @@
                     setRunning(nodeId);
                     showVariables();
                     if (state.scheduler && state.scheduler.stepping()) {
-                        revealNode(nodeId, { quiet: true }); // il blocco evidenziato si vede sempre
+                        revealNode(nodeId, { quiet: true, running: true }); // il blocco in esecuzione si vede sempre
                     }
                 },
                 onInput: function (event) {
                     // Sul telefono il diagramma è nell'altra scheda: sopra il campo, il blocco che chiede il valore (R-07).
                     byId('console-asking-text').textContent = t('ui.console.asking', { block: describeBlock(event.nodeId) || '' });
                     setRunning(event.nodeId);
-                    revealNode(event.nodeId, { quiet: true });
+                    revealNode(event.nodeId, { quiet: true, running: true });
                     consoleView.requestInput(event);
                     if (narrow.matches) {
                         showTab('console');
@@ -1418,7 +1423,7 @@
             var current = schedulerState();
             if (current === 'running') {
                 state.scheduler.pause();
-                revealNode(state.scheduler.currentNodeId(), { quiet: true });
+                revealNode(state.scheduler.currentNodeId(), { quiet: true, running: true });
             } else if (current === 'paused') {
                 consoleView.hideLongRun();
                 state.scheduler.resume();

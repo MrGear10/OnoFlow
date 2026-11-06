@@ -715,19 +715,33 @@ button.diagram-error-entry:active {
     stroke: none;
 }
 
-/* Blocco in esecuzione: l'evidenziatore al posto della tinta, e nient'altro è giallo sul foglio. */
-.dg-block.is-running .dg-shape {
-    fill: var(--highlighter);
-    stroke: var(--on-highlighter);
-}
-
+/* Blocco in esecuzione: tiene la sua tinta, quindi il suo tipo, con il contorno più spesso.
+   Lo indica la freccia del debugger, l'unica cosa gialla sul foglio. */
+.dg-block.is-running .dg-shape,
 .dg-block.is-running .dg-detail {
-    stroke: var(--on-highlighter);
+    stroke-width: 2.5;
 }
 
-.dg-block.is-running .dg-keyword,
-.dg-block.is-running .dg-code {
-    fill: var(--on-highlighter);
+/* Freccia del debugger: lo stesso segno degli IDE. Scorre da un blocco al successivo. */
+.dg-pointer {
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform 240ms var(--ease-out);
+}
+
+.dg-pointer.is-shown {
+    visibility: visible;
+}
+
+.dg-pointer.is-instant {
+    transition: none;
+}
+
+.dg-pointer polygon {
+    fill: var(--highlighter);
+    stroke: var(--text);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
 }
 
 .dg-line {

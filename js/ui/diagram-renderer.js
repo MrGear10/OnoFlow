@@ -7,7 +7,8 @@
  * Disegna la disposizione calcolata da DiagramLayout: forme in inchiostro con la tinta del
  * loro tipo (DEC-057), frecce, etichette Vero/Falso. Ogni blocco è un <g> con l'ID del
  * modello in data-id (FR-VIEW-02). Gli stati sono segni con un solo significato (FR-VIEW-03):
- *   - evidenziatore: il blocco in esecuzione prende il giallo al posto della sua tinta;
+ *   - freccia del debugger: un triangolo giallo a sinistra del blocco in esecuzione, che scorre
+ *     da un blocco al successivo; il blocco tiene la sua tinta e ha il contorno più spesso;
  *   - penna rossa: cerchio attorno al blocco, numero dell'errore, onda nel punto esatto.
  * I messaggi degli errori non stanno nel disegno ma nell'elenco sopra il foglio
  * (js/ui/diagram-errors.js), con lo stesso numero.
@@ -23,7 +24,7 @@
  *         svuota container, disegna e restituisce
  *         { element, size: { width, height }, slots, setRunning(id | null), setErrors(errori),
  *           setSelected(id | null), setMoving(id | null, ammesso(punto)), hitTest(punto, raggio), slotBox(indice),
- *           nodeBox(id) → { x, y, width, height } | null, hasNode(id) }
+ *           nodeBox(id) → { x, y, width, height } | null, runningBox(id) (con la freccia del debugger), hasNode(id) }
  * punto e rettangoli sono in pixel al 100% rispetto all'angolo dell'SVG; hitTest restituisce
  * { slot: indice } o { block: id } o null.
  * nodeBox è in pixel al 100%, rispetto all'angolo in alto a sinistra dell'SVG.
@@ -202,13 +203,15 @@
         var metrics = measurer.metrics();
         var s = metrics.square;
         var result = Layout.layout(program, { t: t, measure: measurer.measure, square: s, fontSize: metrics.fontSize });
-        // Margine attorno al disegno: c'è posto per il cerchio rosso e il numero degli errori.
+        // Margine attorno al disegno: c'è posto per il cerchio rosso e il numero degli errori;
+        // a sinistra anche per la freccia del debugger dei blocchi a filo del bordo (ramo Falso).
         var margin = s;
-        var width = result.width + 2 * margin;
+        var marginLeft = 2 * s;
+        var width = result.width + marginLeft + margin;
         var height = result.height + 2 * margin;
 
         var svg = svgElement('svg', {
-            viewBox: [-margin, -margin, width, height].map(round).join(' '),
+            viewBox: [-marginLeft, -margin, width, height].map(round).join(' '),
             width: round(width),
             height: round(height),
             role: 'group'
@@ -228,10 +231,18 @@
         var selectionLayer = svgElement('g', {}, 'dg-selection');
         var slotsLayer = svgElement('g', {}, 'dg-slots');
         var marksLayer = svgElement('g', {}, 'dg-marks');
+        // Freccia del debugger: punta a destra, con la punta nell'origine; si sposta con transform.
+        var pointerWidth = 0.7 * s;
+        var pointerHeight = 0.8 * s;
+        var pointer = svgElement('g', { 'aria-hidden': 'true' }, 'dg-pointer');
+        pointer.appendChild(svgElement('polygon', {
+            points: pointsText([[-pointerWidth, -pointerHeight / 2], [0, 0], [-pointerWidth, pointerHeight / 2]])
+        }));
         svg.appendChild(linesLayer);
         svg.appendChild(shapesLayer);
         svg.appendChild(selectionLayer);
         svg.appendChild(slotsLayer);
+        svg.appendChild(pointer);
         svg.appendChild(marksLayer);
         var editable = options.editable || function () { return false; };
         var functionIds = Object.create(null);
@@ -324,13 +335,31 @@
 
         var running = null;
 
+        /*
+         * Blocco in esecuzione: contorno più spesso e la freccia del debugger alla sua sinistra.
+         * Da un blocco al successivo la freccia scorre (transizione in base.css); quando compare
+         * va subito al suo posto; null la nasconde.
+         */
         function setRunning(nodeId) {
+            var wasShown = Boolean(running);
             if (running) {
                 running.classList.remove('is-running');
             }
             running = nodeId && groupsById[nodeId] ? groupsById[nodeId] : null;
-            if (running) {
-                running.classList.add('is-running');
+            pointer.classList.toggle('is-shown', Boolean(running));
+            if (!running) {
+                return;
+            }
+            running.classList.add('is-running');
+            var item = shapesById[nodeId];
+            var transform = 'translate(' + round(item.x - 0.2 * s) + 'px, ' + round(item.y + item.height / 2) + 'px)';
+            if (!wasShown) {
+                pointer.classList.add('is-instant');
+                pointer.style.transform = transform;
+                pointer.getBoundingClientRect(); // applica la posizione prima di riaccendere la transizione
+                pointer.classList.remove('is-instant');
+            } else {
+                pointer.style.transform = transform;
             }
         }
 
@@ -461,7 +490,7 @@
          * tocco dei punti resta di 44 px CSS anche quando lo zoom li rimpicciolisce (FR-MOB-04).
          */
         function hitTest(point, radius) {
-            var x = point.x - margin;
+            var x = point.x - marginLeft;
             var y = point.y - margin;
             var ids = Object.keys(groupsById);
             for (var i = 0; i < ids.length; i++) {
@@ -486,7 +515,7 @@
         function slotBox(index) {
             var slot = slots[index];
             return slot ? {
-                x: slot.x - slotRadius + margin, y: (slot.y1 + slot.y2) / 2 - slotRadius + margin,
+                x: slot.x - slotRadius + marginLeft, y: (slot.y1 + slot.y2) / 2 - slotRadius + margin,
                 width: 2 * slotRadius, height: 2 * slotRadius
             } : null;
         }
@@ -496,7 +525,13 @@
             if (!box) {
                 return null;
             }
-            return { x: box.x + margin, y: box.y + margin, width: box.width, height: box.height };
+            return { x: box.x + marginLeft, y: box.y + margin, width: box.width, height: box.height };
+        }
+
+        /* Come nodeBox, ma con la freccia del debugger a sinistra: per inquadrare il blocco in esecuzione. */
+        function runningBox(nodeId) {
+            var box = nodeBox(nodeId);
+            return box && { x: box.x - s, y: box.y, width: box.width + s, height: box.height };
         }
 
         return {
@@ -510,6 +545,7 @@
             hitTest: hitTest,
             slotBox: slotBox,
             nodeBox: nodeBox,
+            runningBox: runningBox,
             hasNode: function (nodeId) { return Boolean(result.nodes[nodeId]); }
         };
     }
