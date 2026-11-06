@@ -679,7 +679,7 @@ button.diagram-error-entry:active {
 
 .dg-keyword {
     font-weight: 600;
-    fill: var(--ink);
+    fill: var(--dg-key, var(--ink));
 }
 
 .dg-code {
@@ -690,7 +690,7 @@ button.diagram-error-entry:active {
 
 .dg-shape,
 .dg-detail {
-    stroke: var(--ink);
+    stroke: var(--dg-line, var(--ink));
     stroke-width: 1.5;
     stroke-linejoin: round;
     transition: fill var(--duration-state) var(--ease-out);
@@ -700,15 +700,17 @@ button.diagram-error-entry:active {
     fill: none;
 }
 
-/* Un colore tenue per tipo (DEC-057): lontano dal giallo dell'evidenziatore e dal rosso. */
-.dg-block--terminal .dg-shape { fill: var(--paper); }
-.dg-block--declare .dg-shape { fill: var(--block-declare); }
-.dg-block--assign .dg-shape { fill: var(--block-assign); }
-.dg-block--input .dg-shape { fill: var(--block-input); }
-.dg-block--output .dg-shape { fill: var(--block-output); }
-.dg-block--if .dg-shape { fill: var(--block-if); }
-.dg-block--loop .dg-shape { fill: var(--block-loop); }
-.dg-block--call .dg-shape { fill: var(--block-call); }
+/* Quattro famiglie di tinte (R-18): fondo, contorno e parola chiave. Inizio e Fine restano
+   su carta, in verde. Lontane dal giallo della freccia del debugger e dal rosso. */
+.dg-block--declare,
+.dg-block--assign { --dg-fill: var(--block-data); --dg-line: var(--block-data-line); --dg-key: var(--block-data-key); }
+.dg-block--input,
+.dg-block--output { --dg-fill: var(--block-io); --dg-line: var(--block-io-line); --dg-key: var(--block-io-key); }
+.dg-block--if,
+.dg-block--loop { --dg-fill: var(--block-control); --dg-line: var(--block-control-line); --dg-key: var(--block-control-key); }
+.dg-block--call,
+.dg-block--comment { --dg-fill: var(--block-call); --dg-line: var(--block-call-line); --dg-key: var(--block-call-key); }
+.dg-shape { fill: var(--dg-fill, var(--paper)); }
 
 .dg-block--comment .dg-shape--open {
     fill: var(--paper);
@@ -746,14 +748,14 @@ button.diagram-error-entry:active {
 
 .dg-line {
     fill: none;
-    stroke: var(--ink-soft);
+    stroke: var(--flow-line);
     stroke-width: 1.5;
     stroke-linejoin: round;
 }
 
 .dg-arrowhead,
 .dg-junction {
-    fill: var(--ink-soft);
+    fill: var(--flow-line);
 }
 
 /* Ramo percorso nel passo a passo: ripassato a penna, tracciato come con una penna. */
@@ -789,7 +791,7 @@ button.diagram-error-entry:active {
     /* Vero e Falso si leggono da fondo aula: crescono con il contenuto, non con la cornice. */
     font-size: calc(0.8 * var(--text-content));
     font-weight: 600;
-    fill: var(--ink-soft);
+    fill: var(--text-muted);
 }
 
 .dg-title {

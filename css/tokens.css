@@ -4,7 +4,8 @@
  * Stile moderno e pulito (revisione R-01…R-11 in DESIGN.md): tela chiara a puntini, console
  * bianca nel tema chiaro e grafite nel tema scuro, cornice leggera. Ogni stato ha un segno con
  * un solo significato:
- *   verde                          i blocchi e i comandi (più chiaro nel tema scuro);
+ *   verde                          i comandi, Inizio e Fine, il ramo percorso (più chiaro nel tema scuro);
+ *   quattro famiglie di tinte      i blocchi (R-18); frecce in grigio neutro;
  *   rosso            solo gli errori;
  *   evidenziatore    solo il blocco in esecuzione;
  *   giallo           solo i valori digitati nella console (nel tema chiaro: verde, in grassetto).
@@ -42,14 +43,22 @@
     --warning-soft: #fdf3dc;
     --info-soft: #e8f2ee;
 
-    /* Tinte dei blocchi, una per tipo (DEC-057): tenui, mai gialle o rosse (regola del segno unico) */
-    --block-declare: #e8ecff;
-    --block-assign: #d8f2ff;
-    --block-input: #cff9ef;
-    --block-output: #dff7da;
-    --block-if: #f8e7ff;
-    --block-loop: #cdf7ff;
-    --block-call: #e9eff6;
+    /* Blocchi in quattro famiglie (R-18), distinte dalla forma dentro ogni famiglia: fondo,
+       contorno e parola chiave. Mai gialle o rosse (regola del segno unico); il verde resta ai
+       comandi, a Inizio e Fine e al ramo percorso. Contorni almeno 3:1 sulla tela. */
+    --block-data: #eaeff8;          /* dichiarazione, assegnazione */
+    --block-data-line: #7c8cad;
+    --block-data-key: #34466e;
+    --block-io: #e4f3eb;            /* input, output */
+    --block-io-line: #67967d;
+    --block-io-key: #22593f;
+    --block-control: #f2ebf9;       /* if, while, do, for */
+    --block-control-line: #9883b5;
+    --block-control-key: #573f7c;
+    --block-call: #eeece7;          /* chiamata e commento */
+    --block-call-line: #918b80;
+    --block-call-key: #4f4b43;
+    --flow-line: #848d9b;           /* frecce: grigio neutro */
 
     /* Console: bianca nel tema chiaro (R-11), grafite nel tema scuro (R-03). I nomi vengono
        dalla lavagna: chalk = testo, chalk-yellow = valori digitati, chalk-pen = errori. */
@@ -128,13 +137,19 @@
         --warning-soft: #33290f;
         --info-soft: #1f2f2a;
 
-        --block-declare: #292b46;
-        --block-assign: #192f46;
-        --block-input: #07362f;
-        --block-output: #20341b;
-        --block-if: #352641;
-        --block-loop: #03343c;
-        --block-call: #282f35;
+        --block-data: #1e2535;
+        --block-data-line: #7a8bb0;
+        --block-data-key: #bccaea;
+        --block-io: #16281f;
+        --block-io-line: #64a081;
+        --block-io-key: #a3d8ba;
+        --block-control: #282034;
+        --block-control-line: #a08ac0;
+        --block-control-key: #d2bfee;
+        --block-call: #25241f;
+        --block-call-line: #99937f;
+        --block-call-key: #d3cdbd;
+        --flow-line: #5d6573;
 
         /* Console più scura della tela, separata da una linea */
         --slate: #0e1013;
@@ -181,13 +196,19 @@
     --warning-soft: #33290f;
     --info-soft: #1f2f2a;
 
-    --block-declare: #292b46;
-    --block-assign: #192f46;
-    --block-input: #07362f;
-    --block-output: #20341b;
-    --block-if: #352641;
-    --block-loop: #03343c;
-    --block-call: #282f35;
+    --block-data: #1e2535;
+    --block-data-line: #7a8bb0;
+    --block-data-key: #bccaea;
+    --block-io: #16281f;
+    --block-io-line: #64a081;
+    --block-io-key: #a3d8ba;
+    --block-control: #282034;
+    --block-control-line: #a08ac0;
+    --block-control-key: #d2bfee;
+    --block-call: #25241f;
+    --block-call-line: #99937f;
+    --block-call-key: #d3cdbd;
+    --flow-line: #5d6573;
 
     /* Console più scura della tela, separata da una linea */
     --slate: #0e1013;

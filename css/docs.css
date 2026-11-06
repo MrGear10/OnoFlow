@@ -432,24 +432,27 @@ a {
 }
 
 .block-shape > :not(.block-shape-detail) {
-    stroke: var(--ink);
+    stroke: var(--dg-line, var(--ink));
     stroke-width: 1.25;
     stroke-linejoin: round;
 }
 
 .block-shape-detail {
     fill: none;
-    stroke: var(--ink);
+    stroke: var(--dg-line, var(--ink));
     stroke-width: 1.25;
 }
 
-.block-shape--declare > :first-child { fill: var(--block-declare); }
-.block-shape--assign > :first-child { fill: var(--block-assign); }
-.block-shape--input > :first-child { fill: var(--block-input); }
-.block-shape--output > :first-child { fill: var(--block-output); }
-.block-shape--if > :first-child { fill: var(--block-if); }
-.block-shape--loop > :first-child { fill: var(--block-loop); }
-.block-shape--call > :first-child { fill: var(--block-call); }
+/* Le quattro famiglie di tinte dell'app (R-18). */
+.block-shape--declare,
+.block-shape--assign { --dg-fill: var(--block-data); --dg-line: var(--block-data-line); }
+.block-shape--input,
+.block-shape--output { --dg-fill: var(--block-io); --dg-line: var(--block-io-line); }
+.block-shape--if,
+.block-shape--loop { --dg-fill: var(--block-control); --dg-line: var(--block-control-line); }
+.block-shape--call,
+.block-shape--comment { --dg-fill: var(--block-call); --dg-line: var(--block-call-line); }
+.block-shape > :first-child { fill: var(--dg-fill, var(--paper)); }
 
 .block-shape .block-shape-open {
     fill: none;
