@@ -26,7 +26,7 @@ const OUTPUT = path.join(ROOT, 'documentazione.html');
 export const DOCUMENTS = [
     { id: 'guida', file: 'docs/guida.md', title: 'Guida d\'uso' },
     { id: 'presentazione', file: 'README.md', title: 'Presentazione' },
-    { id: 'licenza', file: 'LICENSE', title: 'Licenza', plain: true }
+    { id: 'licenza', file: 'LICENSE', title: 'Licenza' } // la PolyForm è scritta in Markdown (DEC-105)
 ];
 
 const FILE_TO_DOC = Object.fromEntries(DOCUMENTS.map((doc) => [doc.file, doc.id]));
@@ -41,10 +41,16 @@ export function slugify(text) {
         .replace(/`/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'sezione';
 }
 
+// Documento che si sta scrivendo: un'ancora dello stesso file («#sezione») diventa la sua sezione nella pagina.
+let currentDoc = null;
+
 /* Destinazione di un collegamento: un altro documento diventa un'ancora della pagina. */
 function linkTarget(url) {
     if (/^https?:\/\//.test(url)) {
         return { href: url, external: true };
+    }
+    if (url.startsWith('#') && currentDoc) {
+        return { href: '#' + currentDoc + '--' + slugify(url.slice(1)), external: false };
     }
     const [file, hash] = url.split('#');
     const doc = FILE_TO_DOC[file.replace(/^\.\//, '').replace(/^\.\.\//, '')];
@@ -57,16 +63,22 @@ function linkTarget(url) {
 /* Testo in linea: codice, collegamenti, grassetto, corsivo; tutto il resto con l'escape. */
 export function inline(text) {
     const codes = [];
+    const raw = [];
     // Il codice si mette da parte prima di tutto: dentro non vale nessun altro segno.
     let html = text.replace(/`([^`]+)`/g, (match, code) => {
         codes.push('<code>' + escapeHtml(code) + '</code>');
+        raw.push(match);
         return '\u0000' + (codes.length - 1) + '\u0000';
     });
     const links = [];
-    html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (match, label, url) => {
+    const keep = (label, url) => {
         links.push({ label, url });
         return '\u0001' + (links.length - 1) + '\u0001';
-    });
+    };
+    // L'etichetta torna al testo originale: il codice che contiene si rifà nella chiamata per l'etichetta.
+    html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (match, label, url) =>
+        keep(label.replace(/\u0000(\d+)\u0000/g, (m, index) => raw[Number(index)]), url))
+        .replace(/<(https?:\/\/[^>\s]+)>/g, (match, url) => keep(url, url));
     html = escapeHtml(html)
         .replace(/&lt;br&gt;/g, '<br>')
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
@@ -170,6 +182,7 @@ export function renderMarkdown(source, docId, headings) {
         .replace(/<!--[\s\S]*?-->/g, '');
     const lines = text.split('\n');
     const out = [];
+    currentDoc = docId;
     const used = new Set();
     let i = 0;
     const isBlank = (line) => line.trim() === '';
@@ -179,16 +192,17 @@ export function renderMarkdown(source, docId, headings) {
             i++;
             continue;
         }
-        const fence = /^```(\w*)/.exec(line);
+        // Anche rientrato (dentro un elenco): il rientro si toglie da ogni riga.
+        const fence = /^(\s*)```(\w*)/.exec(line);
         if (fence) {
             const code = [];
             i++;
-            while (i < lines.length && !/^```/.test(lines[i])) {
-                code.push(lines[i]);
+            while (i < lines.length && !/^\s*```/.test(lines[i])) {
+                code.push(lines[i].startsWith(fence[1]) ? lines[i].slice(fence[1].length) : lines[i].trimStart());
                 i++;
             }
             i++;
-            out.push('<pre><code' + (fence[1] ? ' class="language-' + fence[1] + '"' : '') + '>' + escapeHtml(code.join('\n')) + '</code></pre>');
+            out.push('<pre><code' + (fence[2] ? ' class="language-' + fence[2] + '"' : '') + '>' + escapeHtml(code.join('\n')) + '</code></pre>');
             continue;
         }
         const heading = /^(#{1,6})\s+(.*)$/.exec(line);
@@ -247,7 +261,7 @@ export function renderMarkdown(source, docId, headings) {
             continue;
         }
         const paragraph = [];
-        while (i < lines.length && !isBlank(lines[i]) && !/^(#{1,6}\s|```|\||>|-{3,}\s*$)/.test(lines[i]) && !LIST_ITEM.test(lines[i])) {
+        while (i < lines.length && !isBlank(lines[i]) && !/^(#{1,6}\s|\s*```|\||>|-{3,}\s*$)/.test(lines[i]) && !LIST_ITEM.test(lines[i])) {
             paragraph.push(lines[i].trim());
             i++;
         }
@@ -266,7 +280,7 @@ export async function buildDocs() {
         // Il titolo del file («# OnoFlow — Guida d'uso») lascia il posto a quello dell'indice: uno solo (R-10).
         const source = (await readFile(path.join(ROOT, doc.file), 'utf8')).replace(/^# [^\n]*\n+/, '');
         const headings = [];
-        const body = doc.plain ? '<pre class="plain">' + escapeHtml(source.trim()) + '</pre>' : renderMarkdown(source, doc.id, headings);
+        const body = renderMarkdown(source, doc.id, headings);
         articles.push('<article class="doc" id="' + doc.id + '" aria-labelledby="' + doc.id + '-title">\n' +
             '<h1 id="' + doc.id + '-title">' + escapeHtml(doc.title) + '</h1>\n' + body + '\n</article>');
         // Nell'indice i titoli di secondo livello (## nel file), che sono i capitoli; non quelli che

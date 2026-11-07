@@ -387,10 +387,6 @@ a {
     overflow-wrap: normal;
 }
 
-.doc pre.plain {
-    white-space: pre-wrap;
-}
-
 /* Le tabelle larghe scorrono da sole: la pagina non scorre mai di lato (NFR-ACC-03). */
 .table-wrap {
     overflow-x: auto;
