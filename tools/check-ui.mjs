@@ -1520,6 +1520,168 @@ async function checkBarStable(browser, engineName) {
     return checks;
 }
 
+/* Afferrare e trascinare il foglio con il mouse (MG-01, DEC-106): dal vuoto, da un blocco, da un +,
+   col tasto centrale, fuori dal foglio, nel passo a passo e durante uno spostamento; il clic fermo
+   e il doppio clic restano; senza niente da scorrere il cursore non è la manina. */
+async function checkPan(browser, engineName) {
+    const checks = new Checks(`${engineName} trascina`);
+    const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: 'reduce' });
+    const page = await context.newPage();
+    const scroll = () => page.evaluate(() => {
+        const sheet = document.getElementById('sheet');
+        return { left: sheet.scrollLeft, top: sheet.scrollTop };
+    });
+    const center = (selector) => page.evaluate((query) => {
+        const box = document.querySelector(query).getBoundingClientRect();
+        return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+    }, selector);
+    // Porta il foglio a metà, così si può trascinare nei due versi.
+    const middle = () => page.evaluate(() => {
+        const sheet = document.getElementById('sheet');
+        sheet.scrollLeft = (sheet.scrollWidth - sheet.clientWidth) / 2;
+        sheet.scrollTop = (sheet.scrollHeight - sheet.clientHeight) / 2;
+    });
+    async function drag(from, dx, dy, button = 'left') {
+        await page.mouse.move(from.x, from.y);
+        await page.mouse.down({ button });
+        await page.mouse.move(from.x + dx / 2, from.y + dy / 2, { steps: 4 });
+        await page.mouse.move(from.x + dx, from.y + dy, { steps: 4 });
+        await page.mouse.up({ button });
+    }
+    const moved = (before, after, dx, dy) => Math.abs(before.left - after.left - dx) <= 1 && Math.abs(before.top - after.top - dy) <= 1;
+    const selectedCount = () => page.locator('#diagram .is-selected').count();
+    try {
+        await page.goto(URL);
+        await page.waitForSelector('#diagram .dg-block--terminal');
+        await chooseExample(page);
+        for (let i = 0; i < 3; i++) {
+            await page.click('#zoom-in'); // più grande del foglio nei due versi
+        }
+        await page.waitForTimeout(100);
+        const cursor = () => page.evaluate(() => getComputedStyle(document.getElementById('sheet')).cursor);
+        checks.ok((await cursor()) === 'grab', `sul foglio vuoto la manina aperta (${await cursor()})`);
+
+        // Dal vuoto: il margine a sinistra del foglio.
+        await middle();
+        const sheetBox = await page.locator('#sheet').boundingBox();
+        const empty = { x: sheetBox.x + 8, y: sheetBox.y + sheetBox.height / 2 };
+        let before = await scroll();
+        await drag(empty, 120, -90);
+        let after = await scroll();
+        checks.ok(moved(before, after, 120, -90), `dal vuoto il foglio segue il mouse (${JSON.stringify(before)} → ${JSON.stringify(after)})`);
+        checks.ok(await page.evaluate(() => String(window.getSelection()).trim() === ''), 'nessun testo selezionato');
+        checks.ok(!(await page.locator('#sheet').evaluate((node) => node.classList.contains('is-panning'))), 'al rilascio non si trascina più');
+
+        // Da un blocco: si trascina e il blocco non si seleziona.
+        await middle();
+        const blockId = await page.evaluate(() => {
+            const sheet = document.getElementById('sheet').getBoundingClientRect();
+            const inside = Array.from(document.querySelectorAll('#diagram .dg-block.is-selectable')).find((node) => {
+                const box = node.getBoundingClientRect();
+                return box.left > sheet.left + 150 && box.right < sheet.right - 150 && box.top > sheet.top + 150 && box.bottom < sheet.bottom - 150;
+            });
+            return inside && inside.getAttribute('data-id');
+        });
+        checks.ok(Boolean(blockId), 'un blocco in mezzo al foglio');
+        const block = `#diagram [data-id="${blockId}"] .dg-shape`;
+        before = await scroll();
+        await drag(await center(block), -100, 60);
+        after = await scroll();
+        checks.ok(moved(before, after, -100, 60), 'da un blocco il foglio segue il mouse');
+        checks.ok((await selectedCount()) === 0, 'trascinando da un blocco non lo si seleziona');
+
+        // Da un +: il menu non si apre.
+        await middle();
+        const slot = await page.evaluate(() => {
+            const sheet = document.getElementById('sheet').getBoundingClientRect();
+            const inside = Array.from(document.querySelectorAll('#diagram .dg-slot')).find((node) => {
+                const box = node.getBoundingClientRect();
+                return box.left > sheet.left + 150 && box.right < sheet.right - 150 && box.top > sheet.top + 150 && box.bottom < sheet.bottom - 150;
+            });
+            const box = inside.getBoundingClientRect();
+            return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+        });
+        before = await scroll();
+        await drag(slot, 70, 70);
+        after = await scroll();
+        checks.ok(moved(before, after, 70, 70), 'da un + il foglio segue il mouse');
+        checks.ok(!(await page.isVisible('.block-menu')), 'trascinando da un + il menu non si apre');
+
+        // Clic fermo, con un tremolio sotto la soglia, e doppio clic.
+        await page.waitForTimeout(600);
+        const point = await center(block);
+        await page.mouse.move(point.x, point.y);
+        await page.mouse.down();
+        await page.mouse.move(point.x + 3, point.y + 2);
+        await page.mouse.up();
+        checks.ok(await page.locator(`#diagram [data-id="${blockId}"]`).evaluate((node) => node.classList.contains('is-selected')),
+            'un clic con 3 px di tremolio seleziona ancora il blocco');
+        await page.waitForTimeout(600);
+        await page.mouse.dblclick(point.x, point.y);
+        checks.ok(await page.isVisible('.block-editor'), 'il doppio clic apre ancora la modifica');
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(100);
+        await page.mouse.click(empty.x, empty.y);
+        await page.waitForTimeout(600);
+
+        // Fuori dal foglio: il trascinamento continua, fin sopra la console a destra.
+        await middle();
+        before = await scroll();
+        const start = { x: sheetBox.x + sheetBox.width - 60, y: sheetBox.y + 60 };
+        await page.mouse.move(start.x, start.y);
+        await page.mouse.down();
+        await page.mouse.move(start.x + 30, start.y + 30, { steps: 3 });
+        await page.mouse.move(start.x + 260, start.y + 100, { steps: 6 }); // oltre il bordo destro del foglio
+        after = await scroll();
+        await page.mouse.up();
+        checks.ok(moved(before, after, 260, 100), `fuori dal foglio il trascinamento continua (${JSON.stringify(before)} → ${JSON.stringify(after)})`);
+        checks.ok((await page.locator('.console-log, #console-log').first().evaluate(() => String(window.getSelection()).trim())) === '', 'sopra la console non si seleziona testo');
+
+        // Tasto centrale: si trascina subito.
+        await middle();
+        before = await scroll();
+        await drag(empty, 3, 50, 'middle');
+        after = await scroll();
+        checks.ok(moved(before, after, 3, 50), 'col tasto centrale si trascina subito, anche di pochi pixel');
+
+        // Passo a passo: si trascina e l'esecuzione resta in pausa.
+        await page.click('#step');
+        await page.waitForFunction(() => document.querySelector('.app').getAttribute('data-run-state') === 'paused');
+        await middle();
+        before = await scroll();
+        await drag(empty, 80, -80);
+        after = await scroll();
+        checks.ok(moved(before, after, 80, -80), 'nel passo a passo si trascina');
+        checks.ok((await page.getAttribute('.app', 'data-run-state')) === 'paused', 'il passo a passo resta in pausa');
+        await page.click('#stop');
+
+        // Durante uno spostamento: si trascina e lo spostamento continua.
+        await page.waitForTimeout(600);
+        await middle();
+        const target = await center(block);
+        await page.mouse.click(target.x, target.y);
+        checks.ok(await page.isVisible('#move-block'), 'dopo il passo a passo un clic seleziona ancora');
+        await page.click('#move-block');
+        await middle(); // Sposta porta il focus sul primo +, e il foglio in cima
+        before = await scroll();
+        await drag(empty, 60, 40);
+        after = await scroll();
+        checks.ok(moved(before, after, 60, 40), 'durante uno spostamento si trascina');
+        checks.ok((await page.locator('#diagram .dg-block.is-moving').count()) === 1, 'lo spostamento continua dopo il trascinamento');
+        await page.keyboard.press('Escape');
+
+        // Tutto nel foglio: niente manina.
+        await page.click('#zoom-fit');
+        await page.waitForTimeout(100);
+        checks.ok((await cursor()) !== 'grab', `con il diagramma tutto nel foglio niente manina (${await cursor()})`);
+    } catch (error) {
+        checks.ok(false, `verifica interrotta: ${error.message.split('\n')[0]}`);
+    } finally {
+        await context.close();
+    }
+    return checks;
+}
+
 /* Telefono in orizzontale (M-04): barra su una riga, schede in colonna a sinistra, comandi del
    foglio ai lati; in mezzo al foglio resta una fascia libera alta almeno 250 px. */
 async function checkLandscape(browser, engineName) {
@@ -1758,6 +1920,7 @@ async function main() {
             runs.push(['barra stretta', () => checkBarWidths(browser, engineName)]);
             runs.push(['orizzontale', () => checkLandscape(browser, engineName)]);
             runs.push(['barra ferma', () => checkBarStable(browser, engineName)]);
+            runs.push(['trascina', () => checkPan(browser, engineName)]);
             runs.push(['selezione', () => checkSelectionClear(browser, engineName)]);
             for (const [, run] of runs.filter(([name]) => name.includes(options.only))) {
                 const checks = await run();

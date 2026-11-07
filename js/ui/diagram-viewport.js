@@ -5,7 +5,8 @@
  * Definisce: OnoFlow.DiagramViewport.{create, clampZoom, fitZoom, fitWidthZoom, gridFactor, MIN_ZOOM, MAX_ZOOM}
  *
  * Lo scorrimento è quello nativo del foglio (con il dito, la rotella, la barra): resta fluido
- * anche sui telefoni lenti (NFR-PERF-04). Lo zoom cambia la misura dell'SVG, del margine e dei
+ * anche sui telefoni lenti (NFR-PERF-04). Con il mouse si afferra e si trascina il foglio (MG-01):
+ * tasto sinistro oltre 5 px (sotto è un clic) o tasto centrale; classi is-scrollable e is-panning. Lo zoom cambia la misura dell'SVG, del margine e dei
  * quadretti, mai quella della pagina:
  *   - due dita sul foglio (eventi touch, con preventDefault: Safari ignora user-scalable=no);
  *   - gesti di Safari (gesturestart/gesturechange) e Ctrl + rotella o pizzico sul touchpad;
@@ -30,6 +31,8 @@
     var MAX_ZOOM = 3;
     var STEP = 1.25;
     var MIN_GRID_PX = 8; // sotto questa misura i quadretti diventano rumore: se ne disegna uno ogni 2 o 4
+    var PAN_THRESHOLD = 5; // px: sotto è un clic, oltre si trascina il foglio (MG-01)
+    var CLICK_AFTER_PAN_MS = 500; // un doppio clic che comincia con il rilascio di un trascinamento non vale
 
     function clampZoom(zoom) {
         return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
@@ -87,6 +90,7 @@
             }
             scroller.style.setProperty('--zoom', String(zoom));
             scroller.style.setProperty('--grid-zoom', String(zoom * gridFactor(square(), zoom)));
+            updateScrollable();
             onChange(zoom);
         }
 
@@ -227,6 +231,131 @@
         }
         scroller.addEventListener('touchend', endPinch);
         scroller.addEventListener('touchcancel', endPinch);
+
+        // Mouse: si afferra il foglio e lo si trascina, come con il dito (MG-01, DEC-106). Il dito
+        // resta allo scorrimento nativo; qui solo pointerType "mouse". Col tasto sinistro conta la
+        // soglia (sotto è un clic), col tasto centrale si trascina subito.
+        var pan = null;
+        var swallowClick = false;
+        var panEndedAt = -Infinity;
+
+        function onScrollbar(event) {
+            var box = scroller.getBoundingClientRect();
+            return event.clientX - box.left >= scroller.clientLeft + scroller.clientWidth ||
+                event.clientY - box.top >= scroller.clientTop + scroller.clientHeight;
+        }
+
+        function startPan() {
+            pan.active = true;
+            try {
+                scroller.setPointerCapture(pan.id); // il trascinamento continua anche fuori dal foglio
+            } catch (error) {
+                // il puntatore non c'è più: si trascina finché arrivano i movimenti
+            }
+            scroller.classList.add('is-panning');
+            var selection = scroller.ownerDocument.getSelection();
+            if (selection) {
+                selection.removeAllRanges();
+            }
+        }
+
+        function endPan(event) {
+            if (!pan || (event && event.pointerId !== pan.id)) {
+                return;
+            }
+            if (pan.active) {
+                // Il clic che segue il rilascio non deve selezionare né aprire niente.
+                swallowClick = true;
+                panEndedAt = Date.now();
+                window.setTimeout(function () { swallowClick = false; }, 0);
+                scroller.classList.remove('is-panning');
+                if (scroller.hasPointerCapture && scroller.hasPointerCapture(pan.id)) {
+                    scroller.releasePointerCapture(pan.id);
+                }
+            }
+            pan = null;
+        }
+
+        scroller.addEventListener('pointerdown', function (event) {
+            if (event.pointerType !== 'mouse' || (event.button !== 0 && event.button !== 1) || !view || pan) {
+                return;
+            }
+            // Solo dal disegno e dal foglio vuoto: non dalla riga in fondo (collegamenti) né dalle barre.
+            if ((event.target !== scroller && !content.contains(event.target)) || onScrollbar(event)) {
+                return;
+            }
+            pan = {
+                id: event.pointerId,
+                x: event.clientX,
+                y: event.clientY,
+                left: scroller.scrollLeft,
+                top: scroller.scrollTop,
+                active: false
+            };
+            if (event.button === 1) {
+                event.preventDefault(); // niente scorrimento automatico né incolla del tasto centrale
+                startPan();
+            }
+        });
+
+        scroller.addEventListener('pointermove', function (event) {
+            if (!pan || event.pointerId !== pan.id) {
+                return;
+            }
+            var dx = event.clientX - pan.x;
+            var dy = event.clientY - pan.y;
+            if (!pan.active) {
+                if (Math.hypot(dx, dy) < PAN_THRESHOLD) {
+                    return;
+                }
+                startPan();
+            }
+            scroller.scrollLeft = pan.left - dx;
+            scroller.scrollTop = pan.top - dy;
+        });
+
+        scroller.addEventListener('pointerup', endPan);
+        scroller.addEventListener('pointercancel', endPan);
+        scroller.addEventListener('lostpointercapture', endPan);
+
+        // Il tasto centrale: Chromium avvia lo scorrimento automatico da mousedown.
+        scroller.addEventListener('mousedown', function (event) {
+            if (event.button === 1 && pan) {
+                event.preventDefault();
+            }
+        });
+
+        // In fase di cattura, prima di app.js: il rilascio di un trascinamento non è un clic,
+        // e i due rilasci di un trascinamento e di un clic subito dopo non sono un doppio clic.
+        scroller.addEventListener('click', function (event) {
+            if (swallowClick) {
+                swallowClick = false;
+                event.stopPropagation();
+                event.preventDefault();
+            }
+        }, true);
+        scroller.addEventListener('auxclick', function (event) {
+            if (event.button === 1 && Date.now() - panEndedAt < CLICK_AFTER_PAN_MS) {
+                event.preventDefault();
+            }
+        }, true);
+        scroller.addEventListener('dblclick', function (event) {
+            if (Date.now() - panEndedAt < CLICK_AFTER_PAN_MS) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+        }, true);
+
+        // La manina (CSS) solo se il disegno non entra nel foglio: la riga in fondo da sola non conta.
+        function updateScrollable() {
+            scroller.classList.toggle('is-scrollable',
+                content.offsetWidth > scroller.clientWidth + 1 || content.offsetHeight > scroller.clientHeight + 1);
+        }
+        if (typeof window.ResizeObserver === 'function') {
+            var observer = new window.ResizeObserver(updateScrollable);
+            observer.observe(scroller);
+            observer.observe(content);
+        }
 
         // Safari: gesti di pizzico (iOS e touchpad del Mac). Su iOS lo zoom lo fanno già gli
         // eventi touch: qui si impedisce solo l'ingrandimento della pagina.

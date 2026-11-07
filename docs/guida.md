@@ -78,6 +78,7 @@ In alternativa, con un blocco selezionato, **Inserisci dopo** aggiunge un blocco
 ### Zoom e spostamento nel foglio
 
 - Due dita per ingrandire e per spostarsi sul telefono; Ctrl + rotella o i pulsanti **−** e **+** sul computer.
+- **Sul computer il foglio si afferra con il mouse:** tenere premuto il tasto sinistro (o la rotella) e trascinare, in qualsiasi direzione, anche partendo da un blocco. Un clic senza muovere il mouse seleziona come sempre. Quando c'è da scorrere, sul foglio compare la manina.
 - Il pulsante con la percentuale torna al 100%; **Adatta allo schermo** mostra tutto il diagramma. Sul telefono il comando si chiama **Adatta alla larghezza**: il diagramma prende la larghezza dello schermo e si scorre in verticale.
 - Con il foglio selezionato funzionano anche i tasti `+`, `-` e `0`.
 

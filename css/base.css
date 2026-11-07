@@ -578,6 +578,26 @@ a.menu-item {
     outline-offset: -2px;
 }
 
+/* Con il mouse il foglio si afferra e si trascina (MG-01): la manina aperta sul vuoto quando c'è
+   da scorrere, chiusa mentre si trascina (ovunque, anche sopra blocchi e +). La riga in fondo
+   non si afferra. */
+@media (hover: hover) and (pointer: fine) {
+    .sheet.is-scrollable {
+        cursor: grab;
+    }
+
+    .sheet.is-scrollable .footer {
+        cursor: auto;
+    }
+}
+
+.sheet.is-panning,
+.sheet.is-panning * {
+    cursor: grabbing !important;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
 .sheet-content {
     --sheet-square: calc(var(--square) * var(--zoom));
     flex: 1 0 auto;
