@@ -369,7 +369,7 @@
             'ui.theme.toDark': 'Tema scuro',
             'ui.info.title': 'Informazioni',
             'ui.info.session': 'Per ripristinare il diagramma se la pagina si ricarica, il browser ne conserva una copia solo in questa scheda; la cancella quando la scheda si chiude. Non vengono salvate preferenze né cronologia.',
-            'ui.info.license': 'Codice libero, con licenza MIT.'
+            'ui.info.license': 'Codice pubblico, gratuito per usi non commerciali (licenza PolyForm Noncommercial 1.0.0).'
         }
     });
 })(window.OnoFlow.Localization);
