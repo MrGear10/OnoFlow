@@ -299,26 +299,106 @@
             assert.equal(drawn.container.querySelectorAll('.is-running').length, 0);
         });
 
-        T.test('freccia del debugger: a sinistra del blocco in esecuzione, poi sparisce', function (assert) {
+        T.test('niente freccia del debugger: il blocco in esecuzione ha solo la sua evidenziazione (R-22)', function (assert) {
+            var first = H.output('1');
+            var drawn = draw(H.program([first]));
+            assert.equal(drawn.container.querySelectorAll('.dg-pointer').length, 0);
+            drawn.view.setRunning(first.id);
+            assert.isTrue(group(drawn, first.id).classList.contains('is-running'));
+        });
+
+        T.test('ombra piena: una copia della forma sotto ogni blocco, non sotto i commenti (R-24)', function (assert) {
+            var out = H.output('1');
+            var note = H.comment('nota');
+            var drawn = draw(H.program([out, note]));
+            var shadow = group(drawn, out.id).firstElementChild;
+            assert.isTrue(shadow.classList.contains('dg-shadow'));
+            assert.equal(shadow.getAttribute('points'), group(drawn, out.id).querySelector('.dg-shape').getAttribute('points'));
+            assert.equal(group(drawn, note.id).querySelectorAll('.dg-shadow').length, 0);
+            assert.isTrue(/url\(#dg-arrow-\d+-glow\)/.test(drawn.view.element.style.getPropertyValue('--dg-glow')), 'alone del tema scuro');
+        });
+
+        function ends(connection) {
+            var points = connection.points;
+            return { first: points[0], last: points[points.length - 1] };
+        }
+
+        function boxOf(drawn, id) {
+            var box = drawn.view.nodeBox(id);
+            var left = drawn.view.element.viewBox.baseVal.x; // nodeBox è spostato del margine
+            var top = drawn.view.element.viewBox.baseVal.y;
+            return { x: box.x + left, y: box.y + top, width: box.width, height: box.height };
+        }
+
+        function near(assert, point, x, y, message) {
+            assert.isTrue(Math.abs(point[0] - x) < 0.5 && Math.abs(point[1] - y) < 0.5,
+                message + ': ' + point.join(',') + ' invece di ' + x + ',' + y);
+        }
+
+        T.test('impulso: la freccia tra due blocchi di seguito, attraverso i commenti (R-23)', function (assert) {
+            var first = H.output('1');
+            var note = H.comment('nota');
+            var second = H.output('2');
+            var drawn = draw(H.program([first, note, second]));
+            var path = drawn.view.connection(first.id, second.id);
+            var a = boxOf(drawn, first.id);
+            var b = boxOf(drawn, second.id);
+            near(assert, ends(path).first, a.x + a.width / 2, a.y + a.height, 'parte sotto il primo');
+            near(assert, ends(path).last, b.x + b.width / 2, b.y, 'arriva sopra il secondo');
+            assert.isTrue(path.arrow);
+            assert.equal(drawn.view.connection(second.id, first.id), null, 'all\'indietro non c\'è freccia');
+        });
+
+        T.test('impulso: rami dell\'if, corpo, ritorno e uscita di un ciclo', function (assert) {
+            var yes = H.output('1');
+            var no = H.output('2');
+            var inner = H.output('3');
+            var after = H.output('4');
+            var check = H.when('x > 0', [yes], [no]);
+            var loop = H.loop('x < 3', [inner]);
+            var drawn = draw(H.program([H.declare(['x'], 'Integer'), check, loop, after]));
+            var c = boxOf(drawn, check.id);
+            near(assert, ends(drawn.view.connection(check.id, yes.id)).first, c.x + c.width, c.y + c.height / 2, 'Vero esce a destra');
+            near(assert, ends(drawn.view.connection(check.id, no.id)).first, c.x, c.y + c.height / 2, 'Falso esce a sinistra');
+            var l = boxOf(drawn, loop.id);
+            var i = boxOf(drawn, inner.id);
+            near(assert, ends(drawn.view.connection(yes.id, loop.id)).last, l.x + l.width / 2, l.y, 'dal ramo al ciclo');
+            near(assert, ends(drawn.view.connection(loop.id, inner.id)).last, i.x + i.width / 2, i.y, 'nel corpo');
+            near(assert, ends(drawn.view.connection(inner.id, loop.id)).last, l.x, l.y + l.height / 2, 'ritorno da sinistra');
+            var exit = drawn.view.connection(loop.id, after.id);
+            near(assert, ends(exit).first, l.x + l.width, l.y + l.height / 2, 'uscita a destra');
+            assert.isTrue(exit.points.length >= 4, 'l\'uscita gira attorno al corpo');
+        });
+
+        T.test('impulso: do, dal fondo all\'inizio del corpo; ciclo vuoto su se stesso', function (assert) {
+            var inner = H.output('1');
+            var again = H.repeat([inner], 'x < 3');
+            var empty = H.loop('x < 3', []);
+            var drawn = draw(H.program([H.declare(['x'], 'Integer'), again, empty]));
+            var i = boxOf(drawn, inner.id);
+            near(assert, ends(drawn.view.connection(again.id, inner.id)).last, i.x + i.width / 2, i.y, 'torna al corpo');
+            assert.notEqual(drawn.view.connection(empty.id, empty.id), null);
+        });
+
+        T.test('impulso: scia accesa, un solo impulso alla volta, clearPulse toglie tutto', function (assert) {
             var first = H.output('1');
             var second = H.output('2');
-            var drawn = draw(H.program([first, second]));
-            var pointer = drawn.container.querySelector('.dg-pointer');
-            assert.isFalse(pointer.classList.contains('is-shown'));
-            drawn.view.setRunning(first.id);
-            assert.isTrue(pointer.classList.contains('is-shown'));
-            var before = pointer.style.transform;
-            drawn.view.setRunning(second.id);
-            var after = pointer.style.transform;
-            assert.notEqual(before, after);
-            // La punta sta a sinistra del blocco, alla sua metà.
-            var box = drawn.view.nodeBox(second.id);
-            var numbers = after.match(/-?[\d.]+/g).map(Number);
-            var square = box.x - numbers[0]; // nodeBox è spostato del margine sinistro
-            assert.isTrue(numbers[0] < box.x);
-            assert.isTrue(square > 0);
-            drawn.view.setRunning(null);
-            assert.isFalse(pointer.classList.contains('is-shown'));
+            var third = H.output('3');
+            var drawn = draw(H.program([first, second, third]));
+            assert.isTrue(drawn.view.pulse(first.id, second.id));
+            assert.equal(drawn.container.querySelectorAll('.dg-trail.is-lit').length, 1);
+            drawn.view.pulse(second.id, third.id);
+            assert.isTrue(drawn.container.querySelectorAll('.dg-pulse').length <= 1, 'un impulso alla volta');
+            assert.equal(drawn.container.querySelectorAll('.dg-trail.is-lit').length, 1, 'la scia di prima si spegne');
+            assert.isFalse(drawn.view.pulse(third.id, first.id), 'senza freccia nessun impulso');
+            drawn.view.clearPulse();
+            assert.equal(drawn.container.querySelectorAll('.dg-pulse, .dg-pulse-glow, .dg-trail').length, 0);
+        });
+
+        T.test('giunzioni: cerchi agli angoli delle frecce di un ciclo', function (assert) {
+            var drawn = draw(H.program([H.declare(['x'], 'Integer'), H.loop('x < 3', [H.output('1')])]));
+            // ritorno: inizio e due angoli; uscita: due angoli e il rientro sull'asse
+            assert.equal(drawn.container.querySelectorAll('.dg-junction').length, 6);
         });
 
         T.test('ramo percorso: quale ramo ha preso un if (Model.takenBranch)', function (assert) {

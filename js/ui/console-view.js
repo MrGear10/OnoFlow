@@ -153,7 +153,7 @@
                 keyEvent.preventDefault();
                 var text = field.value;
                 removeInput();
-                // Il valore digitato resta visibile, in giallo, e si va a capo (FR-CON-02).
+                // Il valore digitato resta visibile, in verde, e si va a capo (FR-CON-02).
                 append(element('span', 'console-typed', text), text.length);
                 append(document.createTextNode('\n'), 1);
                 options.onSubmitInput(text);

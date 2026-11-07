@@ -19,7 +19,7 @@
  *                 funzione; shape.inset è il rientro degli angoli, per disegnarla; branch non si disegna
  *                 sempre: è il tratto di un ramo dell'if, { ifId, branch: 'then' | 'else', points },
  *                 da ripassare quando l'esecuzione lo prende; le etichette Vero e Falso dell'if
- *                 portano ifId e branch),
+ *                 portano ifId e branch; l'esagono del do porta loopTop, il punto d'ingresso del ciclo),
  *         nodes: { id: { x, y, width, height } },   rettangolo da inquadrare (funzioni: Inizio)
  *         slots: [ { functionId, ownerId, list, index, x, y1, y2 } ]  frecce dove si inserisce un blocco
  *     }
@@ -308,7 +308,9 @@
                     body.place(axis, top, true);
                     var hexagonTop = top + body.height;
                     var middle = hexagonTop + BOX_HEIGHT / 2;
-                    remember(block.id, hexagon.place(axis, hexagonTop));
+                    var hexagonItem = hexagon.place(axis, hexagonTop);
+                    hexagonItem.loopTop = [axis, top]; // l'ingresso del ciclo, per l'impulso (R-23)
+                    remember(block.id, hexagonItem);
                     // La punta si ferma sul bordo del punto d'incontro (raggio 0,2 quadretti, diagram-renderer.js).
                     line([[axis - half, middle], [axis - leftLane, middle], [axis - leftLane, top], [axis - 0.2 * s, top]], true);
                     label(labelThen, axis - half - LABEL_GAP, middle - LABEL_GAP, 'end');

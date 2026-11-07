@@ -53,6 +53,8 @@
  *     Esc (FR-EDIT-12, D-03);
  *   - pannello Codice: C++ e Python, Scarica, Copia, errori, modifica accanto (passo 22);
  *   - tema chiaro o scuro: pulsante nella barra o voce del menu, ?tema=, contro il sistema (DEC-080);
+ *   - stile «Segnale»: impulso a ogni passo e niente con il movimento ridotto, Ferma toglie
+ *     impulso e scie, ombre piene solo nel tema chiaro, niente freccia del debugger (DEC-109);
  *   - documentazione: pagina aggiornata rispetto ai documenti, escape, ancore, indice, tema,
  *     telefono; collegamenti dall'app con il tema scelto (DEC-081).
  * Esce con codice 1 se una verifica non riesce.
@@ -1184,7 +1186,7 @@ async function checkTheme(page, checks, viewport, browser) {
         await page.click('#cmd-theme');
     }
     checks.ok((await page.getAttribute('html', 'data-theme')) === 'dark' && (await paper()) !== lightPaper, `tema scuro: il foglio cambia colore (${await paper()})`);
-    checks.ok((await page.getAttribute('meta[name="theme-color"]', 'content')) === '#1a1d23', 'anche la barra del browser');
+    checks.ok((await page.getAttribute('meta[name="theme-color"]', 'content')) === '#0a1220', 'anche la barra del browser');
     await page.click('#menu-button');
     checks.ok((await page.textContent('#cmd-theme')).trim() === 'Tema chiaro', 'poi il menu propone il tema chiaro');
     await page.click('#cmd-theme');
@@ -2059,6 +2061,90 @@ async function checkViewport(browser, engineName, viewport, screenshotsDir) {
     return checks;
 }
 
+/* Stile «Segnale» (R-22…R-24, DEC-109): nel passo a passo un impulso corre sulla freccia
+   percorsa e sparisce; con il movimento ridotto non c'è; Ferma toglie impulso e scie; ombre
+   piene solo nel tema chiaro; nessuna freccia del debugger. */
+async function checkSignal(browser, engineName) {
+    const checks = new Checks(`${engineName} segnale`);
+    for (const motion of ['no-preference', 'reduce']) {
+        const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: motion, colorScheme: 'light' });
+        const page = await context.newPage();
+        try {
+            await page.goto(URL);
+            await page.waitForSelector('#diagram .dg-block--terminal');
+            await chooseExample(page);
+            // Conta gli impulsi creati, anche quelli troppo brevi per vederli con una lettura.
+            await page.evaluate(() => {
+                window.__pulses = [];
+                new MutationObserver((records) => records.forEach((record) => record.addedNodes.forEach((node) => {
+                    if (node.classList && node.classList.contains('dg-pulse')) {
+                        window.__pulses.push(node.getAttribute('points'));
+                    }
+                }))).observe(document.getElementById('diagram'), { childList: true, subtree: true });
+            });
+            const running = () => page.evaluate(() => {
+                const node = document.querySelector('#diagram .is-running');
+                return node ? node.getAttribute('data-id') : null;
+            });
+            await page.click('#step');
+            await page.waitForFunction(() => document.querySelector('#diagram .is-running'));
+            for (let i = 0; i < 3; i++) {
+                const before = await running();
+                await page.click('#step');
+                await page.waitForFunction((id) => {
+                    const node = document.querySelector('#diagram .is-running');
+                    return node && node.getAttribute('data-id') !== id;
+                }, before);
+            }
+            const seen = await page.evaluate(() => window.__pulses.length);
+            const pointer = await page.locator('#diagram .dg-pointer').count();
+            checks.ok(pointer === 0, `${motion}: nessuna freccia del debugger (${pointer})`);
+            if (motion === 'reduce') {
+                checks.ok(seen === 0, `movimento ridotto: nessun impulso (${seen})`);
+                const lit = await page.locator('#diagram .dg-trail.is-lit').count();
+                checks.ok(lit === 1, `movimento ridotto: la freccia percorsa si colora soltanto (${lit})`);
+            } else {
+                checks.ok(seen === 3, `un impulso per ogni passo (${seen})`);
+                // L'impulso corre sulla freccia dal blocco di prima a quello in esecuzione.
+                const ends = await page.evaluate(() => {
+                    const trail = document.querySelector('#diagram .dg-trail.is-lit') || document.querySelector('#diagram .dg-trail');
+                    const points = trail.getAttribute('points').split(' ').map((pair) => pair.split(',').map(Number));
+                    const svg = document.querySelector('#diagram svg');
+                    const shape = document.querySelector('#diagram .is-running .dg-shape').getBBox();
+                    const last = points[points.length - 1];
+                    return { x: last[0], y: last[1], cx: shape.x + shape.width / 2, top: shape.y, ok: Boolean(svg) };
+                });
+                checks.ok(Math.abs(ends.x - ends.cx) < 1 && Math.abs(ends.y - ends.top) < 1,
+                    `la scia arriva sopra il blocco in esecuzione (${ends.x},${ends.y} → ${ends.cx},${ends.top})`);
+                await page.waitForFunction(() => !document.querySelector('#diagram .dg-pulse'), null, { timeout: 1500 });
+                checks.ok(true, 'l\'impulso sparisce entro 1,5 s');
+                // Ferma durante un impulso: niente impulso e niente scie.
+                await page.click('#step');
+                await page.click('#stop');
+                await page.waitForFunction(() => document.getElementById('status').textContent.trim() === 'Fermato');
+                const left = await page.locator('#diagram .dg-pulse, #diagram .dg-pulse-glow, #diagram .dg-trail').count();
+                checks.ok(left === 0, `Ferma toglie impulso e scie (${left})`);
+                // Ombre: piene nel tema chiaro, assenti nel tema scuro.
+                const shadows = () => page.evaluate(() => {
+                    const all = [...document.querySelectorAll('#diagram .dg-shadow')];
+                    const blocks = document.querySelectorAll('#diagram .dg-block:not(.dg-block--comment)').length;
+                    return { count: all.length, blocks, visible: all.filter((node) => getComputedStyle(node).display !== 'none').length };
+                });
+                const light = await shadows();
+                checks.ok(light.count === light.blocks && light.visible === light.count, `tema chiaro: ogni blocco ha la sua ombra (${JSON.stringify(light)})`);
+                await page.click('#theme-toggle');
+                const dark = await shadows();
+                checks.ok(dark.visible === 0, `tema scuro: nessuna ombra visibile (${JSON.stringify(dark)})`);
+            }
+        } catch (error) {
+            checks.ok(false, `${motion}: verifica interrotta: ${error.message.split('\n')[0]}`);
+        } finally {
+            await context.close();
+        }
+    }
+    return checks;
+}
+
 async function main() {
     const options = readOptions(process.argv.slice(2));
     if (options.screenshots) {
@@ -2091,6 +2177,7 @@ async function main() {
             runs.push(['trascina', () => checkPan(browser, engineName)]);
             runs.push(['finestra delle variabili', () => checkVariablesWindow(browser, engineName)]);
             runs.push(['selezione', () => checkSelectionClear(browser, engineName)]);
+            runs.push(['segnale', () => checkSignal(browser, engineName)]);
             for (const [, run] of runs.filter(([name]) => name.includes(options.only))) {
                 const checks = await run();
                 if (checks.failures.length === 0) {

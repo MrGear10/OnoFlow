@@ -134,7 +134,7 @@ a {
     position: relative;
     z-index: 10;
     background: var(--chrome);
-    border-bottom: 1px solid var(--chrome-line);
+    border-bottom: var(--chrome-line-width) solid var(--chrome-line);
     padding-top: env(safe-area-inset-top, 0px);
     padding-left: max(var(--gutter), env(safe-area-inset-left, 0px));
     padding-right: max(var(--gutter), env(safe-area-inset-right, 0px));
@@ -156,6 +156,11 @@ a {
     font-size: var(--text-title);
     font-weight: 700;
     letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+/* «Ono» nel colore del testo, «Flow» in verde (R-26). */
+.brand-accent {
     color: var(--ink);
 }
 
@@ -231,11 +236,12 @@ a {
     background: currentColor;
 }
 
-/* Logo (DEC-098) accanto al nome. */
+/* Logo (DEC-098) accanto al nome: ombra piena nel tema chiaro, alone nel tema scuro (R-26). */
 .brand-logo {
     width: 1.5rem;
     height: 1.5rem;
     border-radius: 5px;
+    box-shadow: var(--logo-shadow);
 }
 
 /* Stato dell'esecuzione: ogni stato un punto (FR-RUN-01, R-19). */
@@ -263,10 +269,10 @@ a {
     border-radius: 50%;
 }
 
-/* In esecuzione: il giallo della freccia del debugger. */
+/* In esecuzione: il verde dell'esecuzione (R-22). */
 [data-run-state="running"] .status::before {
-    background: var(--highlighter);
-    border-color: var(--on-highlighter);
+    background: var(--ink);
+    border-color: var(--ink);
 }
 
 [data-run-state="paused"] .status::before {
@@ -313,7 +319,8 @@ a {
     flex: none;
 }
 
-/* --- Pulsanti: premuto pieno, focus tra parentesi, disabilitato barrato ------------- */
+/* --- Pulsanti (R-26): bordo d'inchiostro e ombra piena nel tema chiaro, bordo sottile e
+   alone verde al passaggio nel tema scuro. Premuto: il pulsante scende sull'ombra. ---------- */
 
 .button {
     position: relative;
@@ -324,21 +331,26 @@ a {
     min-width: var(--touch);
     min-height: var(--touch);
     padding: 0 var(--space-3);
-    background: var(--tonal);
-    border: 1px solid transparent;
-    border-radius: var(--radius);
-    color: var(--ink);
+    background: var(--paper);
+    border: var(--button-border) solid var(--chrome-line);
+    border-radius: var(--button-radius);
+    box-shadow: var(--button-shadow);
+    color: var(--text);
     font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
     transition: background-color var(--duration-press) var(--ease-out),
         color var(--duration-press) var(--ease-out),
+        border-color var(--duration-press) var(--ease-out),
+        box-shadow var(--duration-press) var(--ease-out),
         opacity var(--duration-press) var(--ease-out),
         transform var(--duration-press) var(--ease-out);
 }
 
 .button--primary {
     background: var(--ink);
+    border-color: var(--button-primary-border);
+    box-shadow: var(--button-shadow), var(--button-glow);
     color: var(--on-ink);
 }
 
@@ -359,6 +371,8 @@ a {
 
 .button--quiet {
     background: transparent;
+    border-color: transparent;
+    box-shadow: none;
 }
 
 .button--small {
@@ -369,7 +383,8 @@ a {
 
 .button:active:not(:disabled) {
     background: var(--tonal-strong);
-    transform: scale(0.97);
+    transform: var(--button-press);
+    box-shadow: none;
 }
 
 .button--primary:active:not(:disabled),
@@ -378,31 +393,40 @@ a {
     color: var(--on-ink);
 }
 
-/* Focus da tastiera: un anello d'inchiostro staccato dal comando (R-04). */
+/* Focus da tastiera: un anello verde staccato dal comando (R-04, R-26). */
 .button:focus-visible {
-    outline: 2px solid var(--ink);
+    outline: 3px solid var(--pulse);
     outline-offset: 2px;
 }
 
-/* Non disponibile: il comando si spegne, senza fondo (R-04). */
+/* Non disponibile: il comando si spegne (R-04). */
 .button:disabled {
     cursor: not-allowed;
     color: var(--text-muted);
-    background: transparent;
-    opacity: 0.5;
+    opacity: 0.45;
 }
 
+.button--primary:disabled {
+    background: var(--paper);
+    border-color: var(--chrome-line);
+    box-shadow: var(--button-shadow);
+}
+
+/* Passaggio del mouse: solo estetico (FR-MOB-11). Nel tema scuro bordo verde e alone; nel tema
+   chiaro il bordo e l'ombra restano d'inchiostro. */
 @media (hover: hover) and (pointer: fine) {
-    .button:hover:not(:disabled):not(.button--primary):not(.button--chalk):not([aria-pressed="true"]) {
-        background: var(--tonal-strong);
+    .button:hover:not(:disabled):not(.button--quiet):not(:active) {
+        border-color: var(--button-hover-border);
+        box-shadow: var(--button-hover-shadow);
+    }
+
+    .button--primary:hover:not(:disabled):not(:active) {
+        border-color: var(--button-primary-border);
+        box-shadow: var(--button-shadow), var(--button-hover-shadow);
     }
 
     .button--quiet:hover:not(:disabled) {
         background: var(--tonal) !important;
-    }
-
-    .button--primary:hover:not(:disabled) {
-        background: var(--ink-soft);
     }
 }
 
@@ -421,7 +445,7 @@ a {
     overscroll-behavior: contain;
     padding: var(--space-2);
     background: var(--paper);
-    border: 1px solid var(--line);
+    border: var(--float-border);
     border-radius: var(--radius-panel);
     box-shadow: var(--shadow-menu);
 }
@@ -563,11 +587,12 @@ a.menu-item {
     overscroll-behavior: contain;
     background-color: var(--canvas);
     /* Tela con una griglia di puntini appena accennata (R-02): un puntino a ogni incrocio. */
-    background-image: radial-gradient(circle at 1px 1px, var(--canvas-dot) 1px, transparent 1.5px);
+    /* Nel tema scuro, sopra i puntini, un bagliore verde molto tenue verso l'alto, statico (R-21). */
+    background-image: radial-gradient(circle at 1px 1px, var(--canvas-dot) 1px, transparent 1.5px), var(--canvas-glow);
     /* Lo zoom fa crescere anche la griglia; quando è troppo fitta se ne disegna un puntino ogni 2 o 4. */
-    background-size: calc(var(--square) * var(--grid-zoom)) calc(var(--square) * var(--grid-zoom));
-    background-repeat: repeat;
-    background-attachment: local;
+    background-size: calc(var(--square) * var(--grid-zoom)) calc(var(--square) * var(--grid-zoom)), 100% 100%;
+    background-repeat: repeat, no-repeat;
+    background-attachment: local, scroll;
     scrollbar-color: var(--ink-soft) transparent;
     /* Un dito scorre il foglio; il pizzico lo gestisce diagram-viewport.js, mai la pagina. */
     touch-action: pan-x pan-y;
@@ -700,10 +725,12 @@ button.diagram-error-entry:active {
     width: max-content;
 }
 
+/* Tutto il testo del diagramma in monospaziato, parole chiave comprese (R-25): il tratto più
+   «tecnico» dello stile. La misura dei blocchi segue da sola: usa gli stessi stili. */
 .diagram {
     display: block;
     overflow: visible;
-    font-family: var(--font-ui);
+    font-family: var(--font-code);
     font-size: var(--text-content);
 }
 
@@ -712,12 +739,12 @@ button.diagram-error-entry:active {
 }
 
 .dg-keyword {
-    font-weight: 600;
+    font-size: 0.95em;
+    font-weight: 700;
     fill: var(--dg-key, var(--ink));
 }
 
 .dg-code {
-    font-family: var(--font-code);
     font-size: 0.95em;
     fill: var(--text);
 }
@@ -725,7 +752,7 @@ button.diagram-error-entry:active {
 .dg-shape,
 .dg-detail {
     stroke: var(--dg-line, var(--ink));
-    stroke-width: 1.5;
+    stroke-width: var(--block-stroke);
     stroke-linejoin: round;
     transition: fill var(--duration-state) var(--ease-out);
 }
@@ -734,8 +761,8 @@ button.diagram-error-entry:active {
     fill: none;
 }
 
-/* Quattro famiglie di tinte (R-18): fondo, contorno e parola chiave. Inizio e Fine restano
-   su carta, in verde. Lontane dal giallo della freccia del debugger e dal rosso. */
+/* Quattro famiglie di tinte (R-18, R-24): fondo, contorno e parola chiave. Inizio e Fine in
+   verde, l'unico verde sui blocchi. Lontane dal verde dell'esecuzione e dal rosso. */
 .dg-block--declare,
 .dg-block--assign { --dg-fill: var(--block-data); --dg-line: var(--block-data-line); --dg-key: var(--block-data-key); }
 .dg-block--input,
@@ -744,6 +771,7 @@ button.diagram-error-entry:active {
 .dg-block--loop { --dg-fill: var(--block-control); --dg-line: var(--block-control-line); --dg-key: var(--block-control-key); }
 .dg-block--call,
 .dg-block--comment { --dg-fill: var(--block-call); --dg-line: var(--block-call-line); --dg-key: var(--block-call-key); }
+.dg-block--terminal { --dg-fill: var(--block-terminal); --dg-line: var(--block-terminal-line); --dg-key: var(--block-terminal-key); }
 .dg-shape { fill: var(--dg-fill, var(--paper)); }
 
 .dg-block--comment .dg-shape--open {
@@ -751,52 +779,111 @@ button.diagram-error-entry:active {
     stroke: none;
 }
 
-/* Blocco in esecuzione: tiene la sua tinta, quindi il suo tipo, con il contorno più spesso.
-   Lo indica la freccia del debugger, l'unica cosa gialla sul foglio. */
+/* Ombra piena del tema chiaro (R-24): una copia della forma spostata in basso a destra, mai un
+   filtro (le ombre con filtro si ridisegnano a ogni zoom). Nel tema scuro non c'è. */
+.dg-shadow {
+    fill: var(--block-shadow);
+    stroke: none;
+    transform: translate(var(--block-shadow-offset), var(--block-shadow-offset));
+    transition: transform 180ms var(--ease-out), fill 180ms var(--ease-out);
+}
+
+/* Blocco in esecuzione (R-22, R-24): tiene la sua tinta, quindi il suo tipo, con il contorno
+   più spesso e il testo in grassetto. Nel tema chiaro l'ombra diventa verde e si allarga; nel
+   tema scuro un alone (filtro SVG del disegno, solo su questo blocco). Nessun altro segno. */
 .dg-block.is-running .dg-shape,
 .dg-block.is-running .dg-detail {
-    stroke-width: 2.5;
+    stroke-width: var(--block-stroke-active);
 }
 
-/* Freccia del debugger: lo stesso segno degli IDE. Scorre da un blocco al successivo. */
-.dg-pointer {
-    visibility: hidden;
-    pointer-events: none;
-    transition: transform 240ms var(--ease-out);
+.dg-block.is-running .dg-code {
+    font-weight: 700;
 }
 
-.dg-pointer.is-shown {
-    visibility: visible;
+.dg-block.is-running .dg-shadow {
+    fill: var(--pulse);
+    transform: translate(var(--block-shadow-offset-active), var(--block-shadow-offset-active));
 }
 
-.dg-pointer.is-instant {
-    transition: none;
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .dg-shadow {
+        display: none;
+    }
+
+    :root:not([data-theme="light"]) .dg-block.is-running .dg-shape {
+        filter: var(--dg-glow, none);
+    }
 }
 
-.dg-pointer polygon {
-    fill: var(--highlighter);
-    stroke: var(--text);
-    stroke-width: 1.5;
-    stroke-linejoin: round;
+:root[data-theme="dark"] .dg-shadow {
+    display: none;
+}
+
+:root[data-theme="dark"] .dg-block.is-running .dg-shape {
+    filter: var(--dg-glow, none);
 }
 
 .dg-line {
     fill: none;
     stroke: var(--flow-line);
-    stroke-width: 1.5;
+    stroke-width: var(--flow-width);
     stroke-linejoin: round;
 }
 
-.dg-arrowhead,
-.dg-junction {
+.dg-arrowhead {
     fill: var(--flow-line);
 }
 
-/* Ramo percorso nel passo a passo: ripassato a penna, tracciato come con una penna. */
+/* Giunzioni agli angoli delle frecce (R-23): cerchi vuoti, il tocco «circuito stampato». */
+.dg-junction {
+    fill: var(--junction-fill);
+    stroke: var(--flow-line);
+    stroke-width: 2px;
+}
+
+/* Impulso (R-23): un tratto luminoso corre sulla freccia percorsa, sopra una traccia larga
+   semitrasparente; la freccia resta colorata (scia) e poi torna grigia in --trail-fade. */
+.dg-pulse,
+.dg-pulse-glow,
+.dg-trail {
+    fill: none;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+.dg-pulse-glow {
+    stroke: var(--pulse-soft);
+    stroke-width: var(--pulse-glow-width);
+    stroke-linecap: round;
+}
+
+.dg-pulse {
+    stroke: var(--pulse);
+    stroke-width: var(--pulse-width);
+    stroke-linecap: round;
+}
+
+.dg-trail {
+    stroke: var(--trail);
+    stroke-width: var(--flow-width);
+    opacity: 0;
+    transition: opacity var(--trail-fade) ease-out;
+}
+
+.dg-trail.is-lit {
+    opacity: 1;
+    transition: none;
+}
+
+.dg-arrowhead--lit {
+    fill: var(--trail);
+}
+
+/* Ramo percorso nel passo a passo: ripassato in verde, tracciato come con una penna. */
 .dg-taken {
     fill: none;
     stroke: var(--ink);
-    stroke-width: 3;
+    stroke-width: var(--pulse-width);
     stroke-linejoin: round;
     stroke-linecap: round;
 }
@@ -824,7 +911,7 @@ button.diagram-error-entry:active {
 .dg-label {
     /* Vero e Falso si leggono da fondo aula: crescono con il contenuto, non con la cornice. */
     font-size: calc(0.8 * var(--text-content));
-    font-weight: 600;
+    font-weight: 700;
     fill: var(--text-muted);
     /* Alone del colore della tela: si leggono anche sopra il riquadro della selezione (R-20). */
     stroke: var(--canvas);
@@ -864,6 +951,7 @@ button.diagram-error-entry:active {
 
 .dg-badge text {
     fill: var(--paper);
+    font-family: var(--font-ui);
     font-size: var(--text-small);
     font-weight: 700;
 }
@@ -986,7 +1074,7 @@ button.diagram-error-entry:active {
     width: min(25rem, calc(100% - 2 * var(--space-3)));
     padding: var(--space-2) var(--space-3) var(--space-3);
     background: var(--paper);
-    border: 1px solid var(--line);
+    border: var(--float-border);
     border-radius: var(--radius-panel);
     box-shadow: var(--shadow-menu);
 }
@@ -1515,16 +1603,37 @@ button.diagram-error-entry:active {
 .zoom {
     padding: var(--space-1);
     background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-panel);
+    border: var(--float-border);
+    border-radius: var(--button-radius);
     box-shadow: var(--shadow-float);
 }
 
+/* Gruppi di comandi: l'ombra è del gruppo intero, non dei singoli pulsanti (R-26). */
 .selection-bar .button,
 .history-controls--sheet .button,
 .step-controls .button,
 .zoom .button {
     background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.selection-bar .button:active:not(:disabled),
+.history-controls--sheet .button:active:not(:disabled),
+.step-controls .button:active:not(:disabled),
+.zoom .button:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .selection-bar .button:hover:not(:disabled),
+    .history-controls--sheet .button:hover:not(:disabled),
+    .step-controls .button:hover:not(:disabled),
+    .zoom .button:hover:not(:disabled) {
+        border-color: transparent;
+        box-shadow: none;
+        background: var(--tonal);
+    }
 }
 
 .selection-bar {
@@ -1584,11 +1693,22 @@ button.diagram-error-entry:active {
     justify-content: center;
 }
 
-/* Tema e documentazione sono comandi secondari (R-19): senza fondo, nel grigio del testo tenue. */
+/* Tema e documentazione sono comandi secondari (R-19): senza fondo né bordo, nel grigio del testo tenue. */
 .docs-button,
 .theme-button {
     background: transparent;
+    border-color: transparent;
+    box-shadow: none;
     color: var(--text-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .docs-button:hover:not(:disabled):not(:active),
+    .theme-button:hover:not(:disabled):not(:active) {
+        border-color: transparent;
+        box-shadow: none;
+        background: var(--tonal);
+    }
 }
 
 .theme-button[data-target="light"] .theme-icon--moon,
@@ -1618,10 +1738,9 @@ button.diagram-error-entry:active {
     max-height: 45%;
     overflow: auto;
     overscroll-behavior: contain;
-    padding: var(--space-3) var(--square);
-    background: var(--slate);
+    padding: var(--space-3);
+    background: var(--chrome);
     color: var(--chalk);
-    border-bottom: 1px solid var(--slate-line);
     font-family: var(--font-code);
     /* Il passo-passo si legge da fondo aula come la console (R-08, regola della distanza). */
     font-size: var(--text-content);
@@ -1632,12 +1751,30 @@ button.diagram-error-entry:active {
     display: none;
 }
 
-.variables-title {
+/* Etichette di sezione dei pannelli (R-26): monospaziato, piccolo, maiuscolo, con un
+   indicatore verde (quadrato nel tema chiaro, tondo nel tema scuro). */
+.variables-title,
+.pane-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
     margin: 0 0 var(--space-2);
-    font-family: var(--font-ui);
-    font-size: var(--text-body);
-    font-weight: 600;
-    color: var(--chalk-muted);
+    font-family: var(--font-code);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.variables-title::before,
+.pane-label::before {
+    content: "";
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: var(--label-dot-radius);
+    background: var(--pulse);
 }
 
 .variables-empty {
@@ -1676,13 +1813,42 @@ button.diagram-error-entry:active {
     overflow-wrap: anywhere;
 }
 
-/* Cambiata nell'ultimo passo: sottolineata col gesso (il giallo è solo del blocco in esecuzione). */
+/* I valori nel verde dell'esecuzione (R-26); «nessun valore» resta tenue. */
+.variables-pane .variable-value,
+.variables-strip .variable-value {
+    color: var(--ink);
+    font-weight: 700;
+}
+
+.variables-pane .variable-value.is-unset,
+.variables-strip .variable-value.is-unset {
+    color: var(--chalk-muted);
+    font-weight: 400;
+}
+
+/* Cambiata nell'ultimo passo: sottolineata, e per un momento accesa (R-26). */
 .variable.is-changed .variable-value,
 .variable-elements .is-changed .variable-element,
 .variables-strip-summary .is-changed {
     text-decoration: underline;
     text-decoration-thickness: 2px;
     text-underline-offset: 3px;
+}
+
+.variable.is-changed .variable-value,
+.variable-elements .is-changed .variable-element {
+    border-radius: 3px;
+    animation: value-flash 0.9s ease-out;
+}
+
+@keyframes value-flash {
+    from {
+        background-color: var(--pulse-soft);
+    }
+
+    to {
+        background-color: transparent;
+    }
 }
 
 .variable-full {
@@ -1953,7 +2119,7 @@ button.diagram-error-entry:active {
     max-width: min(24rem, calc(100% - 16px));
     max-height: 50%;
     background: var(--paper);
-    border: 1px solid var(--line);
+    border: var(--float-border);
     border-radius: var(--radius-panel);
     box-shadow: var(--shadow-float);
     overflow: hidden;
@@ -2161,7 +2327,7 @@ button.diagram-error-entry:active {
     overscroll-behavior: contain;
     padding: var(--space-3) var(--space-4) var(--space-4);
     background: var(--paper);
-    border: 1px solid var(--line);
+    border: var(--float-border);
     border-radius: var(--radius-panel);
     box-shadow: var(--shadow-menu);
     color: var(--text);
@@ -2212,15 +2378,33 @@ button.diagram-error-entry:active {
 .pane--console {
     grid-column: 2;
     grid-row: 1;
-    border-left: 1px solid var(--slate-line);
+    background: var(--chrome);
+    border-left: var(--chrome-line-width) solid var(--chrome-line);
 }
 
+/* Etichetta «Console» sopra il riquadro: solo sul computer, sul telefono c'è la scheda. */
+.pane-label {
+    margin: var(--space-3) var(--space-3) 0;
+}
+
+@media (max-width: 55.99rem) {
+    .pane-label {
+        display: none;
+    }
+}
+
+/* Console: un riquadro incassato nel pannello (R-26), con bordo d'inchiostro e ombra piena nel
+   tema chiaro, più scuro della tela nel tema scuro. */
 .slate {
     flex: 1;
     min-height: 0;
     overflow: auto;
     overscroll-behavior: contain;
-    padding: var(--square);
+    margin: var(--space-2) var(--space-3) var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: var(--slate-line-width) solid var(--slate-line);
+    border-radius: var(--button-radius);
+    box-shadow: var(--slate-shadow);
     background: var(--slate);
     color: var(--chalk);
     font-family: var(--font-code);
@@ -2262,13 +2446,13 @@ button.diagram-error-entry:active {
     }
 }
 
-/* Lo stesso segno di «in esecuzione» della barra: il blocco è quello evidenziato nel diagramma. */
+/* Lo stesso segno di «in esecuzione» della barra, in verde: il blocco è quello evidenziato nel diagramma. */
 .console-asking-sign {
     flex: none;
     width: 0.875rem;
     height: 0.875rem;
     border-radius: 3px;
-    background: var(--highlighter);
+    background: var(--ink);
 }
 
 #console-asking-text {

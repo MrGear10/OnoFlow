@@ -298,8 +298,8 @@ export async function buildDocs() {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="color-scheme" content="light dark">
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1d23">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#eeece2">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a1220">
     <title>OnoFlow · Documentazione</title>
     <link rel="icon" type="image/svg+xml" href="icons/onoflow.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="icons/onoflow-32.png">

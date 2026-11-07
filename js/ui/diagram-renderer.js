@@ -7,11 +7,14 @@
  * Disegna la disposizione calcolata da DiagramLayout: forme in inchiostro con la tinta del
  * loro tipo (DEC-057), frecce, etichette Vero/Falso. Ogni blocco è un <g> con l'ID del
  * modello in data-id (FR-VIEW-02). Gli stati sono segni con un solo significato (FR-VIEW-03):
- *   - freccia del debugger: un triangolo giallo a sinistra del blocco in esecuzione, che scorre
- *     da un blocco al successivo; il blocco tiene la sua tinta e ha il contorno più spesso;
+ *   - blocco in esecuzione (stile «Segnale», R-22): tiene la sua tinta, con il contorno più
+ *     spesso; nel tema chiaro la sua ombra piena diventa verde, nel tema scuro ha un alone;
+ *   - impulso (R-23): nel passo a passo un tratto verde corre sulla freccia dal blocco di prima
+ *     al successivo e la lascia colorata per un momento (scia);
  *   - penna rossa: cerchio attorno al blocco, numero dell'errore, onda nel punto esatto;
- *   - ramo percorso: nel passo a passo, il ramo preso da un if si ripassa a penna, con
- *     l'etichetta Vero o Falso in inchiostro.
+ *   - ramo percorso: nel passo a passo, il ramo preso da un if si ripassa in verde, con
+ *     l'etichetta Vero o Falso in verde.
+ * Nel tema chiaro ogni blocco ha un'ombra piena: una copia della forma (dg-shadow), mai un filtro.
  * I messaggi degli errori non stanno nel disegno ma nell'elenco sopra il foglio
  * (js/ui/diagram-errors.js), con lo stesso numero.
  *
@@ -26,7 +29,11 @@
  *         svuota container, disegna e restituisce
  *         { element, size: { width, height }, slots, setRunning(id | null), setErrors(errori),
  *           setSelected(id | null), setTaken({ ifId: 'then' | 'else' }, anima), setMoving(id | null, ammesso(punto)), hitTest(punto, raggio), slotBox(indice),
- *           nodeBox(id) → { x, y, width, height } | null, runningBox(id) (con la freccia del debugger), hasNode(id) }
+ *           nodeBox(id) → { x, y, width, height } | null, runningBox(id) (con l'ombra e l'alone), hasNode(id),
+ *           pulse(daId, aId, ramo?) → true se c'è una freccia tra i due blocchi, clearPulse(),
+ *           connection(daId, aId, ramo?) → { points, arrow } | null }
+ * pulse anima l'impulso sulla freccia da un blocco al successivo (ramo 'then' o 'else' per
+ * scegliere l'uscita di un if); con prefers-reduced-motion la freccia si colora soltanto.
  * punto e rettangoli sono in pixel al 100% rispetto all'angolo dell'SVG; hitTest restituisce
  * { slot: indice } o { block: id } o null.
  * nodeBox è in pixel al 100%, rispetto all'angolo in alto a sinistra dell'SVG.
@@ -197,6 +204,56 @@
         return text;
     }
 
+    function pointKey(point) {
+        return Math.round(point[0] * 2) + ',' + Math.round(point[1] * 2);
+    }
+
+    /*
+     * Angoli delle frecce (R-23): i punti dove due tratti si incontrano con direzioni diverse,
+     * dentro una freccia o tra due frecce (uscita di un ciclo, punto d'incontro dei rami).
+     */
+    function findCorners(lines) {
+        var directions = Object.create(null);
+        var places = Object.create(null);
+        function add(point, dx, dy) {
+            var key = pointKey(point);
+            var length = Math.hypot(dx, dy);
+            if (!length) {
+                return;
+            }
+            places[key] = point;
+            (directions[key] = directions[key] || []).push([dx / length, dy / length]);
+        }
+        lines.forEach(function (entry) {
+            for (var i = 1; i < entry.points.length; i++) {
+                var a = entry.points[i - 1];
+                var b = entry.points[i];
+                add(a, b[0] - a[0], b[1] - a[1]);
+                add(b, a[0] - b[0], a[1] - b[1]);
+            }
+        });
+        return Object.keys(directions).filter(function (key) {
+            var list = directions[key];
+            return list.some(function (u) {
+                return list.some(function (v) { return Math.abs(u[0] * v[0] + u[1] * v[1]) < 0.99; });
+            });
+        }).map(function (key) { return places[key]; });
+    }
+
+    /* Più frecce di seguito come una sola spezzata; la punta è quella dell'ultima. */
+    function joinLines(path) {
+        var points = [];
+        path.forEach(function (entry) {
+            entry.points.forEach(function (point) {
+                var last = points[points.length - 1];
+                if (!last || last[0] !== point[0] || last[1] !== point[1]) {
+                    points.push(point);
+                }
+            });
+        });
+        return { points: points, arrow: path[path.length - 1].arrow };
+    }
+
     // --- Disegno --------------------------------------------------------------------
 
     function render(container, program, options) {
@@ -205,10 +262,10 @@
         var metrics = measurer.metrics();
         var s = metrics.square;
         var result = Layout.layout(program, { t: t, measure: measurer.measure, square: s, fontSize: metrics.fontSize });
-        // Margine attorno al disegno: c'è posto per il cerchio rosso e il numero degli errori;
-        // a sinistra anche per la freccia del debugger dei blocchi a filo del bordo (ramo Falso).
+        // Margine attorno al disegno: c'è posto per il cerchio rosso e il numero degli errori,
+        // per l'ombra piena e per l'alone del blocco in esecuzione.
         var margin = s;
-        var marginLeft = 2 * s;
+        var marginLeft = s;
         var width = result.width + marginLeft + margin;
         var height = result.height + 2 * margin;
 
@@ -234,29 +291,42 @@
         });
         takenMarker.appendChild(svgElement('path', { d: 'M0,0L10,5L0,10z' }, 'dg-arrowhead dg-arrowhead--taken'));
         defs.appendChild(takenMarker);
+        // Punta della scia lasciata dall'impulso (R-23).
+        var litMarker = svgElement('marker', {
+            id: markerId + '-lit', viewBox: '0 0 10 10', refX: 10, refY: 5,
+            markerUnits: 'userSpaceOnUse', markerWidth: round(0.55 * s), markerHeight: round(0.55 * s), orient: 'auto'
+        });
+        litMarker.appendChild(svgElement('path', { d: 'M0,0L10,5L0,10z' }, 'dg-arrowhead dg-arrowhead--lit'));
+        defs.appendChild(litMarker);
+        // Alone del blocco in esecuzione nel tema scuro (R-24): un filtro SVG, usato solo da quel
+        // blocco; il CSS lo prende da --dg-glow, così l'id resta unico per ogni disegno.
+        var glow = svgElement('filter', { id: markerId + '-glow', x: '-30%', y: '-80%', width: '160%', height: '260%' });
+        glow.appendChild(svgElement('feGaussianBlur', { 'in': 'SourceGraphic', stdDeviation: 4, result: 'blur' }));
+        var merge = svgElement('feMerge');
+        merge.appendChild(svgElement('feMergeNode', { 'in': 'blur' }));
+        merge.appendChild(svgElement('feMergeNode', { 'in': 'SourceGraphic' }));
+        glow.appendChild(merge);
+        defs.appendChild(glow);
         svg.appendChild(defs);
+        svg.style.setProperty('--dg-glow', 'url(#' + markerId + '-glow)');
         var linesLayer = svgElement('g', {}, 'dg-lines');
         var traceLayer = svgElement('g', {}, 'dg-trace');
+        var pulseLayer = svgElement('g', { 'aria-hidden': 'true' }, 'dg-pulses');
+        var junctionsLayer = svgElement('g', {}, 'dg-junctions');
         var shapesLayer = svgElement('g', {}, 'dg-shapes');
         var selectionLayer = svgElement('g', {}, 'dg-selection');
         // Vero, Falso e «do» sopra il riquadro della selezione, con un alone del colore della tela (R-20).
         var labelsLayer = svgElement('g', {}, 'dg-labels');
         var slotsLayer = svgElement('g', {}, 'dg-slots');
         var marksLayer = svgElement('g', {}, 'dg-marks');
-        // Freccia del debugger: punta a destra, con la punta nell'origine; si sposta con transform.
-        var pointerWidth = 0.7 * s;
-        var pointerHeight = 0.8 * s;
-        var pointer = svgElement('g', { 'aria-hidden': 'true' }, 'dg-pointer');
-        pointer.appendChild(svgElement('polygon', {
-            points: pointsText([[-pointerWidth, -pointerHeight / 2], [0, 0], [-pointerWidth, pointerHeight / 2]])
-        }));
         svg.appendChild(linesLayer);
         svg.appendChild(traceLayer);
+        svg.appendChild(pulseLayer);
+        svg.appendChild(junctionsLayer);
         svg.appendChild(shapesLayer);
         svg.appendChild(selectionLayer);
         svg.appendChild(labelsLayer);
         svg.appendChild(slotsLayer);
-        svg.appendChild(pointer);
         svg.appendChild(marksLayer);
         var editable = options.editable || function () { return false; };
         var functionIds = Object.create(null);
@@ -268,6 +338,8 @@
         var groupsById = Object.create(null);
         var shapesById = Object.create(null);
         var branches = Object.create(null);    // ifId + '\u0000' + ramo → { points, arrow, label }
+        var lines = [];                        // { points, arrow }: le frecce, per l'impulso
+        var junctions = Object.create(null);   // punto → [x, y]: angoli e incroci delle frecce
 
         function branchEntry(ifId, branch) {
             var key = ifId + '\u0000' + branch;
@@ -281,8 +353,9 @@
                     polyline.setAttribute('marker-end', 'url(#' + markerId + ')');
                 }
                 linesLayer.appendChild(polyline);
+                lines.push({ points: item.points, arrow: item.arrow });
             } else if (item.type === 'junction') {
-                linesLayer.appendChild(svgElement('circle', { cx: round(item.x), cy: round(item.y), r: round(0.2 * s) }, 'dg-junction'));
+                junctions[pointKey([item.x, item.y])] = [item.x, item.y];
             } else if (item.type === 'label') {
                 var label = svgElement('text', { x: round(item.x), y: round(item.y), 'text-anchor': item.anchor }, 'dg-label');
                 if (item.baseline === 'middle') {
@@ -317,10 +390,25 @@
                         group.classList.add('is-selectable');
                     }
                 }
-                outline(item).forEach(function (part) { group.appendChild(part); });
+                var parts = outline(item);
+                if (item.color !== 'comment') {
+                    // Ombra piena (tema chiaro): la stessa forma, sotto; il CSS la sposta e la colora.
+                    var shadow = parts[0].cloneNode(false);
+                    shadow.setAttribute('class', 'dg-shadow');
+                    group.appendChild(shadow);
+                }
+                parts.forEach(function (part) { group.appendChild(part); });
                 group.appendChild(textNode(item));
                 shapesLayer.appendChild(group);
             }
+        });
+
+        findCorners(lines).forEach(function (point) {
+            junctions[pointKey(point)] = point;
+        });
+        Object.keys(junctions).forEach(function (key) {
+            var point = junctions[key];
+            junctionsLayer.appendChild(svgElement('circle', { cx: round(point[0]), cy: round(point[1]), r: round(0.175 * s) }, 'dg-junction'));
         });
 
         var slotGroups = [];
@@ -363,32 +451,183 @@
 
         var running = null;
 
-        /*
-         * Blocco in esecuzione: contorno più spesso e la freccia del debugger alla sua sinistra.
-         * Da un blocco al successivo la freccia scorre (transizione in base.css); quando compare
-         * va subito al suo posto; null la nasconde.
-         */
+        /* Blocco in esecuzione (R-22): contorno più spesso, ombra verde o alone (base.css); null lo toglie. */
         function setRunning(nodeId) {
-            var wasShown = Boolean(running);
             if (running) {
                 running.classList.remove('is-running');
             }
             running = nodeId && groupsById[nodeId] ? groupsById[nodeId] : null;
-            pointer.classList.toggle('is-shown', Boolean(running));
-            if (!running) {
+            if (running) {
+                running.classList.add('is-running');
+            }
+        }
+
+        // --- Impulso (R-23) ---------------------------------------------------------
+
+        /* Porte di una forma: dove entrano e da dove escono le frecce. */
+        function ports(item) {
+            var cx = item.x + item.width / 2;
+            var middle = item.y + item.height / 2;
+            var top = [cx, item.y];
+            var bottom = [cx, item.y + item.height];
+            var left = [item.x, middle];
+            var right = [item.x + item.width, middle];
+            if (item.shape === 'diamond') {
+                return { entry: [top], exit: { then: [right], 'else': [left], any: [left, right] } };
+            }
+            if (item.loopTop) {
+                // do: si entra dal punto in cima al corpo; dalla verifica si torna su a sinistra o si esce sotto.
+                return { entry: [item.loopTop, top], exit: { any: [bottom, left], enter: [item.loopTop] } };
+            }
+            if (item.shape === 'hexagon') {
+                // while e for: ritorno da sinistra, corpo sotto, uscita a destra.
+                return { entry: [top, left], exit: { any: [bottom, right] } };
+            }
+            return { entry: [top], exit: { any: [bottom] } };
+        }
+
+        var near = 0.3 * s; // le frecce si toccano in un punto, salvo la punta del ritorno del do
+
+        function close(a, b) {
+            return Math.abs(a[0] - b[0]) <= near && Math.abs(a[1] - b[1]) <= near;
+        }
+
+        var commentPorts = Object.keys(shapesById).filter(function (id) {
+            return shapesById[id].color === 'comment';
+        }).map(function (id) { return ports(shapesById[id]); });
+
+        /*
+         * La freccia (anche fatta di più tratti) da un blocco al successivo: si parte dalle uscite
+         * di fromId e si seguono le frecce, che finiscono sull'entrata di un blocco o proseguono
+         * in un'altra freccia; un commento si attraversa. null se non c'è (per esempio una chiamata).
+         */
+        var entered = null; // il do in cui l'ultimo impulso è appena entrato: il prossimo va nel corpo
+
+        function connection(fromId, toId, branch) {
+            var from = shapesById[fromId];
+            var to = shapesById[toId];
+            if (!from || !to) {
+                return null;
+            }
+            var exits = ports(from).exit;
+            if (exits.enter && entered === fromId) {
+                branch = 'enter';
+            }
+            var targets = ports(to).entry;
+            var queue = (exits[branch] || exits.any).map(function (point) { return { point: point, path: [] }; });
+            var used = Object.create(null);
+            while (queue.length) {
+                var state = queue.shift();
+                for (var index = 0; index < lines.length; index++) {
+                    if (used[index] || !close(lines[index].points[0], state.point)) {
+                        continue;
+                    }
+                    used[index] = true;
+                    var path = state.path.concat([lines[index]]);
+                    var end = lines[index].points[lines[index].points.length - 1];
+                    if (targets.some(function (point) { return close(point, end); })) {
+                        return joinLines(path);
+                    }
+                    var next = [end];
+                    commentPorts.forEach(function (comment) {
+                        if (close(comment.entry[0], end)) {
+                            next = comment.exit.any;
+                        }
+                    });
+                    next.forEach(function (point) { queue.push({ point: point, path: path }); });
+                }
+            }
+            return null;
+        }
+
+        var reducedMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+        var current = null; // { elements, animations }: l'impulso che sta correndo, uno alla volta
+        var trails = [];
+
+        function stopPulse() {
+            if (!current) {
                 return;
             }
-            running.classList.add('is-running');
-            var item = shapesById[nodeId];
-            var transform = 'translate(' + round(item.x - 0.2 * s) + 'px, ' + round(item.y + item.height / 2) + 'px)';
-            if (!wasShown) {
-                pointer.classList.add('is-instant');
-                pointer.style.transform = transform;
-                pointer.getBoundingClientRect(); // applica la posizione prima di riaccendere la transizione
-                pointer.classList.remove('is-instant');
-            } else {
-                pointer.style.transform = transform;
+            current.animations.forEach(function (animation) { animation.cancel(); });
+            current.elements.forEach(function (element) { element.remove(); });
+            current = null;
+        }
+
+        /* La scia torna grigia in --trail-fade (base.css), poi si toglie. */
+        function fadeTrail(trail) {
+            trail.classList.remove('is-lit');
+            window.setTimeout(function () {
+                trail.remove();
+                trails = trails.filter(function (other) { return other !== trail; });
+            }, 1600);
+        }
+
+        /* Annulla impulso e scie (Ferma, Pausa, fine dell'esecuzione). */
+        function clearPulse() {
+            stopPulse();
+            trails.forEach(function (trail) { trail.remove(); });
+            trails = [];
+        }
+
+        function pulse(fromId, toId, branch) {
+            var path = connection(fromId, toId, branch);
+            var loopTop = shapesById[toId] && shapesById[toId].loopTop;
+            entered = path && loopTop && close(path.points[path.points.length - 1], loopTop) ? toId : null;
+            stopPulse();
+            trails.forEach(function (trail) {
+                if (reducedMotion.matches) {
+                    trail.remove(); // senza dissolvenza
+                } else if (trail.classList.contains('is-lit')) {
+                    fadeTrail(trail);
+                }
+            });
+            if (reducedMotion.matches) {
+                trails = [];
             }
+            if (!path) {
+                return false;
+            }
+            var points = pointsText(path.points);
+            var trail = svgElement('polyline', { points: points }, 'dg-trail is-lit');
+            if (path.arrow) {
+                trail.setAttribute('marker-end', 'url(#' + markerId + '-lit)');
+            }
+            pulseLayer.appendChild(trail);
+            trails.push(trail);
+            if (reducedMotion.matches || typeof trail.animate !== 'function') {
+                return true; // la freccia percorsa si colora e resta fino al passo successivo
+            }
+            var length = 0;
+            for (var i = 1; i < path.points.length; i++) {
+                length += Math.hypot(path.points[i][0] - path.points[i - 1][0], path.points[i][1] - path.points[i - 1][1]);
+            }
+            // Velocità fissa (non c'è un comando della velocità): un tratto corto, una durata breve.
+            var dash = Math.min(38, Math.max(14, length * 0.55));
+            var duration = Math.min(600, Math.max(150, length / 520 * 1000));
+            var elements = [
+                svgElement('polyline', { points: points }, 'dg-pulse-glow'),
+                svgElement('polyline', { points: points }, 'dg-pulse')
+            ];
+            var active = { elements: elements, animations: [] };
+            elements.forEach(function (element) {
+                element.style.strokeDasharray = round(dash) + ' ' + round(length + dash);
+                element.style.strokeDashoffset = round(-length);
+                pulseLayer.appendChild(element);
+                active.animations.push(element.animate(
+                    [{ strokeDashoffset: round(dash) }, { strokeDashoffset: round(-length) }],
+                    { duration: duration, easing: 'linear' }
+                ));
+            });
+            current = active;
+            active.animations[1].onfinish = function () {
+                if (current === active) {
+                    stopPulse();
+                }
+                if (trail.classList.contains('is-lit')) {
+                    fadeTrail(trail);
+                }
+            };
+            return true;
         }
 
         /* Onda di penna rossa sotto [start, end) del campo; un punto vuoto diventa un trattino. */
@@ -592,10 +831,11 @@
             return { x: box.x + marginLeft, y: box.y + margin, width: box.width, height: box.height };
         }
 
-        /* Come nodeBox, ma con la freccia del debugger a sinistra: per inquadrare il blocco in esecuzione. */
+        /* Come nodeBox, con attorno l'ombra e l'alone: per inquadrare il blocco in esecuzione. */
         function runningBox(nodeId) {
             var box = nodeBox(nodeId);
-            return box && { x: box.x - s, y: box.y, width: box.width + s, height: box.height };
+            var pad = 0.5 * s;
+            return box && { x: box.x - pad, y: box.y - pad, width: box.width + 2 * pad, height: box.height + 2 * pad };
         }
 
         return {
@@ -611,6 +851,9 @@
             slotBox: slotBox,
             nodeBox: nodeBox,
             runningBox: runningBox,
+            pulse: pulse,
+            clearPulse: clearPulse,
+            connection: connection,
             hasNode: function (nodeId) { return Boolean(result.nodes[nodeId]); }
         };
     }

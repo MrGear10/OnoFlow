@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="color-scheme" content="light dark">
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1d23">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#eeece2">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a1220">
     <title>OnoFlow</title>
     <link rel="icon" type="image/svg+xml" href="icons/onoflow.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="icons/onoflow-32.png">
@@ -17,7 +17,7 @@
 <div class="app" id="app" data-tab="diagram" data-run-state="idle" data-loading>
     <header class="bar">
         <div class="bar-row bar-row--main">
-            <span class="brand"><img class="brand-logo" src="icons/onoflow.svg" alt="" width="24" height="24">OnoFlow</span>
+            <span class="brand"><img class="brand-logo" src="icons/onoflow.svg" alt="" width="24" height="24"><span>Ono<span class="brand-accent">Flow</span></span></span>
             <div class="file-group">
                 <div class="file">
                     <label class="visually-hidden" for="file-name" data-i18n="ui.fileName.label"></label>
@@ -185,6 +185,7 @@
             <section class="variables-pane" id="variables-pane" data-i18n-label="ui.variablesPanel.label" hidden>
                 <div id="variables-pane-body"></div>
             </section>
+            <p class="pane-label" aria-hidden="true" data-i18n="ui.tab.console"></p>
             <div class="slate" id="console-scroll">
                 <p class="console-asking" id="console-asking"><span class="console-asking-sign" aria-hidden="true"></span><span id="console-asking-text"></span></p>
                 <p class="console-trimmed" id="console-trimmed" data-i18n="ui.console.trimmed" hidden></p>

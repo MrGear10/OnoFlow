@@ -353,6 +353,9 @@
         function setRunning(nodeId) {
             state.runningId = nodeId;
             state.diagram.setRunning(nodeId);
+            if (!nodeId) {
+                state.diagram.clearPulse(); // fine dell'esecuzione o Ferma: niente impulso né scie (R-23)
+            }
         }
 
         /* Rami percorsi nel passo a passo: restano fino alla prossima esecuzione o modifica. */
@@ -364,7 +367,7 @@
         }
 
         /* Inquadra un blocco; false se il foglio non si vede (scheda Console sul telefono).
-           options.running: con la freccia del debugger alla sua sinistra. */
+           options.running: con l'ombra e l'alone del blocco in esecuzione. */
         function revealNode(nodeId, options) {
             if (!state.diagram) {
                 return false;
@@ -1406,11 +1409,19 @@
                 onStep: function (nodeId) {
                     consoleView.flush();
                     // Passo a passo da un if al blocco successivo: si ripassa il ramo preso.
-                    var branch = state.scheduler && state.scheduler.stepping() && state.runningId ?
+                    var stepping = Boolean(state.scheduler && state.scheduler.stepping());
+                    var branch = stepping && state.runningId ?
                         Model.takenBranch(state.program, state.runningId, nodeId) : null;
                     if (branch) {
                         state.taken[state.runningId] = branch;
                         state.diagram.setTaken(state.taken, true);
+                    }
+                    // Nel passo a passo un impulso corre sulla freccia percorsa (R-23); nell'esecuzione
+                    // continua no: un impulso per blocco a piena velocità non si vedrebbe.
+                    if (stepping && state.runningId && nodeId) {
+                        state.diagram.pulse(state.runningId, nodeId, branch || undefined);
+                    } else {
+                        state.diagram.clearPulse();
                     }
                     setRunning(nodeId);
                     showVariables();
@@ -1453,6 +1464,7 @@
             var current = schedulerState();
             if (current === 'running') {
                 state.scheduler.pause();
+                state.diagram.clearPulse();
                 revealNode(state.scheduler.currentNodeId(), { quiet: true, running: true });
             } else if (current === 'paused') {
                 consoleView.hideLongRun();

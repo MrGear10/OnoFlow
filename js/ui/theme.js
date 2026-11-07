@@ -18,7 +18,7 @@
     'use strict';
 
     // Colore della barra del browser per tema: lo stesso di index.html.
-    var THEME_COLORS = { light: '#ffffff', dark: '#1a1d23' };
+    var THEME_COLORS = { light: '#eeece2', dark: '#0a1220' };
     var QUERY_VALUES = { chiaro: 'light', scuro: 'dark', light: 'light', dark: 'dark' };
 
     function fromQuery(search) {

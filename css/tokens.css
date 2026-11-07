@@ -1,35 +1,40 @@
 /*
  * OnoFlow — valori del sistema visivo (§11.2, DEC-051).
  *
- * Stile moderno e pulito (revisione R-01…R-11 in DESIGN.md): tela chiara a puntini, console
- * bianca nel tema chiaro e grafite nel tema scuro, cornice leggera. Ogni stato ha un segno con
- * un solo significato:
- *   verde                          i comandi, Inizio e Fine, il ramo percorso (più chiaro nel tema scuro);
- *   quattro famiglie di tinte      i blocchi (R-18); frecce in grigio neutro;
- *   rosso            solo gli errori;
- *   evidenziatore    solo il blocco in esecuzione;
- *   giallo           solo i valori digitati nella console (nel tema chiaro: verde, in grassetto).
- * Niente gradienti decorativi; ombre leggere solo per ciò che sta sopra la tela. Solo font di
+ * Stile «Segnale» (R-21…R-27 in DESIGN.md, DEC-109): l'esecuzione è un segnale che percorre il
+ * circuito. Il carattere sta nel diagramma e nel momento in cui il programma si muove; barra,
+ * menu e pannelli restano sobri. I due temi parlano due linguaggi:
+ *   chiaro «marcato»   schema stampato su carta: bordi d'inchiostro spessi, ombre piene sfalsate;
+ *   scuro              schema elettrico notturno: bordi sottili, alone luminoso sul blocco attivo.
+ * Ogni segno ha un solo significato:
+ *   verde (--ink)                  esecuzione e comandi: impulso, scia, blocco attivo, ramo percorso,
+ *                                  pulsanti principali, Inizio e Fine, valori digitati in console;
+ *   quattro famiglie di tinte      il tipo di blocco, mai verde, giallo o rosso (con la forma);
+ *   rosso (--pen)                  solo gli errori.
+ * Il giallo non è più usato (R-22: niente freccia del debugger). Niente gradienti decorativi
+ * oltre al bagliore statico della tela scura; niente ombre sfocate nel tema chiaro. Solo font di
  * sistema (NFR-PRIV-02).
  * Tema chiaro e scuro secondo il sistema (NFR-ACC-02), oppure scelto dal menu (data-theme sull'html, DEC-080).
  */
 :root {
     color-scheme: light dark;
 
-    /* Tela del diagramma: chiara, con una griglia di puntini appena accennata (R-02). */
-    --canvas: #f5f6f8;
-    --canvas-dot: #c4cad5;
-    /* Superfici: barra, menu, pannelli, campi, Inizio e Fine. */
-    --paper: #ffffff;
-    --ink: #1d6954;            /* verde nel tema chiaro, scelto dall'autore (R-11); blu nel tema scuro */
+    /* Tela del diagramma: carta calda con una griglia di puntini (R-02, R-21). */
+    --canvas: #f6f5ef;
+    --canvas-dot: #c9cbca;
+    --canvas-glow: none;       /* solo nel tema scuro */
+    /* Superfici: menu, campi, finestre. */
+    --paper: #fffef9;
+    --ink: #1d6954;            /* verde del marchio, in entrambi i temi (R-11, R-14) */
     --ink-soft: #3f7f6c;
-    --text: #14161b;
-    --text-muted: #5a6070;
+    --text: #0e1823;
+    --text-muted: #4f5f72;
 
-    /* Barra e pannelli */
-    --chrome: #ffffff;
-    --chrome-line: #dfe2e8;
-    --line: #e6e8ed;
+    /* Barra e pannelli: linee d'inchiostro, non grigie (R-21). */
+    --chrome: #eeece2;
+    --chrome-line: #14202e;
+    --chrome-line-width: 2px;
+    --line: rgba(20, 32, 46, 0.16);   /* righe di tabelle e separatori interni */
     --on-ink: #ffffff;
     --tonal: #e8f2ee;          /* fondo dei comandi secondari */
     --tonal-strong: #d3e8df;   /* loro hover */
@@ -37,45 +42,79 @@
     /* Stati */
     --pen: #c0141c;
     --pen-soft: #fcebeb;
-    --highlighter: #fff06b;
-    --on-highlighter: #14161b;
     --warning: #8a5a00;
     --warning-soft: #fdf3dc;
     --info-soft: #e8f2ee;
 
-    /* Blocchi in quattro famiglie (R-18), distinte dalla forma dentro ogni famiglia: fondo,
-       contorno e parola chiave. Mai gialle o rosse (regola del segno unico); il verde resta ai
-       comandi, a Inizio e Fine e al ramo percorso. Contorni almeno 3:1 sulla tela. */
-    --block-data: #eaeff8;          /* dichiarazione, assegnazione */
-    --block-data-line: #7c8cad;
-    --block-data-key: #34466e;
-    --block-io: #e4f3eb;            /* input, output */
-    --block-io-line: #67967d;
-    --block-io-key: #22593f;
-    --block-control: #f2ebf9;       /* if, while, do, for */
-    --block-control-line: #9883b5;
-    --block-control-key: #573f7c;
-    --block-call: #eeece7;          /* chiamata e commento */
-    --block-call-line: #918b80;
-    --block-call-key: #4f4b43;
-    --flow-line: #848d9b;           /* frecce: grigio neutro */
+    /* Esecuzione (R-23): l'impulso che corre sulle frecce e la scia che lascia. */
+    --pulse: var(--ink);
+    --pulse-soft: rgba(29, 105, 84, 0.2);
+    --trail: var(--ink);
+    --pulse-width: 5px;
+    --pulse-glow-width: 14px;  /* traccia larga, piena e semitrasparente: non è un filtro */
+    --trail-fade: 1.4s;
 
-    /* Console: bianca nel tema chiaro (R-11), grafite nel tema scuro (R-03). I nomi vengono
-       dalla lavagna: chalk = testo, chalk-yellow = valori digitati, chalk-pen = errori. */
-    --slate: #ffffff;
-    --slate-line: #e6e8ed;
-    --chalk: #14161b;
-    --chalk-muted: #5a6070;
+    /* Frecce: smorzate ma almeno 3:1 sulla tela (WCAG 1.4.11). */
+    --flow-line: #7a8a9c;
+    --flow-width: 2.6px;
+    --junction-fill: var(--canvas);
+
+    /* Blocchi in quattro famiglie (R-18, R-24), distinte dalla forma dentro ogni famiglia. Il
+       contorno è il colore della famiglia, la parola chiave anche; il fondo è lo stesso colore
+       al 9% sulla carta (12% nel tema scuro). Mai verdi, gialle o rosse: il verde è
+       dell'esecuzione, e solo Inizio e Fine lo portano. */
+    --block-data: #edeef4;          /* dichiarazione, assegnazione */
+    --block-data-line: #3a4fc4;
+    --block-data-key: #3a4fc4;
+    --block-io: #e9f1ef;            /* input, output: ciano-petrolio */
+    --block-io-line: #0b7285;
+    --block-io-key: #0b7285;
+    --block-control: #f2edf2;       /* if, while, do, for */
+    --block-control-line: #6a3fb0;
+    --block-control-key: #6a3fb0;
+    --block-call: #f2f0ea;          /* chiamata e commento: grigio caldo */
+    --block-call-line: #6b6457;
+    --block-call-key: #6b6457;
+    --block-terminal: #ebf1ea;      /* Inizio e Fine */
+    --block-terminal-line: #1d6954;
+    --block-terminal-key: #1d6954;
+    --block-stroke: 2.6px;
+    --block-stroke-active: 4px;
+    /* Ombra piena sfalsata (tema chiaro): una copia della forma, mai un filtro. */
+    --block-shadow: #14202e;
+    --block-shadow-offset: 4px;
+    --block-shadow-offset-active: 7px;
+
+    /* Console: riquadro incassato. I nomi vengono dalla lavagna: chalk = testo,
+       chalk-yellow = valori digitati (oggi verdi, R-22), chalk-pen = errori. */
+    --slate: #fffef9;
+    --slate-line: #14202e;
+    --slate-line-width: 2px;
+    --slate-shadow: 3px 3px 0 #14202e;
+    --chalk: #0e1823;
+    --chalk-muted: #4f5f72;
     --chalk-yellow: #1d6954;
     --chalk-pen: #c0141c;
-    --chalk-field: #f2f4f6;
+    --chalk-field: #f1f0e8;
 
     /* Colori del codice generato (passo 22): mai rosso né giallo, che hanno già un significato */
     --code-keyword: #1d6954;
     --code-string: #7a3a9e;
     --code-number: #1f5fb8;
-    --code-comment: #5a6070;
+    --code-comment: #4f5f72;
     --code-directive: #7a3a9e;
+
+    /* Cornice (R-26): pulsanti con bordo d'inchiostro e ombra piena nel tema chiaro. */
+    --button-border: 2px;
+    --button-radius: 6px;
+    --button-shadow: 3px 3px 0 #14202e;
+    --button-press: translate(3px, 3px);
+    --button-glow: none;
+    --button-primary-border: #14202e;
+    --button-hover-border: #14202e;
+    --button-hover-shadow: 3px 3px 0 #14202e;
+    --logo-shadow: 3px 3px 0 #14202e;
+    --label-dot-radius: 0;      /* indicatore delle etichette di sezione: quadrato */
 
     /* Tipografia */
     --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, sans-serif;
@@ -95,14 +134,15 @@
     --space-6: 1.5rem;
     --gutter: 1rem;
     --touch: 2.75rem;           /* 44 px: area di tocco minima (FR-MOB-04) */
-    --radius: 8px;              /* pulsanti e campi (R-04) */
+    --radius: 8px;              /* campi (R-04) */
     --radius-panel: 12px;       /* menu e pannelli che si sovrappongono */
     --bar-height: 3.5rem;
     --tabs-height: 3.5rem;
 
-    /* Ombra leggera solo per ciò che sta sopra la tela (menu, comandi del foglio) */
-    --shadow-float: 0 1px 2px rgba(16, 22, 36, 0.08), 0 4px 14px rgba(16, 22, 36, 0.1);
-    --shadow-menu: 0 2px 4px rgba(16, 22, 36, 0.08), 0 12px 32px rgba(16, 22, 36, 0.16);
+    /* Ombra per ciò che sta sopra la tela (menu, comandi del foglio): piena nel tema chiaro. */
+    --shadow-float: 3px 3px 0 #14202e;
+    --shadow-menu: 4px 4px 0 #14202e;
+    --float-border: 2px solid #14202e;
 
     /* Movimento */
     --duration-press: 100ms;
@@ -114,118 +154,176 @@
    I valori sono ripetuti per [data-theme="dark"]: tenerli uguali. */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-        --canvas: #121418;
-        --canvas-dot: #2d323c;
-        --paper: #1a1d23;
+        --canvas: #060a12;
+        --canvas-dot: #142124;
+        --canvas-glow: radial-gradient(ellipse at 50% 25%, rgba(121, 201, 169, 0.07), transparent 65%);
+        --paper: #0b1321;
         --ink: #79c9a9;
         --ink-soft: #5f9e88;
-        --text: #eceef3;
-        --text-muted: #a1a8b5;
+        --text: #dbe7f5;
+        --text-muted: #7f93ad;
 
-        --chrome: #1a1d23;
-        --chrome-line: #2c313b;
-        --line: #282c35;
-        --on-ink: #11131a;
-        --tonal: #1f2f2a;
-        --tonal-strong: #284139;
+        --chrome: #0a1220;
+        --chrome-line: #1a2a42;
+        --chrome-line-width: 1px;
+        --line: #15233a;
+        --on-ink: #0b1a14;
+        --tonal: #14261f;
+        --tonal-strong: #1d3a30;
 
         --pen: #ff7b73;
         --pen-soft: #3a1d1f;
-        --highlighter: #f5e15a;
-        --on-highlighter: #121418;
         --warning: #f1c46b;
         --warning-soft: #33290f;
-        --info-soft: #1f2f2a;
+        --info-soft: #14261f;
 
-        --block-data: #1e2535;
-        --block-data-line: #7a8bb0;
-        --block-data-key: #bccaea;
-        --block-io: #16281f;
-        --block-io-line: #64a081;
-        --block-io-key: #a3d8ba;
-        --block-control: #282034;
-        --block-control-line: #a08ac0;
-        --block-control-key: #d2bfee;
-        --block-call: #25241f;
-        --block-call-line: #99937f;
-        --block-call-key: #d3cdbd;
-        --flow-line: #5d6573;
+        --pulse-soft: rgba(121, 201, 169, 0.32);
+        --pulse-width: 3px;
+        --pulse-glow-width: 10px;
+
+        --flow-line: #4a6478;
+        --flow-width: 2px;
+
+        --block-data: #19233c;
+        --block-data-line: #7f9cff;
+        --block-data-key: #7f9cff;
+        --block-io: #132a39;
+        --block-io-line: #4fd3e6;
+        --block-io-key: #4fd3e6;
+        --block-control: #1f223c;
+        --block-control-line: #b48cff;
+        --block-control-key: #b48cff;
+        --block-call: #1d242e;
+        --block-call-line: #a59f8c;
+        --block-call-key: #a59f8c;
+        --block-terminal: #182931;
+        --block-terminal-line: #79c9a9;
+        --block-terminal-key: #79c9a9;
+        --block-stroke: 1.6px;
+        --block-stroke-active: 3px;
+        --block-shadow: transparent;
+        --block-shadow-offset: 0px;
+        --block-shadow-offset-active: 0px;
 
         /* Console più scura della tela, separata da una linea */
-        --slate: #0e1013;
-        --slate-line: #262a31;
-        --chalk: #eceef2;
-        --chalk-muted: #a3a9b5;
-        --chalk-yellow: #f2cf5b;
+        --slate: #050910;
+        --slate-line: #1a2a42;
+        --slate-line-width: 1px;
+        --slate-shadow: none;
+        --chalk: #dbe7f5;
+        --chalk-muted: #7f93ad;
+        --chalk-yellow: #79c9a9;
         --chalk-pen: #ff8f86;
-        --chalk-field: #1c1f25;
+        --chalk-field: #0f1a2b;
 
         --code-keyword: #79c9a9;
         --code-string: #d6a8ff;
         --code-number: #8cc8ff;
-        --code-comment: #a3a9b5;
+        --code-comment: #8fa2bb;
         --code-directive: #d6a8ff;
+
+        --button-border: 1px;
+        --button-radius: 8px;
+        --button-shadow: none;
+        --button-press: scale(0.97);
+        --button-glow: 0 0 16px rgba(121, 201, 169, 0.32);
+        --button-primary-border: #79c9a9;
+        --button-hover-border: #79c9a9;
+        --button-hover-shadow: 0 0 12px rgba(121, 201, 169, 0.32);
+        --logo-shadow: 0 0 14px rgba(121, 201, 169, 0.45);
+        --label-dot-radius: 50%;
+
         --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.35);
         --shadow-menu: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.5);
+        --float-border: 1px solid #1a2a42;
     }
 }
 
 /* Scelto a mano dal menu, vale anche con il sistema chiaro. */
 :root[data-theme="dark"] {
     color-scheme: dark;
-    --canvas: #121418;
-    --canvas-dot: #2d323c;
-    --paper: #1a1d23;
+    --canvas: #060a12;
+    --canvas-dot: #142124;
+    --canvas-glow: radial-gradient(ellipse at 50% 25%, rgba(121, 201, 169, 0.07), transparent 65%);
+    --paper: #0b1321;
     --ink: #79c9a9;
     --ink-soft: #5f9e88;
-    --text: #eceef3;
-    --text-muted: #a1a8b5;
+    --text: #dbe7f5;
+    --text-muted: #7f93ad;
 
-    --chrome: #1a1d23;
-    --chrome-line: #2c313b;
-    --line: #282c35;
-    --on-ink: #11131a;
-    --tonal: #1f2f2a;
-    --tonal-strong: #284139;
+    --chrome: #0a1220;
+    --chrome-line: #1a2a42;
+    --chrome-line-width: 1px;
+    --line: #15233a;
+    --on-ink: #0b1a14;
+    --tonal: #14261f;
+    --tonal-strong: #1d3a30;
 
     --pen: #ff7b73;
     --pen-soft: #3a1d1f;
-    --highlighter: #f5e15a;
-    --on-highlighter: #121418;
     --warning: #f1c46b;
     --warning-soft: #33290f;
-    --info-soft: #1f2f2a;
+    --info-soft: #14261f;
 
-    --block-data: #1e2535;
-    --block-data-line: #7a8bb0;
-    --block-data-key: #bccaea;
-    --block-io: #16281f;
-    --block-io-line: #64a081;
-    --block-io-key: #a3d8ba;
-    --block-control: #282034;
-    --block-control-line: #a08ac0;
-    --block-control-key: #d2bfee;
-    --block-call: #25241f;
-    --block-call-line: #99937f;
-    --block-call-key: #d3cdbd;
-    --flow-line: #5d6573;
+    --pulse-soft: rgba(121, 201, 169, 0.32);
+    --pulse-width: 3px;
+    --pulse-glow-width: 10px;
+
+    --flow-line: #4a6478;
+    --flow-width: 2px;
+
+    --block-data: #19233c;
+    --block-data-line: #7f9cff;
+    --block-data-key: #7f9cff;
+    --block-io: #132a39;
+    --block-io-line: #4fd3e6;
+    --block-io-key: #4fd3e6;
+    --block-control: #1f223c;
+    --block-control-line: #b48cff;
+    --block-control-key: #b48cff;
+    --block-call: #1d242e;
+    --block-call-line: #a59f8c;
+    --block-call-key: #a59f8c;
+    --block-terminal: #182931;
+    --block-terminal-line: #79c9a9;
+    --block-terminal-key: #79c9a9;
+    --block-stroke: 1.6px;
+    --block-stroke-active: 3px;
+    --block-shadow: transparent;
+    --block-shadow-offset: 0px;
+    --block-shadow-offset-active: 0px;
 
     /* Console più scura della tela, separata da una linea */
-    --slate: #0e1013;
-    --slate-line: #262a31;
-    --chalk: #eceef2;
-    --chalk-muted: #a3a9b5;
-    --chalk-yellow: #f2cf5b;
+    --slate: #050910;
+    --slate-line: #1a2a42;
+    --slate-line-width: 1px;
+    --slate-shadow: none;
+    --chalk: #dbe7f5;
+    --chalk-muted: #7f93ad;
+    --chalk-yellow: #79c9a9;
     --chalk-pen: #ff8f86;
-    --chalk-field: #1c1f25;
+    --chalk-field: #0f1a2b;
 
     --code-keyword: #79c9a9;
     --code-string: #d6a8ff;
     --code-number: #8cc8ff;
-    --code-comment: #a3a9b5;
+    --code-comment: #8fa2bb;
     --code-directive: #d6a8ff;
+
+    --button-border: 1px;
+    --button-radius: 8px;
+    --button-shadow: none;
+    --button-press: scale(0.97);
+    --button-glow: 0 0 16px rgba(121, 201, 169, 0.32);
+    --button-primary-border: #79c9a9;
+    --button-hover-border: #79c9a9;
+    --button-hover-shadow: 0 0 12px rgba(121, 201, 169, 0.32);
+    --logo-shadow: 0 0 14px rgba(121, 201, 169, 0.45);
+    --label-dot-radius: 50%;
+
     --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.35);
     --shadow-menu: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.5);
+    --float-border: 1px solid #1a2a42;
 }
 
 :root[data-theme="light"] {

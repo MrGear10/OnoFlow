@@ -116,7 +116,7 @@
 
         function valueNode(variable, changes) {
             if (!variable.array) {
-                var box = element('span', 'variable-value', valueText(variable.type, variable.value, t, formatValue));
+                var box = element('span', 'variable-value' + (hasValue(variable) ? '' : ' is-unset'), valueText(variable.type, variable.value, t, formatValue));
                 if (variable.type === 'Real' && typeof variable.value === 'number') {
                     var full = formatFull(variable.value);
                     if (full !== box.textContent) {
