@@ -379,6 +379,7 @@
             'ui.menu.about': 'Progetto',
             'ui.info.open': 'Informazioni',
             'ui.docs.open': 'Documentazione',
+            'ui.install': 'Installa OnoFlow',
             'ui.docs.full': 'Documentazione completa: guida d\'uso, presentazione, licenza.',
             'ui.theme.toLight': 'Tema chiaro',
             'ui.theme.toDark': 'Tema scuro',

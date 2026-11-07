@@ -1,0 +1,26 @@
+{
+    "id": "./",
+    "name": "OnoFlow",
+    "short_name": "OnoFlow",
+    "description": "Editor web di diagrammi di flusso, compatibile con i file .fprg",
+    "lang": "it",
+    "dir": "ltr",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "theme_color": "#eeece2",
+    "background_color": "#f6f5ef",
+    "categories": ["education", "productivity"],
+    "icons": [
+        { "src": "icons/onoflow.svg", "sizes": "any", "type": "image/svg+xml" },
+        { "src": "icons/onoflow-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "icons/onoflow-512.png", "sizes": "512x512", "type": "image/png" },
+        { "src": "icons/onoflow-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ],
+    "file_handlers": [
+        {
+            "action": "./",
+            "accept": { "application/x-flowgorithm": [".fprg"] }
+        }
+    ]
+}

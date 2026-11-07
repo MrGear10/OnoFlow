@@ -10,6 +10,7 @@
     <link rel="icon" type="image/svg+xml" href="icons/onoflow.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="icons/onoflow-32.png">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/base.css">
 </head>
@@ -87,6 +88,7 @@
                     <button class="menu-item" id="cmd-theme" type="button" role="menuitem"></button>
                     <a class="menu-item" id="cmd-docs" href="documentazione.html" target="_blank" rel="noopener" role="menuitem" data-docs-link data-i18n="ui.docs.open"></a>
                     <button class="menu-item" id="cmd-info" type="button" role="menuitem" data-i18n="ui.info.open"></button>
+                    <button class="menu-item" id="cmd-install" type="button" role="menuitem" data-i18n="ui.install" hidden></button>
                 </div>
             </div>
         </div>
@@ -242,6 +244,7 @@
 <script src="js/ui/code-view.js"></script>
 <script src="js/ui/session-copy.js"></script>
 <script src="js/ui/theme.js"></script>
+<script src="js/ui/install.js"></script>
 <script src="js/app.js"></script>
 <script>
     window.OnoFlow.App.start();

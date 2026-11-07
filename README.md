@@ -17,12 +17,14 @@ OnoFlow serve a scuola: si costruisce un diagramma di flusso, lo si esegue con l
 - **Codice C++ e Python:** lo stesso programma scritto nei due linguaggi, con lo stesso output, da leggere accanto al diagramma, copiare o scaricare.
 - Sul **telefono** diagramma e console stanno in due schede; zoom con due dita.
 - Tema chiaro o scuro, che segue il sistema o si sceglie a mano.
+- Si può **installare come app** dal browser (Chrome, Edge, Safari su iPhone).
 
 Come si fa ogni cosa: [Guida d'uso](docs/guida.md).
 
 ## Come si usa
 
 - **Online:** [mrgear10.github.io/OnoFlow](https://mrgear10.github.io/OnoFlow/), ospitato su GitHub Pages. Sui telefoni si usa così.
+- **Come app:** dalla versione online si può installare (Menu → Installa OnoFlow su Chrome ed Edge, Aggiungi alla schermata Home su iPhone): icona propria, finestra senza barra degli indirizzi e, con Chrome ed Edge sul computer, apertura dei `.fprg` con un doppio clic. Resta il sito online: si aggiorna da solo e senza rete non si apre. Vedi la [Guida d'uso](docs/guida.md#installare-onoflow-come-app).
 - **Offline, sul computer:** scaricare lo ZIP del repository (Code → Download ZIP), estrarlo e aprire `index.html` con un doppio clic. Funziona da `file://`, senza rete; in fondo alla pagina compare "Copia locale".
 
 Browser di riferimento: Firefox (anche su Linux), Chrome su Android, Safari su iPhone e iPad.
@@ -30,7 +32,7 @@ Browser di riferimento: Firefox (anche su Linux), Chrome su Android, Safari su i
 ## Privacy
 
 - **I file non lasciano il browser.** Si leggono sul dispositivo e si salvano con un download. Non c'è un server di OnoFlow e la pagina non usa risorse esterne: niente font remoti, statistiche o cookie.
-- **Nessun dato salvato.** Niente `localStorage`, cookie o cronologia. L'unica eccezione è una **copia di sessione** del diagramma aperto (testo del file, nome, stato "salvato" e origine) in `sessionStorage`, perché un ricaricamento o una scheda chiusa dal telefono non facciano perdere il lavoro. Resta solo in quella scheda di quel dispositivo, il browser la cancella quando la scheda si chiude e non viene mai inviata. Se `sessionStorage` non c'è (per esempio in navigazione privata) l'app funziona lo stesso, senza ripristino.
+- **Nessun dato salvato.** Niente `localStorage`, cookie o cronologia. L'unica eccezione è una **copia di sessione** del diagramma aperto (testo del file, nome, stato "salvato" e origine) in `sessionStorage`, perché un ricaricamento o una scheda chiusa dal telefono non facciano perdere il lavoro. Resta solo in quella scheda di quel dispositivo, il browser la cancella quando la scheda si chiude e non viene mai inviata. Se `sessionStorage` non c'è (per esempio in navigazione privata) l'app funziona lo stesso, senza ripristino. Installare OnoFlow come app non cambia nulla: non c'è un service worker e non si conservano copie del sito o dei file.
 - **Hosting.** La versione online è ospitata su **GitHub Pages**, un servizio di GitHub, Inc., con sede negli **Stati Uniti, quindi fuori dall'Unione Europea**. Secondo la documentazione di GitHub, di ogni visitatore "l'indirizzo IP viene registrato e conservato per motivi di sicurezza", anche senza un account GitHub. OnoFlow non invia altri dati. Vedi l'[informativa sulla privacy di GitHub](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement). La copia offline non contatta GitHub.
 - **Dati nei file `.fprg`.** Un file creato con Flowgorithm contiene il **nome utente e il nome del computer** di chi l'ha creato e modificato (negli attributi `authors`, `created` ed `edited`, gli ultimi due codificati in Base64). OnoFlow non li aggiunge, ma **non li toglie**: un file aperto e risalvato li conserva. Un file creato da zero in OnoFlow ha solo il nome, `authors` e `about` vuoti e la data di salvataggio.
 

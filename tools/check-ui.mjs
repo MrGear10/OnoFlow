@@ -2157,6 +2157,89 @@ async function checkSignal(browser, engineName) {
     return checks;
 }
 
+/* App installabile (DEC-111): manifest e icone; voce del menu solo se il browser propone
+ * l'installazione; un .fprg aperto con un doppio clic arriva come Menu → Apri…. */
+async function checkInstall(browser, engineName) {
+    const checks = new Checks(`${engineName} installabile`);
+    const manifest = JSON.parse(await readFile(path.join(ROOT, 'manifest.webmanifest'), 'utf8'));
+    checks.ok(manifest.name === 'OnoFlow' && manifest.display === 'standalone' && manifest.start_url === './' && manifest.scope === './',
+        'manifest: nome, finestra propria, indirizzi relativi');
+    for (const icon of manifest.icons) {
+        const data = await readFile(path.join(ROOT, icon.src));
+        if (icon.type === 'image/png') {
+            const size = `${data.readUInt32BE(16)}x${data.readUInt32BE(20)}`;
+            checks.ok(size === icon.sizes, `icona ${icon.src}: ${size}`);
+        }
+    }
+    checks.ok(['192x192', '512x512'].every((size) => manifest.icons.some((icon) => icon.sizes === size && !icon.purpose)),
+        'icone da 192 e 512 px');
+    checks.ok(manifest.icons.some((icon) => icon.purpose === 'maskable'), 'icona maskable per Android');
+    checks.ok(Object.values(manifest.file_handlers[0].accept).flat().includes('.fprg'), 'apre i file .fprg');
+    const html = await readFile(path.join(ROOT, 'index.html'), 'utf8');
+    checks.ok(html.includes('<link rel="manifest" href="manifest.webmanifest">'), 'index.html collega il manifest');
+
+    const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+    // Una coda di avvio finta, come quella di Chrome per i file aperti con l'app installata.
+    await context.addInitScript(() => {
+        Object.defineProperty(window, 'launchQueue', { configurable: true, value: { setConsumer: (consumer) => { window.__launch = consumer; } } });
+    });
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    try {
+        await page.goto(URL);
+        await page.waitForSelector('#diagram .dg-block--terminal');
+        await page.click('#menu-button');
+        checks.ok(!(await page.isVisible('#cmd-install')), 'senza proposta del browser la voce Installa non c\'è');
+        await page.click('#menu-button');
+        await page.evaluate(() => {
+            const event = new Event('beforeinstallprompt', { cancelable: true });
+            event.prompt = () => { window.__prompted = (window.__prompted || 0) + 1; };
+            window.__event = event;
+            window.dispatchEvent(event);
+        });
+        checks.ok(await page.evaluate(() => window.__event.defaultPrevented), 'nessun avviso del browser che compare da solo');
+        await page.click('#menu-button');
+        checks.ok(await page.isVisible('#cmd-install') && (await page.textContent('#cmd-install')).trim() === 'Installa OnoFlow',
+            'con la proposta del browser: «Installa OnoFlow» nel menu');
+        await page.click('#cmd-install');
+        checks.ok(await page.evaluate(() => window.__prompted === 1), 'la voce apre la richiesta del browser');
+        checks.ok(await page.isHidden('#menu'), 'e chiude il menu');
+        await page.click('#menu-button');
+        checks.ok(!(await page.isVisible('#cmd-install')), 'dopo la richiesta la voce sparisce');
+        await page.click('#menu-button');
+
+        const launch = (name) => page.evaluate((fileName) => {
+            const text = window.OnoFlow.Examples.byId('somma-massimo-minimo').text;
+            const file = new File([text], fileName);
+            window.__launch({ files: [{ getFile: () => Promise.resolve(file) }] });
+        }, name);
+        await launch('compito.fprg');
+        await page.waitForFunction(() => document.getElementById('file-name').value === 'compito.fprg');
+        checks.ok(await page.locator('#diagram [data-id]').count() > 5, 'doppio clic su un .fprg: il diagramma si apre');
+        // Con modifiche non salvate chiede prima cosa fare, come Apri.
+        await page.click('#menu-button');
+        await page.click('#cmd-new-function');
+        await page.keyboard.press('Escape');
+        const modified = await page.isVisible('#modified');
+        await launch('altro.fprg');
+        if (modified) {
+            const bar = page.locator('.notice:has(.notice-action)');
+            await bar.waitFor();
+            checks.ok(await page.inputValue('#file-name') !== 'altro.fprg', 'con modifiche: il file non si apre subito');
+            await page.locator('.notice-action', { hasText: 'Non salvare' }).click();
+        }
+        await page.waitForFunction(() => document.getElementById('file-name').value === 'altro.fprg');
+        checks.ok(true, 'poi si apre il file scelto');
+        checks.ok(errors.length === 0, `nessun errore nella pagina (${errors.join('; ')})`);
+    } catch (error) {
+        checks.ok(false, `verifica interrotta: ${error.message.split('\n')[0]}`);
+    } finally {
+        await context.close();
+    }
+    return checks;
+}
+
 async function main() {
     const options = readOptions(process.argv.slice(2));
     if (options.screenshots) {
@@ -2190,6 +2273,7 @@ async function main() {
             runs.push(['finestra delle variabili', () => checkVariablesWindow(browser, engineName)]);
             runs.push(['selezione', () => checkSelectionClear(browser, engineName)]);
             runs.push(['segnale', () => checkSignal(browser, engineName)]);
+            runs.push(['installabile', () => checkInstall(browser, engineName)]);
             for (const [, run] of runs.filter(([name]) => name.includes(options.only))) {
                 const checks = await run();
                 if (checks.failures.length === 0) {

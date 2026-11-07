@@ -50,6 +50,7 @@
     var CODE_GENERATORS = { cpp: OnoFlow.CodegenCpp, python: OnoFlow.CodegenPython };
     var CODE_EXTENSIONS = { cpp: '.cpp', python: '.py' };
     var Theme = OnoFlow.Theme;
+    var Install = OnoFlow.Install;
 
     var DEFAULT_EXTENSION = '.fprg';
     var MAX_FILE_BYTES = 5 * 1024 * 1024; // NFR-PERF-02
@@ -1914,6 +1915,19 @@
         } else {
             newProgram();
         }
+
+        // App installata (DEC-111): voce «Installa OnoFlow» e .fprg aperti con un doppio clic,
+        // come Menu → Apri… (con la richiesta di salvare se ci sono modifiche).
+        var installItem = byId('cmd-install');
+        installItem.addEventListener('click', function () { closeMenu(); });
+        Install.create({
+            item: installItem,
+            onFile: function (file) {
+                if (!isActive()) {
+                    confirmLeave(function () { openFile(file); });
+                }
+            }
+        });
         app.removeAttribute('data-loading');
     }
 

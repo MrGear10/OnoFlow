@@ -2,7 +2,7 @@
 
 Questa guida spiega come si costruisce, si esegue e si salva un diagramma di flusso con OnoFlow. È scritta per studenti e docenti; non serve sapere nulla di Flowgorithm.
 
-OnoFlow si apre all'indirizzo [mrgear10.github.io/OnoFlow](https://mrgear10.github.io/OnoFlow/), sul computer e sul telefono, senza installare nulla e senza account. Sul computer si può usare anche senza rete: vedi [Presentazione](../README.md#come-si-usa).
+OnoFlow si apre all'indirizzo [mrgear10.github.io/OnoFlow](https://mrgear10.github.io/OnoFlow/), sul computer e sul telefono, senza installare nulla e senza account. Chi vuole può installarla come app (vedi [Installare OnoFlow come app](#installare-onoflow-come-app)). Sul computer si può usare anche senza rete: vedi [Presentazione](../README.md#come-si-usa).
 
 ## La schermata
 
@@ -14,7 +14,7 @@ OnoFlow si apre all'indirizzo [mrgear10.github.io/OnoFlow](https://mrgear10.gith
   - **Esempi:** diagrammi pronti da aprire.
   - **Esecuzione:** Esegui passo a passo (anche con F10).
   - **Modifica:** Nuova funzione, Annulla (Ctrl + Z), Ripeti (Ctrl + Y).
-  - **Progetto:** tema chiaro o scuro, Documentazione, Informazioni.
+  - **Progetto:** tema chiaro o scuro, Documentazione, Informazioni e, dove il browser lo permette, **Installa OnoFlow**.
 
 Sul computer diagramma e console stanno affiancati. **Sul telefono** stanno in due schede in basso, **Diagramma** e **Console** (con il telefono in orizzontale, una colonna di icone a sinistra): all'avvio dell'esecuzione si passa da soli alla console. Sul telefono i comandi del foglio (selezione, Annulla e Ripeti, zoom) stanno in una base in basso, che non copre il diagramma; i comandi dell'esecuzione nella barra in alto occupano sempre gli stessi due posti.
 
@@ -106,6 +106,21 @@ In alternativa, con un blocco selezionato, **Inserisci dopo** aggiunge un blocco
 - Prima di aprire un altro diagramma con modifiche non salvate, una barra chiede se **Salva**, **Non salvare** o **Chiudi**.
 - Se la pagina si ricarica o il telefono chiude la scheda, il diagramma viene **ripristinato** all'apertura successiva della stessa scheda. È una rete di sicurezza, non un salvataggio: per conservare il lavoro serve **Salva**.
 
+## Installare OnoFlow come app
+
+OnoFlow si può installare come un'app: ha la sua icona tra le app (sul computer anche sulla barra delle applicazioni, sul telefono nella schermata Home) e si apre in una finestra propria, senza barra degli indirizzi né schede. È sempre lo stesso sito: si aggiorna da solo e, come la pagina, **senza rete non si apre**. Non salva nulla di nuovo sul dispositivo.
+
+- **Chrome o Edge sul computer:** Menu → **Installa OnoFlow**, oppure l'icona di installazione nella barra degli indirizzi.
+- **Chrome su Android:** Menu → **Installa OnoFlow**, oppure il menu di Chrome (⋮) → **Installa app** o **Aggiungi a schermata Home**.
+- **Safari su iPhone e iPad:** il pulsante **Condividi** → **Aggiungi alla schermata Home**.
+- **Firefox:** non installa le app web; OnoFlow resta una scheda, come sempre.
+
+La voce **Installa OnoFlow** compare nel menu solo quando il browser propone l'installazione: non c'è se l'app è già installata, se si usa un browser che non lo permette o se la pagina è aperta dal disco (la copia offline non si installa).
+
+Con l'app installata in **Chrome o Edge sul computer**, un file `.fprg` si apre anche con un **doppio clic** (o con *Apri con → OnoFlow*): arriva nell'app come con **Apri…**, con la stessa richiesta di salvare se ci sono modifiche. Il sistema può chiedere la prima volta se lasciare aprire i file a OnoFlow.
+
+Per **disinstallare:** sul computer, nella finestra dell'app, il menu in alto a destra (⋮) → **Disinstalla OnoFlow**; sul telefono, come per le altre app (tenere premuta l'icona).
+
 ## Il codice C++ e Python
 
 Menu → File → **Codice C++ e Python** mostra lo stesso programma del diagramma scritto in **C++** e in **Python**, per passare dal diagramma a un linguaggio vero. Sul computer il codice sta accanto al diagramma, al posto della console; sul telefono occupa tutto lo schermo. **Chiudi** (o Esc) torna alla console.
@@ -189,4 +204,5 @@ Un **array** è una fila di valori dello stesso tipo, numerati da 0: con `Intege
 | Il + non c'è | Durante l'esecuzione le frecce non hanno il +: prima serve **Ferma** o la fine del programma. |
 | Il file non si apre | Il messaggio spiega il motivo; il diagramma di prima resta aperto. OnoFlow apre solo file `.fprg`. |
 | All'apertura compare un avviso su `<function>`, `<call>` o `<comment>` | Il formato di questi elementi non è ancora stato verificato su un file di Flowgorithm: il diagramma si apre, conviene controllarlo dopo il salvataggio. |
+| La voce **Installa OnoFlow** non c'è | Il browser non propone l'installazione: l'app è già installata, il browser non lo permette (Firefox, Safari: su iPhone si usa Condividi → Aggiungi alla schermata Home) o la pagina è aperta dal disco. |
 | Il diagramma è sparito dopo aver chiuso il browser | Il ripristino vale solo per la stessa scheda: il lavoro va salvato con **Salva**. |
