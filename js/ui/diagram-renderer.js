@@ -601,10 +601,9 @@
             for (var i = 1; i < path.points.length; i++) {
                 length += Math.hypot(path.points[i][0] - path.points[i - 1][0], path.points[i][1] - path.points[i - 1][1]);
             }
-            // Velocità fissa (non c'è un comando della velocità): una cometa lunga che si vede
-            // correre anche sulle frecce corte, più lenta su quelle lunghe.
-            var dash = Math.min(80, Math.max(30, length * 0.7));
-            var duration = Math.min(900, Math.max(320, length / 380 * 1000));
+            // Velocità fissa (non c'è un comando della velocità): un tratto corto, una durata breve.
+            var dash = Math.min(38, Math.max(14, length * 0.55));
+            var duration = Math.min(600, Math.max(150, length / 520 * 1000));
             var elements = [
                 svgElement('polyline', { points: points }, 'dg-pulse-glow'),
                 svgElement('polyline', { points: points }, 'dg-pulse'),

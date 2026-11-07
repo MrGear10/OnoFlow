@@ -859,14 +859,14 @@ button.diagram-error-entry:active {
 }
 
 .dg-pulse {
-    stroke: var(--pulse);
+    stroke: var(--pulse-bright);
     stroke-width: var(--pulse-width);
     stroke-linecap: round;
 }
 
 .dg-pulse-core {
     stroke: var(--pulse-core);
-    stroke-width: calc(var(--pulse-width) / 3);
+    stroke-width: calc(var(--pulse-width) / 2.5);
     stroke-linecap: round;
 }
 
@@ -890,7 +890,7 @@ button.diagram-error-entry:active {
 .dg-taken {
     fill: none;
     stroke: var(--ink);
-    stroke-width: var(--trail-width);
+    stroke-width: var(--pulse-width);
     stroke-linejoin: round;
     stroke-linecap: round;
 }
