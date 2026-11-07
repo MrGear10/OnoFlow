@@ -1495,8 +1495,8 @@ async function checkBarWidths(browser, engineName) {
     return checks;
 }
 
-/* Barra ferma (R-19): da fermo, durante l'esecuzione e alla fine i comandi non si spostano; in pausa
-   c'è un comando in più (Passo) e la barra si allarga a sinistra, ma il Menu resta fermo. */
+/* Barra ferma (R-19, R-28): da fermo, durante l'esecuzione, in pausa e alla fine i comandi non si
+   spostano; Passo resta nello stesso posto anche quando lo si preme. */
 async function checkBarStable(browser, engineName) {
     const checks = new Checks(`${engineName} barra ferma`);
     const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: 'reduce' });
@@ -1521,6 +1521,18 @@ async function checkBarStable(browser, engineName) {
             await page.waitForFunction(() => document.getElementById('status').textContent.trim() === 'Terminato');
             const done = await places();
             checks.ok(idle === waiting && idle === done, `${width} px: stessi posti da fermo, in attesa e alla fine (${idle} / ${waiting} / ${done})`);
+            const stepPlace = () => page.evaluate(() => {
+                const box = document.getElementById('step').getBoundingClientRect();
+                return Math.round(box.left) + '+' + Math.round(box.width);
+            });
+            const stepIdle = await stepPlace();
+            await page.click('#step');
+            await page.waitForFunction(() => document.getElementById('status').textContent.trim() === 'Passo a passo');
+            const stepPaused = await stepPlace();
+            const pausedPlaces = await places();
+            await page.click('#stop');
+            await page.waitForFunction(() => document.getElementById('status').textContent.trim() === 'Fermato');
+            checks.ok(stepIdle === stepPaused && pausedPlaces === idle, `${width} px: Passo e la barra restano al loro posto premendo Passo (${stepIdle} / ${stepPaused}; ${pausedPlaces})`);
         }
     } finally {
         await context.close();

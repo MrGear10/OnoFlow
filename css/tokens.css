@@ -48,10 +48,12 @@
 
     /* Esecuzione (R-23): l'impulso che corre sulle frecce e la scia che lascia. */
     --pulse: var(--ink);
-    --pulse-soft: rgba(29, 105, 84, 0.2);
+    --pulse-soft: rgba(29, 105, 84, 0.3);
+    --pulse-core: #ffffff;     /* anima chiara al centro dell'impulso: effetto tubo al neon */
     --trail: var(--ink);
-    --pulse-width: 5px;
-    --pulse-glow-width: 14px;  /* traccia larga, piena e semitrasparente: non è un filtro */
+    --pulse-width: 8px;
+    --pulse-glow-width: 24px;  /* traccia larga, piena e semitrasparente: non è un filtro */
+    --trail-width: 4px;
     --trail-fade: 1.4s;
 
     /* Frecce: smorzate ma almeno 3:1 sulla tela (WCAG 1.4.11). */
@@ -177,9 +179,11 @@
         --warning-soft: #33290f;
         --info-soft: #14261f;
 
-        --pulse-soft: rgba(121, 201, 169, 0.32);
-        --pulse-width: 3px;
-        --pulse-glow-width: 10px;
+        --pulse-soft: rgba(121, 201, 169, 0.45);
+        --pulse-core: #eafff6;
+        --pulse-width: 6px;
+        --pulse-glow-width: 22px;
+        --trail-width: 3px;
 
         --flow-line: #4a6478;
         --flow-width: 2px;
@@ -265,9 +269,11 @@
     --warning-soft: #33290f;
     --info-soft: #14261f;
 
-    --pulse-soft: rgba(121, 201, 169, 0.32);
-    --pulse-width: 3px;
-    --pulse-glow-width: 10px;
+    --pulse-soft: rgba(121, 201, 169, 0.45);
+    --pulse-core: #eafff6;
+    --pulse-width: 6px;
+    --pulse-glow-width: 22px;
+    --trail-width: 3px;
 
     --flow-line: #4a6478;
     --flow-width: 2px;

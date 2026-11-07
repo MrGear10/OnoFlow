@@ -845,6 +845,7 @@ button.diagram-error-entry:active {
    semitrasparente; la freccia resta colorata (scia) e poi torna grigia in --trail-fade. */
 .dg-pulse,
 .dg-pulse-glow,
+.dg-pulse-core,
 .dg-trail {
     fill: none;
     stroke-linejoin: round;
@@ -863,9 +864,15 @@ button.diagram-error-entry:active {
     stroke-linecap: round;
 }
 
+.dg-pulse-core {
+    stroke: var(--pulse-core);
+    stroke-width: calc(var(--pulse-width) / 3);
+    stroke-linecap: round;
+}
+
 .dg-trail {
     stroke: var(--trail);
-    stroke-width: var(--flow-width);
+    stroke-width: var(--trail-width);
     opacity: 0;
     transition: opacity var(--trail-fade) ease-out;
 }
@@ -883,7 +890,7 @@ button.diagram-error-entry:active {
 .dg-taken {
     fill: none;
     stroke: var(--ink);
-    stroke-width: var(--pulse-width);
+    stroke-width: var(--trail-width);
     stroke-linejoin: round;
     stroke-linecap: round;
 }
@@ -1984,14 +1991,14 @@ button.diagram-error-entry:active {
     visibility: hidden;
 }
 
-/* Un solo comando principale per stato (R-04, R-08): durante l'esecuzione Esegui lascia il posto a
-   Ferma, e Passo compare solo quando vale, nella pausa. Sotto i 40rem i posti fissi sono quelli
-   della regola più avanti (M-03). */
+/* Tre posti fissi (R-19, R-28): Pausa o Riprendi, poi Esegui o Ferma, poi Passo sempre a destra.
+   Da fermo il posto di Pausa resta vuoto ma tenuto; durante l'esecuzione continua Passo resta al
+   suo posto, spento. Così nessun comando si sposta, nemmeno quando si preme Passo. Sotto i 40rem
+   i posti fissi sono quelli della regola più avanti (M-03). */
 @media (min-width: 40.01rem) {
-    /* Posti di larghezza fissa: Esegui e Ferma, Passo e Pausa (o Riprendi) occupano lo stesso spazio,
-       quindi da fermo e durante l'esecuzione i comandi non spostano il resto della barra (R-19). */
     #run,
     #stop {
+        order: 2;
         min-width: 7.25rem;
     }
 
@@ -2000,14 +2007,23 @@ button.diagram-error-entry:active {
         min-width: 7.75rem;
     }
 
+    #pause {
+        order: 1;
+    }
+
+    #step {
+        order: 3;
+    }
+
     .app[data-run-state="running"] #run,
     .app[data-run-state="paused"] #run,
     .app[data-run-state="waitingInput"] #run,
-    .app[data-run-state="running"] #step,
-    .app[data-run-state="waitingInput"] #step,
-    .app:not([data-run-state="running"]):not([data-run-state="paused"]):not([data-run-state="waitingInput"]) #pause,
     .app:not([data-run-state="running"]):not([data-run-state="paused"]):not([data-run-state="waitingInput"]) #stop {
-        display: none; /* da fermo Pausa e Ferma non valgono */
+        display: none; /* Esegui e Ferma si danno il cambio nello stesso posto */
+    }
+
+    .app:not([data-run-state="running"]):not([data-run-state="paused"]):not([data-run-state="waitingInput"]) #pause {
+        visibility: hidden; /* da fermo Pausa non vale, ma il suo posto resta */
     }
 }
 
