@@ -1688,6 +1688,168 @@ async function checkPan(browser, engineName) {
     return checks;
 }
 
+/* Programma di prova per la finestra delle variabili: un array passato per riferimento a una
+   funzione, un input, un Real e una stringa. Costruito con il modello della pagina. */
+async function variablesProgram(page) {
+    return page.evaluate(() => {
+        const M = window.OnoFlow.Model;
+        const B = (kind, values) => M.createBlock(kind, values);
+        const raddoppia = M.createFunction({
+            name: 'Raddoppia', type: 'None', variable: '',
+            parameters: [{ name: 'v', type: 'Integer', array: true }, { name: 'k', type: 'Integer', array: false }],
+            body: [B('declare', { names: 'i', type: 'Integer' }),
+                B('for', { variable: 'i', start: '0', end: 'k - 1', body: [B('assign', { variable: 'v[i]', expression: 'v[i] * 2' })] })]
+        });
+        const main = M.createFunction({
+            name: 'Main', type: 'None', variable: '', parameters: [], body: [
+                B('declare', { names: 'voti', type: 'Integer', array: true, size: '3' }), B('declare', { names: 'n', type: 'Integer' }),
+                B('declare', { names: 'media', type: 'Real' }),
+                B('assign', { variable: 'voti[0]', expression: '7' }), B('assign', { variable: 'voti[1]', expression: '8' }),
+                B('assign', { variable: 'voti[2]', expression: '6' }), B('input', { variable: 'n' }),
+                B('call', { expression: 'Raddoppia(voti, 3)' }),
+                B('assign', { variable: 'media', expression: '(voti[0] + voti[1] + voti[2]) / 3' }), B('output', { expression: 'media' })
+            ]
+        });
+        return window.OnoFlow.Format.exportFprg(M.createProgram({ attributes: [], functions: [main, raddoppia] }), {});
+    });
+}
+
+/* Finestra delle variabili (MG-02, DEC-108): tutte le variabili del diagramma con il valore del
+   momento; righe fisse; funzioni, array per riferimento; spostamento, riduzione, solo computer. */
+async function checkVariablesWindow(browser, engineName) {
+    const checks = new Checks(`${engineName} finestra delle variabili`);
+    const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: 'reduce' });
+    const page = await context.newPage();
+    const rows = () => page.evaluate(() => Array.from(document.querySelectorAll('#variables-window tbody tr'))
+        .map((row) => row.querySelector('th').firstChild.textContent + '=' + row.querySelector('td').firstChild.textContent));
+    const value = async (label) => ((await rows()).find((row) => row.startsWith(label + '=')) || '').slice(label.length + 1);
+    const box = () => page.locator('#variables-window').boundingBox();
+    try {
+        await page.goto(URL);
+        await page.waitForSelector('#diagram .dg-block--terminal');
+        const text = await variablesProgram(page);
+        await page.setInputFiles('#file-input', { name: 'prova.fprg', mimeType: 'text/plain', buffer: Buffer.from(text) });
+        await page.waitForSelector('#diagram .dg-block--call');
+        const notice = page.locator('.notice-action:has-text("Chiudi"), .notice button:has-text("Chiudi")').first();
+        if (await notice.isVisible()) {
+            await notice.click(); // avvisi del formato non verificato: liberano spazio
+        }
+
+        checks.ok(!(await page.isVisible('#variables-window')), 'all\'inizio la finestra è chiusa');
+        await page.click('#menu-button');
+        await page.click('#cmd-variables');
+        checks.ok(await page.isVisible('#variables-window'), 'Menu → Finestra delle variabili la apre');
+        checks.ok((await page.getAttribute('#cmd-variables', 'aria-checked')) === 'true' && (await page.getAttribute('#variables-toggle', 'aria-pressed')) === 'true',
+            'voce del menu e pulsante segnano la finestra aperta');
+        const before = await rows();
+        checks.ok(before.join(' ') === 'voti (Main)=– n (Main)=– media (Main)=– v (Raddoppia)=– k (Raddoppia)=– i (Raddoppia)=–',
+            `a programma fermo tutte le variabili del diagramma, senza valore: ${before.join(' ')}`);
+        const sheet = await page.locator('#panel-diagram').boundingBox();
+        const opened = await box();
+        checks.ok(opened.x + opened.width <= sheet.x + sheet.width && opened.x + opened.width > sheet.x + sheet.width - 40 && opened.y < sheet.y + 60,
+            'si apre in alto a destra nella zona del diagramma');
+
+        // Passo a passo fino all'input, poi dentro la funzione.
+        const step = async (count = 1) => {
+            for (let i = 0; i < count; i++) {
+                await page.click('#step');
+                await page.waitForFunction(() => ['paused', 'waitingInput', 'finished'].includes(document.querySelector('.app').getAttribute('data-run-state')));
+            }
+        };
+        const field = page.locator('.console-field');
+        for (let i = 0; i < 12 && !(await field.isVisible()); i++) {
+            await step(); // fino all'input
+        }
+        await field.fill('5');
+        await field.press('Enter');
+        await page.waitForFunction(() => document.querySelector('.app').getAttribute('data-run-state') === 'paused');
+        checks.ok((await value('n (Main)')) === '5' && (await value('voti (Main)')) === '[7; 8; 6]', `valori in Main: n = ${await value('n (Main)')}, voti = ${await value('voti (Main)')}`);
+        checks.ok(await page.locator('#variables-window tr.is-changed').filter({ hasText: 'n (Main)' }).count() === 1, 'n è segnata come cambiata');
+        await step(1); // nella funzione
+        checks.ok((await value('v (Raddoppia)')) === '[7; 8; 6]' && (await value('k (Raddoppia)')) === '3' && (await value('n (Main)')) === '5',
+            `dentro Raddoppia si vedono anche le variabili di Main (v = ${await value('v (Raddoppia)')}, k = ${await value('k (Raddoppia)')})`);
+        await step(9); // il for e il ritorno
+        checks.ok((await value('voti (Main)')) === '[14; 16; 12]', `l'array del chiamante è cambiato: ${await value('voti (Main)')}`);
+        checks.ok((await value('v (Raddoppia)')) === '[14; 16; 12]' && (await value('k (Raddoppia)')) === '–' && (await value('i (Raddoppia)')) === '–',
+            `dopo il ritorno: il parametro array tiene l'ultimo valore, gli altri tornano a – (${(await rows()).slice(3).join(' ')})`);
+        checks.ok((await rows()).length === 6, 'le righe non cambiano durante l\'esecuzione');
+        await page.click('#stop');
+
+        // Esecuzione continua: i valori si vedono quando il programma chiede n.
+        await page.click('#run');
+        await field.waitFor();
+        checks.ok((await value('voti (Main)')) === '[7; 8; 6]', `nell'esecuzione continua i valori ci sono già all'input (${await value('voti (Main)')})`);
+        await field.fill('1');
+        await field.press('Enter');
+        await page.waitForFunction(() => document.getElementById('status').textContent.trim() === 'Terminato');
+        checks.ok((await value('media (Main)')) === '14' && (await value('k (Raddoppia)')) === '–', `a fine esecuzione i valori finali: media = ${await value('media (Main)')}`);
+
+        // Elenco completo di un array, con un clic.
+        await page.click('#variables-window tr[data-key^="Main"] .variables-window-array');
+        checks.ok((await page.locator('#variables-window .variables-window-elements li').count()) === 3, 'un clic sull\'array mostra i suoi elementi');
+
+        // Spostare: barra del titolo con il mouse, poi con le frecce.
+        const start = await box();
+        const header = page.locator('.variables-window-header');
+        const grip = await page.locator('.variables-window-title').boundingBox();
+        await page.mouse.move(grip.x + 10, grip.y + 5);
+        await page.mouse.down();
+        await page.mouse.move(grip.x - 290, grip.y + 105, { steps: 6 });
+        await page.mouse.up();
+        const dragged = await box();
+        checks.ok(Math.abs(dragged.x - (start.x - 300)) <= 1 && Math.abs(dragged.y - (start.y + 100)) <= 1,
+            `la barra del titolo trascina la finestra (${Math.round(start.x)},${Math.round(start.y)} → ${Math.round(dragged.x)},${Math.round(dragged.y)})`);
+        await header.focus();
+        await page.keyboard.press('ArrowLeft');
+        await page.keyboard.press('ArrowDown');
+        const keyed = await box();
+        checks.ok(Math.abs(keyed.x - (dragged.x - 20)) <= 1 && Math.abs(keyed.y - (dragged.y + 20)) <= 1,
+            `le frecce la spostano di un quadretto (${Math.round(dragged.x)},${Math.round(dragged.y)} → ${Math.round(keyed.x)},${Math.round(keyed.y)}; focus ${await page.evaluate(() => document.activeElement.className)})`);
+        await page.mouse.move(grip.x - 280, grip.y + 115);
+        await page.mouse.down();
+        await page.mouse.move(-500, 2000, { steps: 4 }); // fuori dalla finestra del browser
+        await page.mouse.up();
+        const clamped = await box();
+        const pane = await page.locator('#panel-diagram').boundingBox();
+        checks.ok(clamped.x >= pane.x && clamped.y + clamped.height <= pane.y + pane.height + 1, 'non esce dalla zona del diagramma');
+        await page.setViewportSize({ width: 1024, height: 640 });
+        await page.waitForTimeout(150);
+        const narrow = await box();
+        const narrowPane = await page.locator('#panel-diagram').boundingBox();
+        checks.ok(narrow.x >= narrowPane.x && narrow.x + narrow.width <= narrowPane.x + narrowPane.width + 1 && narrow.y + narrow.height <= narrowPane.y + narrowPane.height + 1,
+            'se la finestra del browser si stringe, torna dentro');
+
+        // Ridurre alla barra del titolo, chiudere con Esc.
+        await page.click('.variables-window-header button[aria-controls="variables-window-body"]');
+        checks.ok(!(await page.isVisible('#variables-window-body')) && await page.isVisible('.variables-window-header'),
+            `Riduci lascia solo la barra del titolo (${await page.getAttribute('.variables-window-header button[aria-controls="variables-window-body"]', 'aria-expanded')}, ${JSON.stringify(await box())})`);
+        await page.click('.variables-window-header button[aria-controls="variables-window-body"]');
+        checks.ok(await page.isVisible('#variables-window-body'), 'e la tabella torna');
+        await header.focus();
+        await page.keyboard.press('Escape');
+        checks.ok(!(await page.isVisible('#variables-window')), 'Esc chiude la finestra');
+        checks.ok(await page.evaluate(() => document.activeElement && document.activeElement.id === 'variables-toggle'), 'il focus torna al pulsante');
+        await page.click('#variables-toggle');
+        checks.ok(await page.isVisible('#variables-window'), 'il pulsante la riapre');
+        await page.click('#variables-toggle');
+        checks.ok(!(await page.isVisible('#variables-window')), 'e la richiude');
+
+        // Solo computer.
+        for (const width of [375, 768]) {
+            await page.setViewportSize({ width, height: 740 });
+            await page.waitForTimeout(100);
+            await page.click('#menu-button');
+            checks.ok(!(await page.isVisible('#cmd-variables')) && !(await page.isVisible('#variables-toggle')), `a ${width} px niente voce né pulsante`);
+            await page.keyboard.press('Escape');
+        }
+    } catch (error) {
+        checks.ok(false, `verifica interrotta: ${error.message.split('\n')[0]}`);
+    } finally {
+        await context.close();
+    }
+    return checks;
+}
+
 /* Telefono in orizzontale (M-04): barra su una riga, schede in colonna a sinistra, comandi del
    foglio ai lati; in mezzo al foglio resta una fascia libera alta almeno 250 px. */
 async function checkLandscape(browser, engineName) {
@@ -1927,6 +2089,7 @@ async function main() {
             runs.push(['orizzontale', () => checkLandscape(browser, engineName)]);
             runs.push(['barra ferma', () => checkBarStable(browser, engineName)]);
             runs.push(['trascina', () => checkPan(browser, engineName)]);
+            runs.push(['finestra delle variabili', () => checkVariablesWindow(browser, engineName)]);
             runs.push(['selezione', () => checkSelectionClear(browser, engineName)]);
             for (const [, run] of runs.filter(([name]) => name.includes(options.only))) {
                 const checks = await run();

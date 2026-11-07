@@ -45,6 +45,7 @@
     var BlockEditor = OnoFlow.BlockEditor;
     var History = OnoFlow.History;
     var VariablesView = OnoFlow.VariablesView;
+    var VariablesWindow = OnoFlow.VariablesWindow;
     var CodeView = OnoFlow.CodeView;
     var CODE_GENERATORS = { cpp: OnoFlow.CodegenCpp, python: OnoFlow.CodegenPython };
     var CODE_EXTENSIONS = { cpp: '.cpp', python: '.py' };
@@ -389,6 +390,8 @@
         }
 
         /* Disegna il programma aperto, con gli stati di adesso (errori, esecuzione, selezione). */
+        var variablesWindow = null; // finestra delle variabili, creata più avanti (MG-02)
+
         function drawDiagram() {
             state.diagram = DiagramRenderer.render(diagram, state.program, {
                 t: t,
@@ -406,6 +409,9 @@
                 showMoving();
             }
             updateCode();
+            if (variablesWindow) {
+                variablesWindow.setRows(Model.declaredVariables(state.program)); // le righe seguono il diagramma (MG-02)
+            }
         }
 
         // --- Editor: inserimento (passo 9, DEC-063) ---------------------------------
@@ -1472,6 +1478,35 @@
             formatFull: function (value) { return NumberFormat.formatRealFull(value, numberFormat); }
         };
         var paneView = VariablesView.create(byId('variables-pane-body'), variablesOptions);
+
+        // Finestra delle variabili (MG-02, DEC-108): tutte le variabili del diagramma, solo sul computer.
+        var variablesToggle = byId('variables-toggle');
+        var variablesMenuItem = byId('cmd-variables');
+        variablesWindow = VariablesWindow.create(byId('panel-diagram'), {
+            t: t,
+            formatValue: formatValue,
+            formatFull: variablesOptions.formatFull,
+            onToggle: function (open, hadFocus) {
+                variablesToggle.setAttribute('aria-pressed', String(open));
+                variablesMenuItem.setAttribute('aria-checked', String(open));
+                if (!open && hadFocus) {
+                    variablesToggle.focus();
+                }
+            }
+        });
+        if (state.program) {
+            variablesWindow.setRows(Model.declaredVariables(state.program));
+        }
+        variablesToggle.addEventListener('click', function () {
+            variablesWindow.toggle();
+        });
+        variablesMenuItem.addEventListener('click', function () {
+            closeMenu();
+            variablesWindow.toggle();
+            if (variablesWindow.isOpen()) {
+                variablesWindow.element.querySelector('.variables-window-header').focus();
+            }
+        });
         var stripView = VariablesView.create(stripBody, variablesOptions);
 
         /* Le variabili della chiamata in corso, dopo ogni passo e a ogni turno dell'esecuzione. */
@@ -1484,6 +1519,7 @@
             variablesPane.hidden = false;
             variablesStrip.hidden = false;
             paneView.show(snapshot);
+            variablesWindow.show(state.scheduler.frames());
             showSummary(VariablesView.summaryParts(snapshot, t, formatValue, stripView.show(snapshot)));
         }
 
@@ -1514,6 +1550,9 @@
             variablesStrip.hidden = true;
             paneView.reset();
             stripView.reset();
+            if (variablesWindow) {
+                variablesWindow.show(null);
+            }
         }
 
         stripToggle.addEventListener('click', function () {
@@ -1568,8 +1607,8 @@
         // --- Menu ------------------------------------------------------------------
 
         function menuItems() {
-            return Array.prototype.filter.call(menu.querySelectorAll('[role="menuitem"]'), function (item) {
-                return !item.disabled;
+            return Array.prototype.filter.call(menu.querySelectorAll('[role="menuitem"], [role="menuitemcheckbox"]'), function (item) {
+                return !item.disabled && item.getClientRects().length > 0; // non quelle nascoste (solo computer)
             });
         }
 

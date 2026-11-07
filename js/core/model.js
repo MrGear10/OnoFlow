@@ -312,8 +312,45 @@
         return null;
     }
 
+    /*
+     * Tutte le variabili dichiarate nel diagramma, per la finestra delle variabili (MG-02):
+     * [{ functionName, name, type, array, parameter }]. Prima Main, poi le altre funzioni
+     * nell'ordine del diagramma; in ogni funzione i parametri e poi le dichiarazioni in ordine di
+     * lettura (anche dentro rami e cicli). Un nome dichiarato due volte nella stessa funzione
+     * conta una volta, con la prima dichiarazione; un campo con un errore non dà nomi.
+     */
+    function declaredVariables(program) {
+        var rows = [];
+        var functions = program.functions.filter(function (programFunction) { return programFunction.name === 'Main'; })
+            .concat(program.functions.filter(function (programFunction) { return programFunction.name !== 'Main'; }));
+        functions.forEach(function (programFunction) {
+            var seen = Object.create(null);
+            function add(name, type, array, parameter) {
+                if (!seen[name]) {
+                    seen[name] = true;
+                    rows.push({ functionName: programFunction.name, name: name, type: type, array: array, parameter: parameter });
+                }
+            }
+            programFunction.parameters.forEach(function (parameter) {
+                add(parameter.name, parameter.type, parameter.array, true);
+            });
+            (function visit(list) {
+                list.forEach(function (block) {
+                    if (block.kind === 'declare' && block.fields.names.ast) {
+                        block.fields.names.ast.names.forEach(function (entry) {
+                            add(entry.name, block.type, block.array, false);
+                        });
+                    }
+                    childListsOf(block).forEach(function (child) { visit(block[child]); });
+                });
+            })(programFunction.body);
+        });
+        return rows;
+    }
+
     OnoFlow.Model = {
         takenBranch: takenBranch,
+        declaredVariables: declaredVariables,
         TYPES: TYPES,
         FUNCTION_TYPES: FUNCTION_TYPES,
         DIRECTIONS: DIRECTIONS,

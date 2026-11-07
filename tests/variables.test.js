@@ -119,6 +119,64 @@
         });
     });
 
+    T.suite('Variabili › tutte quelle del diagramma (MG-02)', function () {
+        T.test('Main prima, poi le funzioni; parametri, poi dichiarazioni anche in rami e cicli', function (assert) {
+            var somma = H.fn('Somma', 'Integer', 'r', [['v', 'Integer', true], ['k', 'Integer']], [H.declare('r', 'Integer')]);
+            var program = H.program([
+                H.declare('n, i', 'Integer'),
+                H.when('n > 0', [H.declare('voti', 'Real', '3')], [H.declare('n', 'String')]),
+                H.loop('i < 3', [H.declare('t', 'Boolean')])
+            ], [somma]);
+            var rows = OnoFlow.Model.declaredVariables(program).map(function (row) {
+                return row.functionName + ':' + row.name + ':' + row.type + (row.array ? '[]' : '') + (row.parameter ? ':p' : '');
+            });
+            assert.deepEqual(rows, ['Main:n:Integer', 'Main:i:Integer', 'Main:voti:Real[]', 'Main:t:Boolean',
+                'Somma:v:Integer[]:p', 'Somma:k:Integer:p', 'Somma:r:Integer']);
+        });
+
+        T.test('lo stesso nome in funzioni diverse sono due variabili; un campo con errore non conta', function (assert) {
+            var f = H.fn('F', 'None', '', [['n', 'Integer']], [H.declare('x, 3a', 'Integer')]);
+            var rows = OnoFlow.Model.declaredVariables(H.program([H.declare('n', 'Integer')], [f]));
+            assert.deepEqual(rows.map(function (row) { return row.functionName + ':' + row.name; }), ['Main:n', 'F:n']);
+        });
+    });
+
+    T.suite('Variabili › pila delle chiamate (MG-02)', function () {
+        T.test('dentro una funzione si vedono anche le variabili di Main', function (assert) {
+            var doppio = H.fn('Doppio', 'Integer', 'r', [['n', 'Integer']], [H.declare('r', 'Integer'), H.assign('r', 'n * 2')]);
+            var program = H.program([H.declare('a', 'Integer'), H.assign('a', '1'), H.assign('a', 'Doppio(4)')], [doppio]);
+            var run = stepper(program);
+            assert.equal(run.scheduler.frames(), null, 'prima di cominciare');
+            run.step();
+            run.step();
+            run.step();
+            run.step(); // dentro Doppio
+            var frames = run.scheduler.frames();
+            assert.deepEqual(frames.map(function (frame) { return frame.functionName; }), ['Main', 'Doppio']);
+            assert.equal(frames[0].variables[0].value, 1, 'a in Main');
+            assert.equal(frames[1].variables[0].value, 4, 'n in Doppio');
+            run.step();
+            run.step(); // finito: resta Main con il risultato
+            assert.deepEqual(run.scheduler.frames().map(function (frame) { return frame.functionName + ':' + frame.variables[0].value; }), ['Main:8']);
+        });
+
+        T.test('ricorsione: una chiamata per livello', function (assert) {
+            var fatt = H.fn('Fatt', 'Integer', 'r', [['n', 'Integer']], [
+                H.declare('r', 'Integer'),
+                H.when('n <= 1', [H.assign('r', '1')], [H.assign('r', 'n * Fatt(n - 1)')])
+            ]);
+            var program = H.program([H.declare('x', 'Integer'), H.assign('x', 'Fatt(3)')], [fatt]);
+            var run = stepper(program);
+            var deepest = 0;
+            for (var i = 0; i < 40 && run.scheduler.state() !== 'finished'; i++) {
+                run.step();
+                var frames = run.scheduler.frames();
+                deepest = Math.max(deepest, frames ? frames.length : 0);
+            }
+            assert.equal(deepest, 4, 'Main e tre chiamate di Fatt');
+        });
+    });
+
     T.suite('Variabili › pannello (FR-RUN-06, QA-08)', function () {
         T.test('nome, tipo e valore come nella console; le stringhe tra virgolette', function (assert) {
             var panel = view();

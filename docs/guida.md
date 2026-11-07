@@ -94,6 +94,7 @@ In alternativa, con un blocco selezionato, **Inserisci dopo** aggiunge un blocco
 
 - **Passo** (o **F10**, o Menu → Esecuzione → **Esegui passo a passo**) esegue un blocco alla volta. Il blocco indicato dalla **freccia gialla** alla sua sinistra, con il contorno più spesso, è il **prossimo** che verrà eseguito: a ogni passo la freccia scorre al blocco successivo, come nel debugger di un ambiente di sviluppo. Quando l'esecuzione passa da un `if` al blocco successivo, il ramo preso si ripassa in verde, con la scritta **Vero** o **Falso**; il segno resta fino all'esecuzione successiva.
 - Il **pannello delle variabili** mostra il valore di ogni variabile: sul computer in cima alla console, sul telefono in una striscia nella base sotto il diagramma, che si allarga con un tocco. Il valore cambiato nell'ultimo passo è sottolineato.
+- Sul computer, la **finestra delle variabili** (pulsante sotto lo zoom, o Menu → Finestra delle variabili) mostra tutte le variabili del diagramma, di tutte le funzioni, con il valore del momento; «–» vuol dire nessun valore. Si sposta trascinando la barra del titolo e si chiude con Esc.
 - **Riprendi** continua senza fermarsi; **Ferma** termina.
 - Sul telefono, durante il passo a passo, il pulsante **Passo** sta nella base in basso, a sinistra (in orizzontale, in alto a destra).
 

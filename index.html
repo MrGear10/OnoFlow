@@ -78,6 +78,7 @@
                     <div id="examples-list" role="group"></div>
                     <p class="menu-heading" data-i18n="ui.menu.run"></p>
                     <button class="menu-item" id="cmd-step" type="button" role="menuitem" aria-keyshortcuts="F10"><span data-i18n="ui.runStep"></span><kbd class="menu-shortcut" aria-hidden="true">F10</kbd></button>
+                    <button class="menu-item menu-item--desktop" id="cmd-variables" type="button" role="menuitemcheckbox" aria-checked="false" data-i18n="ui.variablesWindow.menu"></button>
                     <p class="menu-heading" data-i18n="ui.menu.edit"></p>
                     <button class="menu-item" id="cmd-new-function" type="button" role="menuitem" data-i18n="ui.newFunction"></button>
                     <button class="menu-item" id="cmd-undo" type="button" role="menuitem" aria-keyshortcuts="Control+Z" disabled><span data-i18n="ui.undo"></span><kbd class="menu-shortcut" aria-hidden="true">Ctrl+Z</kbd></button>
@@ -163,6 +164,9 @@
                     </button>
                 </div>
                 <div class="zoom" role="group" data-i18n-label="ui.zoom.label">
+                    <button class="button zoom-button variables-toggle" id="variables-toggle" type="button" aria-pressed="false" aria-controls="variables-window" data-i18n-label="ui.variablesWindow.title" data-i18n-title="ui.variablesWindow.toggleTitle">
+                        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3.5" y="4" width="13" height="12" rx="1.5"/><path d="M3.5 8h13M8.5 4v12M8.5 12h8"/></svg>
+                    </button>
                     <button class="button zoom-button" id="zoom-out" type="button" data-i18n-label="ui.zoom.out" data-i18n-title="ui.zoom.out">
                         <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10"/></svg>
                     </button>
@@ -233,6 +237,7 @@
 <script src="js/ui/block-editor.js"></script>
 <script src="js/ui/console-view.js"></script>
 <script src="js/ui/variables-view.js"></script>
+<script src="js/ui/variables-window.js"></script>
 <script src="js/ui/code-view.js"></script>
 <script src="js/ui/session-copy.js"></script>
 <script src="js/ui/theme.js"></script>

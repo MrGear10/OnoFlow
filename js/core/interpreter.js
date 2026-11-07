@@ -46,8 +46,9 @@
     var DEFAULT_NUMBER_FORMAT = { decimalSeparator: ',', inputDecimalSeparators: [',', '.'] };
 
     /* Variabili di una chiamata di funzione (§6.5: ogni funzione vede solo le sue). */
-    function Frame(programFunction) {
+    function Frame(programFunction, caller) {
         this.programFunction = programFunction;
+        this.caller = caller || null; // la chiamata che l'ha chiamata: la pila per la finestra delle variabili
         this.variables = Object.create(null);
         this.order = [];
     }
@@ -612,7 +613,7 @@
         if (this.depth >= MAX_RECURSION) {
             fail('ERR_RECURSION_LIMIT', { max: MAX_RECURSION });
         }
-        var calleeFrame = new Frame(callee);
+        var calleeFrame = new Frame(callee, frame);
         bindings.forEach(function (binding) {
             if (binding.array) {
                 calleeFrame.bindArray(binding.parameter.name, binding.array);

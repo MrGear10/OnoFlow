@@ -22,6 +22,8 @@
  *
  * variables() → { functionName, variables } | null: le variabili della chiamata in corso al
  * blocco evidenziato, come le fotografa l'interprete (FR-RUN-06, passo 15).
+ * frames() → [{ functionName, variables }] | null: tutta la pila delle chiamate attive, da Main
+ * alla chiamata in corso (finestra delle variabili, MG-02).
  * Opzioni (tutte facoltative tranne i gestori che servono):
  *     onOutput(evento), onInput(evento), onStep(nodeId), onStateChange(stato),
  *     onLongRun(), onFinish(esito)
@@ -83,6 +85,13 @@
             if (timer !== null) {
                 cancel(timer);
                 timer = null;
+            }
+            // Finito bene: le funzioni sono tutte tornate, anche se l'ultimo passo era dentro una
+            // (il ritorno non è un passo). Con un errore resta la chiamata dove è successo.
+            if (outcome && outcome.status === 'done') {
+                while (currentFrame && currentFrame.caller) {
+                    currentFrame = currentFrame.caller;
+                }
             }
             setState('finished');
             handlers.onFinish(outcome);
@@ -260,6 +269,15 @@
                 return currentFrame
                     ? { functionName: currentFrame.programFunction.name, variables: currentFrame.snapshot() }
                     : null;
+            },
+            /* La pila delle chiamate attive, dalla più esterna (Main) a quella in corso, con le
+               loro variabili; null prima dell'avvio (finestra delle variabili, MG-02). */
+            frames: function () {
+                var list = [];
+                for (var frame = currentFrame; frame; frame = frame.caller) {
+                    list.unshift({ functionName: frame.programFunction.name, variables: frame.snapshot() });
+                }
+                return currentFrame ? list : null;
             },
             provideInput: provideInput,
             state: function () { return state; },
