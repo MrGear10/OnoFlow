@@ -1417,6 +1417,9 @@
                     byId('console-asking-text').textContent = t('ui.console.asking', { block: describeBlock(event.nodeId) || '' });
                     setRunning(event.nodeId);
                     revealNode(event.nodeId, { quiet: true, running: true });
+                    // Anche nell'esecuzione continua: il turno finisce qui, senza onStep, e le variabili
+                    // si sarebbero viste solo alla fine (DEC-107).
+                    showVariables();
                     consoleView.requestInput(event);
                     if (narrow.matches) {
                         showTab('console');

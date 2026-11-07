@@ -137,6 +137,12 @@ async function runQa04(page, checks, viewport) {
         }
         const field = page.locator('.console-field');
         await field.waitFor();
+        if (index === 1) {
+            // Esecuzione continua: le variabili si vedono già mentre il programma chiede un valore (DEC-107).
+            const shown = await page.evaluate(() => Array.from(document.querySelectorAll('#variables-pane .variable-value, #variables-strip .variable-value'))
+                .map((node) => node.textContent.trim()));
+            checks.ok(shown.includes('5'), `durante l'esecuzione le variabili hanno già il primo valore (${shown.join(', ')})`);
+        }
         const box = await field.boundingBox();
         checks.ok(box !== null && box.y >= 0 && box.y + box.height <= viewport.height,
             `il campo di input è dentro lo schermo (valore ${value})`);
