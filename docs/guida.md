@@ -6,7 +6,7 @@ OnoFlow si apre all'indirizzo [mrgear10.github.io/OnoFlow](https://mrgear10.gith
 
 ## La schermata
 
-- **Barra in alto:** il nome del file (si può cambiare scrivendoci sopra), il segno **Non salvato** quando ci sono modifiche (un punto accanto al nome, se lo spazio è poco), lo stato dell'esecuzione, i comandi dell'esecuzione e il **Menu**. Da fermo i comandi sono **Esegui** e **Passo**; durante l'esecuzione **Pausa** (o **Riprendi**) e **Ferma**. Sul computer ogni comando ha il suo posto: **Passo** resta sempre a destra, anche mentre lo si preme. Sugli schermi larghi ci sono anche **Salva** (la freccia verso il basso), Annulla, Ripeti, il tema chiaro o scuro e il libro della documentazione.
+- **Barra in alto:** il nome del file (si può cambiare scrivendoci sopra), il segno **Non salvato** quando ci sono modifiche (un punto accanto al nome, se lo spazio è poco), lo stato dell'esecuzione, i comandi dell'esecuzione e il **Menu**. Da fermo i comandi sono **Esegui** e **Passo**; durante l'esecuzione **Pausa** (o **Riprendi**) e **Ferma**. Ogni comando ha il suo posto: **Passo** non si sposta mai, anche mentre lo si preme (sul telefono Pausa e Riprendi stanno nella base in basso). Sugli schermi larghi ci sono anche **Salva** (la freccia verso il basso), Annulla, Ripeti, il tema chiaro o scuro e il libro della documentazione.
 - **Diagramma:** il foglio con i blocchi, su una griglia di puntini. In basso ci sono i comandi dello zoom e, sugli schermi stretti, Annulla e Ripeti.
 - **Console:** il riquadro accanto al diagramma (bianco nel tema chiaro, scuro nel tema scuro) dove compaiono l'output del programma e le richieste di input; i valori scritti si distinguono per colore e grassetto.
 - **Menu:** cinque sezioni.
@@ -96,7 +96,7 @@ In alternativa, con un blocco selezionato, **Inserisci dopo** aggiunge un blocco
 - Il **pannello delle variabili** mostra il valore di ogni variabile: sul computer in cima alla console, sul telefono in una striscia nella base sotto il diagramma, che si allarga con un tocco. Il valore cambiato nell'ultimo passo è sottolineato.
 - Sul computer, la **finestra delle variabili** (pulsante sotto lo zoom, o Menu → Finestra delle variabili) mostra tutte le variabili del diagramma, di tutte le funzioni, con il valore del momento; «–» vuol dire nessun valore. Si sposta trascinando la barra del titolo e si chiude con Esc.
 - **Riprendi** continua senza fermarsi; **Ferma** termina.
-- Sul telefono, durante il passo a passo, il pulsante **Passo** sta nella base in basso, a sinistra (in orizzontale, in alto a destra).
+- Sul telefono **Passo** resta sempre nella barra in alto, nello stesso posto, anche mentre lo si preme. Durante l'esecuzione **Pausa** (o **Riprendi**) sta nella base in basso, a sinistra (in orizzontale, in alto a destra).
 
 ## Aprire e salvare
 

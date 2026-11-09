@@ -359,13 +359,13 @@ a {
 }
 
 #stop .icon rect,
-#pause .icon-resume path {
+.pause-button .icon-resume path {
     fill: currentColor;
 }
 
 /* Pausa e Riprendi: in pausa l'icona è quella del riprendere, non due barre piene (R-07). */
-#pause[aria-pressed="true"] .icon-pause,
-#pause:not([aria-pressed="true"]) .icon-resume {
+.pause-button[aria-pressed="true"] .icon-pause,
+.pause-button:not([aria-pressed="true"]) .icon-resume {
     display: none;
 }
 
@@ -1643,6 +1643,13 @@ button.diagram-error-entry:active {
     }
 }
 
+/* Riprendi nel foglio (DEC-114): pieno come nella barra, è il comando principale della pausa. */
+.step-controls .pause-button[aria-pressed="true"],
+.step-controls .pause-button[aria-pressed="true"]:hover:not(:disabled) {
+    background: var(--ink);
+    color: var(--on-ink);
+}
+
 .selection-bar {
     position: absolute;
     left: calc(var(--space-3) + env(safe-area-inset-left, 0px));
@@ -1938,12 +1945,32 @@ button.diagram-error-entry:active {
 
 /* --- Passo-passo (FR-RUN-05) -------------------------------------------------------- */
 
-/* Sul telefono la barra è piena: durante l'esecuzione Passo prende il posto di Annulla e Ripeti. */
+/* Sul telefono la barra è piena: durante l'esecuzione Pausa/Riprendi prende il posto di Annulla e
+   Ripeti, e Passo resta fermo nella barra (DEC-114). */
 .step-controls {
     display: none;
     position: absolute;
     left: calc(var(--space-3) + env(safe-area-inset-left, 0px));
     bottom: var(--space-3);
+}
+
+/* Telefono stretto: «Riprendi» con l'etichetta toccherebbe lo zoom; resta l'icona, e l'etichetta
+   per i lettori di schermo (DEC-114). */
+@media (max-width: 25rem) {
+    .pause-sheet-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    #pause-sheet {
+        width: var(--touch);
+        min-width: var(--touch);
+        padding: 0;
+    }
 }
 
 /* Sotto i 64rem nella barra mancherebbe spazio per il nome del file (B2). */
@@ -2908,11 +2935,11 @@ button.diagram-error-entry:active {
 
 /* Barra stretta: con tutte le etichette (e «Riprendi» al posto di «Pausa») i comandi non stanno
    in una riga accanto al marchio e al menu, e la barra andava su tre o quattro righe (M-02).
-   I comandi cambiano con lo stato (M-03, D-M1): da fermo Esegui e Passo, durante l'esecuzione
-   Ferma e Pausa negli stessi due posti. Il comando che non vale non c'è, invece di restare
-   barrato; tiene però la sua larghezza, così i posti non si spostano mai. Passo, durante
-   l'esecuzione, sta nel foglio (DEC-074). Vale anche per il telefono in orizzontale, dove la
-   barra ha una riga sola (M-04). */
+   Due posti fissi (M-03, DEC-114): Esegui o Ferma, poi Passo, che non si sposta mai, nemmeno
+   premendolo. Esegui e Ferma si danno il cambio nello stesso posto; il comando che non vale non
+   c'è, ma tiene la sua larghezza. Pausa/Riprendi, durante l'esecuzione, sta nel foglio al posto
+   di Annulla e Ripeti. Vale anche per il telefono in orizzontale, dove la barra ha una riga sola
+   (M-04). */
 @media (max-width: 40rem), (max-width: 55.99rem) and (orientation: landscape) and (max-height: 30rem) {
     .run-controls {
         display: grid;
@@ -2924,28 +2951,24 @@ button.diagram-error-entry:active {
         grid-area: 1 / 1;
     }
 
-    #step,
-    #pause {
+    #step {
         grid-area: 1 / 2;
     }
 
+    #pause {
+        display: none; /* nel foglio, come #pause-sheet */
+    }
+
     #stop,
-    #pause,
     .app[data-run-state="running"] #run,
     .app[data-run-state="paused"] #run,
-    .app[data-run-state="waitingInput"] #run,
-    .app[data-run-state="running"] #step,
-    .app[data-run-state="paused"] #step,
-    .app[data-run-state="waitingInput"] #step {
+    .app[data-run-state="waitingInput"] #run {
         visibility: hidden;
     }
 
     .app[data-run-state="running"] #stop,
     .app[data-run-state="paused"] #stop,
-    .app[data-run-state="waitingInput"] #stop,
-    .app[data-run-state="running"] #pause,
-    .app[data-run-state="paused"] #pause,
-    .app[data-run-state="waitingInput"] #pause {
+    .app[data-run-state="waitingInput"] #stop {
         visibility: visible;
     }
 
@@ -2961,8 +2984,7 @@ button.diagram-error-entry:active {
         display: none;
     }
 
-    #step .button-label,
-    #pause .button-label {
+    #step .button-label {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -2971,8 +2993,7 @@ button.diagram-error-entry:active {
         white-space: nowrap;
     }
 
-    #step,
-    #pause {
+    #step {
         width: var(--touch);
         min-width: var(--touch); /* qui i posti fissi sono quelli della griglia */
         padding: 0;

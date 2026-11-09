@@ -131,9 +131,11 @@
         var modifiedMark = byId('modified');
         var statusLabel = byId('status');
         var runButton = byId('run');
-        var stepButtons = [byId('step'), byId('step-sheet')];
+        var stepButtons = [byId('step')];
         var pauseButton = byId('pause');
-        var pauseLabel = byId('pause-label');
+        var pauseSheet = byId('pause-sheet'); // sul telefono, nel foglio (DEC-114)
+        var pauseButtons = [pauseButton, pauseSheet];
+        var pauseLabels = [byId('pause-label'), byId('pause-sheet-label')];
         var stopButton = byId('stop');
         var menuButton = byId('menu-button');
         var menu = byId('menu');
@@ -1286,9 +1288,11 @@
             runButton.disabled = active;
             stopButton.disabled = !active;
             // Pausa non ha effetto mentre si attende un valore (§11.1).
-            pauseButton.disabled = current !== 'running' && current !== 'paused';
-            pauseLabel.textContent = t(current === 'paused' ? 'ui.resume' : 'ui.pause');
-            pauseButton.setAttribute('aria-pressed', current === 'paused' ? 'true' : 'false');
+            pauseButtons.forEach(function (button) {
+                button.disabled = current !== 'running' && current !== 'paused';
+                button.setAttribute('aria-pressed', current === 'paused' ? 'true' : 'false');
+            });
+            pauseLabels.forEach(function (label) { label.textContent = t(current === 'paused' ? 'ui.resume' : 'ui.pause'); });
             // Passo: per cominciare, o da una pausa (FR-RUN-05).
             stepButtons.forEach(function (button) { button.disabled = active && current !== 'paused'; });
             byId('cmd-step').disabled = active;
@@ -1314,11 +1318,29 @@
 
         /* Sul telefono un comando dell'esecuzione sparisce quando cambia lo stato (M-03): il focus
            passa a quello che ne prende il posto, invece di perdersi. */
-        var runPartners = [[runButton, stopButton], [byId('step'), pauseButton]];
+        var runPartners = [[runButton, stopButton], [byId('step'), pauseButton], [pauseSheet, byId('step')]];
         function shown(element) {
             return element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden';
         }
+        /* Passo, premuto da tastiera, si spegne per un attimo mentre si va al blocco successivo e il
+           focus si perde: torna su Passo appena si riaccende, se nel frattempo non è andato altrove. */
+        var stepFocusPending = false;
+        function keepStepFocus(focused) {
+            var step = stepButtons[0];
+            if (focused === step && step.disabled) {
+                stepFocusPending = true;
+            } else if (focused !== step && focused !== document.body && focused !== null) {
+                stepFocusPending = false;
+            }
+            if (stepFocusPending && !step.disabled && shown(step)) {
+                stepFocusPending = false;
+                if (document.activeElement === document.body || document.activeElement === null) {
+                    step.focus();
+                }
+            }
+        }
         function keepRunFocus(focused) {
+            keepStepFocus(focused);
             runPartners.forEach(function (pair) {
                 var index = pair.indexOf(focused);
                 var other = pair[1 - index];
@@ -1614,7 +1636,7 @@
                 stepRun();
             }
         });
-        pauseButton.addEventListener('click', togglePause);
+        pauseButtons.forEach(function (button) { button.addEventListener('click', togglePause); });
         stopButton.addEventListener('click', stop);
 
         // --- Menu ------------------------------------------------------------------

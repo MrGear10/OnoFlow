@@ -54,7 +54,7 @@
                     <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4.5v11l7.5-5.5z"/><path d="M15.5 4.5v11"/></svg>
                     <span class="button-label" data-i18n="ui.step"></span>
                 </button>
-                <button class="button" id="pause" type="button" aria-pressed="false" disabled>
+                <button class="button pause-button" id="pause" type="button" aria-pressed="false" disabled>
                     <svg class="icon icon-pause" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4.5v11M13 4.5v11"/></svg>
                     <svg class="icon icon-resume" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5v11l9-5.5z"/></svg>
                     <span class="button-label" id="pause-label" data-i18n="ui.pause"></span>
@@ -160,9 +160,10 @@
                     <div class="variables-strip-body" id="variables-strip-body" hidden></div>
                 </section>
                 <div class="step-controls">
-                    <button class="button step-sheet" id="step-sheet" type="button" data-i18n-title="ui.step.title">
-                        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4.5v11l7.5-5.5z"/><path d="M15.5 4.5v11"/></svg>
-                        <span data-i18n="ui.step"></span>
+                    <button class="button pause-button" id="pause-sheet" type="button" aria-pressed="false" disabled>
+                        <svg class="icon icon-pause" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4.5v11M13 4.5v11"/></svg>
+                        <svg class="icon icon-resume" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.5v11l9-5.5z"/></svg>
+                        <span class="pause-sheet-label" id="pause-sheet-label" data-i18n="ui.pause"></span>
                     </button>
                 </div>
                 <div class="zoom" role="group" data-i18n-label="ui.zoom.label">

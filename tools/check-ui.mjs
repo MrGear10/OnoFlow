@@ -1303,11 +1303,11 @@ async function checkStep(page, checks, viewport) {
         .includes(document.getElementById('status').textContent.trim()));
     await chooseExample(page, 'pari-dispari');
     await leaveUnsaved(page, press);
-    // Barra del telefono (M-03): da fermo Esegui e Passo, durante l'esecuzione Ferma e Pausa negli
-    // stessi posti; il comando che non vale non c'è.
+    // Barra del telefono (M-03, DEC-114): da fermo Esegui e Passo, durante l'esecuzione Ferma al
+    // posto di Esegui e Passo fermo dov'è; Pausa sta nel foglio. Il comando che non vale non c'è.
     const runSlots = () => page.evaluate(() => ['#run', '#step', '#pause', '#stop'].map((selector) => {
         const button = document.querySelector(selector);
-        return getComputedStyle(button).visibility === 'hidden' ? null : Math.round(button.getBoundingClientRect().x);
+        return button.getClientRects().length === 0 || getComputedStyle(button).visibility === 'hidden' ? null : Math.round(button.getBoundingClientRect().x);
     }));
     const idleSlots = await runSlots();
     if (phoneBar) {
@@ -1318,24 +1318,27 @@ async function checkStep(page, checks, viewport) {
     await settled();
     if (phoneBar) {
         const slots = await runSlots();
-        checks.ok(slots[0] === null && slots[1] === null && slots[3] === idleSlots[0] && slots[2] === idleSlots[1],
-            `nel passo a passo Ferma e Pausa al posto di Esegui e Passo: ${JSON.stringify(slots)}`);
+        checks.ok(slots[0] === null && slots[1] === idleSlots[1] && slots[2] === null && slots[3] === idleSlots[0],
+            `nel passo a passo Ferma al posto di Esegui, Passo fermo al suo posto: ${JSON.stringify(slots)}`);
         checks.ok((await page.locator('#stop').boundingBox()).width >= 44 && (await page.textContent('#stop')).trim() === 'Ferma',
             'Ferma con la sua etichetta');
     } else {
-        checks.ok(!(await runSlots()).includes(null), 'sul computer i quattro comandi restano tutti');
+        const slots = await runSlots();
+        checks.ok(slots[0] === null && slots[1] === idleSlots[1] && slots[2] !== null && slots[3] === idleSlots[0],
+            `sul computer Ferma al posto di Esegui, Passo fermo, Pausa al suo posto: ${JSON.stringify(slots)}`);
     }
     checks.ok((await status()) === 'Passo a passo', `passo-passo avviato: ${await status()}`);
     checks.ok((await highlighted()) === 'Integer n', `fermo prima del primo blocco: ${await highlighted()}`);
     if (viewport.phone) {
         checks.ok(await page.isVisible('#panel-diagram'), 'sul telefono resta in primo piano il diagramma');
     }
-    const step = phoneBar ? '#step-sheet' : '#step';
+    const step = '#step';
+    const pause = phoneBar ? '#pause-sheet' : '#pause';
     if (phoneBar) {
-        checks.ok(await page.isVisible('#step-sheet') && !(await page.isVisible('#undo-sheet')), 'sul foglio Passo prende il posto di Annulla e Ripeti');
-        const button = await page.locator('#step-sheet').boundingBox();
+        checks.ok(await page.isVisible('#pause-sheet') && !(await page.isVisible('#undo-sheet')), 'sul foglio Riprendi prende il posto di Annulla e Ripeti');
+        const button = await page.locator('#pause-sheet').boundingBox();
         const zoom = await page.locator('.zoom').boundingBox();
-        checks.ok(button.height >= 44 && button.x + button.width <= zoom.x, 'Passo alto 44 px, a sinistra dello zoom');
+        checks.ok(button.height >= 44 && button.x + button.width <= zoom.x, 'Riprendi alto 44 px, a sinistra dello zoom');
     }
     await press(step);
     await settled();
@@ -1406,13 +1409,14 @@ async function checkStep(page, checks, viewport) {
         await settled();
     }
     checks.ok((await highlighted()) === 'Output "Scrivi un numero intero"', viewport.phone ? 'di nuovo un passo' : 'F10 fa un passo');
-    checks.ok((await page.textContent('#pause-label')).trim() === 'Riprendi', 'in pausa: Riprendi');
-    await press('#pause');
+    checks.ok((await page.textContent(`${pause}-label`)).trim() === 'Riprendi', 'in pausa: Riprendi');
+    await press(pause);
     await page.locator('.console-field').waitFor();
     checks.ok((await status()) === 'In attesa di un valore', 'Riprendi continua senza fermarsi fino all\'input');
     if (phoneBar) {
-        checks.ok(await page.isVisible('#pause') && await page.isDisabled('#pause'), 'in attesa del valore Pausa resta al suo posto, spenta');
+        checks.ok(await page.isVisible('#step') && await page.isDisabled('#step'), 'in attesa del valore Passo resta al suo posto, spento');
         await press('#tab-diagram');
+        checks.ok(await page.isVisible('#pause-sheet') && await page.isDisabled('#pause-sheet'), 'in attesa del valore Pausa resta nel foglio, spenta');
     }
     await press('#stop');
     checks.ok((await status()) === 'Fermato', 'Ferma');
@@ -1484,7 +1488,7 @@ async function checkBarWidths(browser, engineName) {
         await page.focus('#step');
         await page.keyboard.press('Enter');
         await page.waitForFunction(() => document.getElementById('status').textContent.trim() === 'Passo a passo');
-        checks.ok((await focused()) === 'pause', `Passo con Invio: il focus va su Pausa (${await focused()})`);
+        checks.ok((await focused()) === 'step', `Passo con Invio: il focus resta su Passo (${await focused()})`);
         await page.focus('#stop');
         await page.keyboard.press('Enter');
         await page.waitForFunction(() => document.getElementById('status').textContent.trim() === 'Fermato');
@@ -1906,7 +1910,7 @@ async function checkLandscape(browser, engineName) {
             state = await layout();
             checks.ok(state.bar <= 64 && state.statusWidth <= 24, `${label}: nel passo a passo lo stato è un segno nella stessa riga (${state.bar} px, segno ${state.statusWidth} px)`);
             checks.ok(state.free >= 250, `${label}: fascia libera nel passo a passo ${state.free} px`);
-            checks.ok(await page.isVisible('#step-sheet') && await page.isVisible('#stop'), `${label}: Passo sul foglio e Ferma nella barra`);
+            checks.ok(await page.isVisible('#step') && await page.isVisible('#pause-sheet') && await page.isVisible('#stop'), `${label}: Passo e Ferma nella barra, Riprendi sul foglio`);
             // Riassunto delle variabili (M-06): dopo «dim = 0» la variabile appena cambiata viene prima.
             const running = () => page.evaluate(() => {
                 const node = document.querySelector('#diagram .is-running');
@@ -1914,7 +1918,7 @@ async function checkLandscape(browser, engineName) {
             });
             for (let i = 0; i < 4; i++) {
                 const before = await running();
-                await page.tap('#step-sheet');
+                await page.tap('#step');
                 await page.waitForFunction((id) => {
                     const node = document.querySelector('#diagram .is-running');
                     return node && node.getAttribute('data-id') !== id;
